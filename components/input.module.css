@@ -1,0 +1,68 @@
+.inputField {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  font-size: 14px;
+  color: #52525b;
+}
+
+/* New positioning context container */
+.inputContainer {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.labelText {
+  position: relative;
+  font-weight: 500;
+}
+
+.requiredAsterisk {
+  position: relative;
+  font-weight: 500;
+  color: #ff5c02;
+}
+
+.input {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--color-orbit-input);
+  border-radius: 4px;
+  color: #1a1a1a;
+  font-weight: 500;
+  border: 0.5px solid transparent;
+  transition: all 0.3s ease-out;
+}
+
+.input:focus {
+  outline: none;
+  border: 0.5px solid var(--color-orbit-primary);
+}
+
+.inputIcon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.hasIcon {
+  padding-right: 40px;
+}

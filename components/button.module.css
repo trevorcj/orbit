@@ -1,0 +1,31 @@
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 10px;
+  font-size: 16px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.primary {
+  background-color: var(--color-orbit-primary);
+  font-weight: 700;
+  border-radius: 36px;
+  color: #faffff;
+}
+
+.secondary {
+  background-color: var(--color-zinc-100);
+  font-weight: 600;
+  border-radius: 4px;
+  color: var(--color-orbit-black);
+}
+
+button:disabled {
+  background-color: #e4e4e7;
+  color: #71717a;
+  cursor: not-allowed;
+}
