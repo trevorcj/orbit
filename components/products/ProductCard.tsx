@@ -1,16 +1,23 @@
+"use client";
+
 import { Product } from "@/types/product";
 import { Copy, Trash2, Package } from "lucide-react";
 import { deleteProduct } from "@/actions/delete-product";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function ProductCard({ product }: { product: Product }) {
+  const router = useRouter();
+
   const copyLink = async () => {
     const url = `${window.location.origin}/checkout/${product.slug}`;
     await navigator.clipboard.writeText(url);
   };
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white cursor-pointer transition-all duration-200 hover:border-zinc-300/90">
+    <div
+      onClick={() => router.push(`/dashboard/products/${product.slug}`)}
+      className="rounded-lg border border-zinc-200 bg-white cursor-pointer transition-all duration-200 hover:border-zinc-300/90">
       <div className="flex items-start justify-between px-8 py-7">
         <div className="flex gap-5">
           <div
@@ -55,12 +62,17 @@ export default function ProductCard({ product }: { product: Product }) {
       </div>
 
       <div className="flex justify-end gap-4 px-8 py-5">
-        <button onClick={copyLink}>
+        <button
+          onClick={(event) => {
+            event.stopPropagation();
+            copyLink();
+          }}>
           <Copy size={18} className="text-zinc-500 cursor-pointer" />
         </button>
 
         <button
-          onClick={async () => {
+          onClick={async (event) => {
+            event.stopPropagation();
             await deleteProduct(product.id);
             toast.success("Product deleted");
           }}
