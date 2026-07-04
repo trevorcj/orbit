@@ -18,7 +18,7 @@ export default function RootLayout({
       lang="en"
       className={`${plusJakartaSans.variable} ${boing.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <Toaster position="top-right" richColors />
+        <Toaster position="top-right" />
         {children}
       </body>
     </html>

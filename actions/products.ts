@@ -49,13 +49,17 @@ export async function createProduct(formData: FormData) {
     };
   }
 
-  const { error } = await supabase.from("products").insert({
-    organisation_id: organisation.id,
-    name,
-    slug,
-    description,
-    brand_color: brandColor,
-  });
+  const { data, error } = await supabase
+    .from("products")
+    .insert({
+      organisation_id: organisation.id,
+      name,
+      slug,
+      description,
+      brand_color: brandColor,
+    })
+    .select()
+    .single();
 
   if (error) {
     return {
@@ -68,6 +72,7 @@ export async function createProduct(formData: FormData) {
 
   return {
     success: true,
+    product: data,
   };
 }
 

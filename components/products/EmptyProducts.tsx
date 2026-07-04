@@ -17,7 +17,7 @@ export default function EmptyProducts({ onCreate }: { onCreate: () => void }) {
 
         <button
           onClick={onCreate}
-          className="mt-10 h-11 rounded-full border border-zinc-200 px-10 text-[14px] font-medium text-zinc-900 hover:bg-zinc-50">
+          className="mt-10 h-11 rounded-full border border-zinc-200 px-10 text-[14px] font-medium text-zinc-900 hover:bg-zinc-50 cursor-pointer">
           Create product
         </button>
       </div>

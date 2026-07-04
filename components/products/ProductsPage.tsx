@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Product } from "@/types/product";
 import EmptyProducts from "./EmptyProducts";
 import ProductCard from "./ProductCard";
@@ -18,6 +18,7 @@ export default function ProductsPage({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | "active" | "inactive">("all");
+  const [openFilter, setOpenFilter] = useState(false);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -38,15 +39,21 @@ export default function ProductsPage({
 
   const hasProducts = products.length > 0;
 
+  useEffect(() => {
+    const handler = () => setOpenFilter(false);
+    window.addEventListener("click", handler);
+    return () => window.removeEventListener("click", handler);
+  }, []);
+
   return (
     <>
       <div className="flex flex-col gap-8">
         <div className="flex items-center justify-between">
-          <p className="text-[18px] font-medium text-zinc-900">Products</p>
+          <p className="text-zinc-900">Products</p>
 
           <button
             onClick={() => setOpen(true)}
-            className="h-11 rounded-full bg-[#0F86EE] px-8 text-[15px] font-medium text-white">
+            className="h-11 rounded-full text-[15px] bg-[#0F86EE] px-8 font-semibold text-white cursor-pointer">
             Create product
           </button>
         </div>
@@ -63,18 +70,14 @@ export default function ProductsPage({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search products"
-                className="h-11 w-full rounded-xl border border-zinc-200 pl-11 pr-4 text-[14px]"
+                className="h-11 w-full rounded border border-zinc-200 pl-11 pr-4 text-[14px] transition-all duration-200 focus:outline-none focus:border-zinc-300"
               />
             </div>
 
-            <div className="relative">
+            <div className="relative" onClick={(e) => e.stopPropagation()}>
               <button
-                className="flex h-11 w-40 items-center justify-between rounded-xl border border-zinc-200 px-4 text-[14px]"
-                onClick={() => {
-                  if (status === "all") setStatus("active");
-                  else if (status === "active") setStatus("inactive");
-                  else setStatus("all");
-                }}>
+                onClick={() => setOpenFilter(!openFilter)}
+                className="flex h-11 w-40 items-center justify-between rounded border border-zinc-200 px-4 text-sm transition-all duration-200 focus:outline-none focus:border-zinc-300">
                 {status === "all"
                   ? "All status"
                   : status === "active"
@@ -83,6 +86,37 @@ export default function ProductsPage({
 
                 <ChevronDown size={18} />
               </button>
+
+              {openFilter && (
+                <div className="absolute right-0 top-12 w-40 rounded border border-zinc-200 bg-white shadow-sm overflow-hidden z-50">
+                  <button
+                    onClick={() => {
+                      setStatus("all");
+                      setOpenFilter(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-zinc-50">
+                    All
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setStatus("active");
+                      setOpenFilter(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-zinc-50">
+                    Active
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setStatus("inactive");
+                      setOpenFilter(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-zinc-50">
+                    Inactive
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -101,7 +135,7 @@ export default function ProductsPage({
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            {Array.from({ length: 4 }).map((_, i) => (
+            {Array.from({ length: 2 }).map((_, i) => (
               <ProductSkeleton key={i} />
             ))}
           </div>

@@ -13,6 +13,8 @@ import {
   HelpCircle,
   LogOut,
   Search,
+  Menu,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -69,6 +71,18 @@ export default function DashboardLayoutClient({
           onClick={() => setMobileOpen(false)}
           className="fixed inset-0 z-40 bg-black/30 md:hidden"
         />
+      )}
+
+      {mobileOpen && (
+        <>
+          <div className="mb-6 flex items-center gap-3 md:hidden">
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="rounded border border-zinc-200 p-3 text-sm cursor-pointer">
+              <X size={16} />
+            </button>
+          </div>
+        </>
       )}
 
       <aside
@@ -260,12 +274,12 @@ ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
           </div>
         </div>
       </aside>
-      <main className="flex-1 overflow-y-auto bg-white p-10 text-left">
+      <main className="flex-1 overflow-y-auto bg-white p-7 text-left">
         <div className="mb-6 flex items-center gap-3 md:hidden">
           <button
             onClick={() => setMobileOpen(true)}
-            className="h-10 rounded-xl border border-zinc-200 px-4 text-sm">
-            Menu
+            className="rounded border border-zinc-200 p-3 text-sm cursor-pointer">
+            <Menu />
           </button>
         </div>
         {children}

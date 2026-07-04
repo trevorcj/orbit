@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { X, Check } from "lucide-react";
+import { X, Check, Copy } from "lucide-react";
 import { createProduct, checkSlug } from "@/actions/products";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import Input from "../Input";
 
 export default function CreateProductSheet({
   open,
@@ -38,6 +39,11 @@ export default function CreateProductSheet({
     if (!newSlug) setAvailable(false);
   };
 
+  const copyLink = async () => {
+    const url = `${window.location.origin}/checkout/${slug}`;
+    await navigator.clipboard.writeText(url);
+  };
+
   useEffect(() => {
     if (!slug) return;
 
@@ -57,7 +63,7 @@ export default function CreateProductSheet({
 
       <div className="fixed right-0 top-0 z-50 h-full w-155 bg-white flex flex-col">
         <div className="flex items-center justify-between px-10 py-7 border-b border-zinc-100">
-          <p className="text-[18px] font-medium">Create product</p>
+          <p className="font-semibold cursor-pointer">Create product</p>
 
           <button onClick={onClose}>
             <X size={18} />
@@ -81,24 +87,30 @@ export default function CreateProductSheet({
           className="flex flex-1 flex-col justify-between px-10 py-8 overflow-y-auto">
           <div className="space-y-7">
             <div>
-              <p className="text-[14px] font-medium mb-2">Product name</p>
-
-              <input
+              <Input
+                type="text"
+                placeholder="Acme Pro"
+                isRequired
                 name="name"
                 value={name}
                 onChange={handleNameChange}
-                className="h-11 w-full rounded-xl border border-zinc-200 px-4 text-[14px]"
+                label="Product name"
+                className="h-11 w-full border border-zinc-200 px-4"
+                required
               />
             </div>
 
             <div>
-              <p className="text-[14px] font-medium mb-2">Product slug</p>
-
-              <input
+              <Input
+                type="text"
+                placeholder="acme-pro"
+                isRequired
                 name="slug"
                 value={slug}
                 onChange={handleSlugChange}
-                className="h-11 w-full rounded-xl border border-zinc-200 px-4 text-[14px]"
+                label="Product slug"
+                className="h-11 w-full border border-zinc-200 px-4"
+                required
               />
 
               {available && (
@@ -108,9 +120,23 @@ export default function CreateProductSheet({
                 </div>
               )}
 
-              <p className="mt-2 text-[13px] text-zinc-400">
-                ://orbit.com{slug}
-              </p>
+              <div className="my-10">
+                <p className="mt-2 text-[15px] text-zinc-400">
+                  Your product will be available at:
+                </p>
+                <div className="flex gap-4 items-center">
+                  <p className="mt-2 text-[15px] text-zinc-700 font-medium underline">
+                    orbit.com/checkout/{slug}
+                  </p>
+
+                  <button type="button" onClick={copyLink}>
+                    <Copy
+                      size={16}
+                      className="text-zinc-500 cursor-pointer mt-2"
+                    />
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -121,14 +147,14 @@ export default function CreateProductSheet({
                   type="color"
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
-                  className="h-11 w-11"
+                  className="h-11 w-11 outline-0 border-0"
                 />
 
                 <input
                   name="brand_color"
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
-                  className="h-11 w-28 rounded-xl border border-zinc-200 px-3 text-[14px]"
+                  className="h-11 w-28 rounded border border-zinc-200 px-3 text-sm"
                 />
               </div>
             </div>
@@ -140,7 +166,7 @@ export default function CreateProductSheet({
                 name="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="h-32 w-full rounded-xl border border-zinc-200 p-4 text-[14px]"
+                className="h-32 w-full rounded border border-zinc-200 p-4 text-[14px]"
               />
             </div>
           </div>
@@ -149,13 +175,13 @@ export default function CreateProductSheet({
             <button
               type="button"
               onClick={onClose}
-              className="h-11 rounded-full border border-zinc-200 px-6 text-[14px]">
+              className="h-11 rounded-full border border-zinc-200 px-6 text-[14px] font-semibold cursor-pointer">
               Cancel
             </button>
 
             <button
               disabled={pending}
-              className="h-11 rounded-full bg-[#0F86EE] px-6 text-[14px] font-medium text-white">
+              className="h-11 rounded-full bg-[#0F86EE] px-6 text-[14px] font-semibold text-white  cursor-pointer">
               Create
             </button>
           </div>

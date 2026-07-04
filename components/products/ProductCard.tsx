@@ -10,7 +10,7 @@ export default function ProductCard({ product }: { product: Product }) {
   };
 
   return (
-    <div className="rounded-3xl border border-zinc-200 bg-white">
+    <div className="rounded-lg border border-zinc-200 bg-white cursor-pointer transition-all duration-200 hover:border-zinc-300/90">
       <div className="flex items-start justify-between px-8 py-7">
         <div className="flex gap-5">
           <div
@@ -42,7 +42,7 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
       </div>
 
-      <div className="border-y border-zinc-100 px-8 py-5">
+      <div className="border-y border-zinc-100 px-8 py-5 ">
         <div className="flex gap-2">
           <div className="rounded-full border border-zinc-200 px-3 py-1 text-[13px] text-zinc-500">
             0 plans
@@ -56,7 +56,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
       <div className="flex justify-end gap-4 px-8 py-5">
         <button onClick={copyLink}>
-          <Copy size={18} className="text-zinc-500" />
+          <Copy size={18} className="text-zinc-500 cursor-pointer" />
         </button>
 
         <button
@@ -65,7 +65,7 @@ export default function ProductCard({ product }: { product: Product }) {
             toast.success("Product deleted");
           }}
           className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50">
-          <Trash2 size={18} className="text-red-500" />
+          <Trash2 size={18} className="text-red-500 cursor-pointer" />
         </button>
       </div>
     </div>
