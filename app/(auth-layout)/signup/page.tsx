@@ -1,7 +1,5 @@
-import Button from "@/components/Button";
 import Separator from "@/components/Separator";
 import SignupForm from "@/components/SignupForm";
-import Image from "next/image";
 import Link from "next/link";
 
 function Signup() {
@@ -11,13 +9,6 @@ function Signup() {
 
       <div className="mt-5 w-full space-y-5">
         <Separator />
-
-        <Button
-          className="w-full bg-orbit-white border border-zinc-200 rounded-full font-semibold"
-          variant="other">
-          <Image src="/google.svg" alt="Google logo" width={20} height={20} />{" "}
-          Continue with Google
-        </Button>
 
         <p className="font-semibold text-zinc-700">
           Already have an account?{" "}

@@ -9,13 +9,15 @@ export async function POST(req: Request) {
   console.log("🔥 NOMBA WEBHOOK RECEIVED");
 
   try {
+    /*
+     * 1. Read raw body
+     * IMPORTANT:
+     * HMAC verification must happen before JSON parsing
+     */
+
     const rawBody = await req.text();
 
     const signature = req.headers.get("nomba-signature");
-
-    /*
-     * 1. Verify webhook signature
-     */
 
     const webhookSecret = process.env.NOMBA_WEBHOOK_SECRET;
 
@@ -23,13 +25,17 @@ export async function POST(req: Request) {
       throw new Error("Missing Nomba webhook secret");
     }
 
+    /*
+     * 2. Verify HMAC SHA256 signature
+     */
+
     const expectedSignature = crypto
       .createHmac("sha256", webhookSecret)
       .update(rawBody)
       .digest("hex");
 
     if (!signature || signature !== expectedSignature) {
-      console.error("❌ Invalid webhook signature");
+      console.error("❌ Invalid Nomba signature");
 
       return NextResponse.json(
         {
@@ -42,28 +48,71 @@ export async function POST(req: Request) {
     }
 
     /*
-     * 2. Parse payload
+     * 3. Parse verified payload
      */
 
     const payload = JSON.parse(rawBody);
 
     console.log("NOMBA PAYLOAD:", JSON.stringify(payload, null, 2));
 
-    /*
-     * 3. Store webhook event
-     */
-
     const eventType =
       payload.event_type ?? payload.eventType ?? payload.event ?? "unknown";
+
+    const requestId = payload.requestId ?? payload.request_id ?? null;
+
+    const data = payload.data ?? {};
+
+    const transaction = data.transaction ?? data;
+
+    const reference =
+      transaction.merchantTxRef ??
+      data.merchantTxRef ??
+      transaction.orderReference ??
+      data.orderReference ??
+      null;
+
+    /*
+     * 4. Idempotency check
+     *
+     * Nomba can send the same webhook multiple times.
+     * Never fulfill twice.
+     */
+
+    if (requestId) {
+      const { data: existingEvent } = await supabaseAdmin
+        .from("webhook_events")
+        .select("id, processed")
+        .eq("request_id", requestId)
+        .maybeSingle();
+
+      if (existingEvent?.processed) {
+        console.log("Duplicate webhook ignored:", requestId);
+
+        return NextResponse.json({
+          received: true,
+          duplicate: true,
+        });
+      }
+    }
+
+    /*
+     * 5. Store webhook event
+     */
 
     const { data: webhookEvent, error: webhookError } = await supabaseAdmin
       .from("webhook_events")
       .insert({
         provider: "nomba",
 
+        request_id: requestId,
+
         event_type: eventType,
 
+        reference,
+
         payload,
+
+        processed: false,
       })
       .select("id")
       .single();
@@ -73,12 +122,22 @@ export async function POST(req: Request) {
     }
 
     /*
-     * 4. Extract transaction
+     * 6. Only handle successful payments
      */
 
-    const data = payload.data ?? {};
+    const status = transaction.status ?? data.status;
 
-    const transaction = data.transaction ?? data;
+    if (status !== "SUCCESS" && status !== "SUCCESSFUL") {
+      console.log("Ignoring webhook status:", status);
+
+      return NextResponse.json({
+        received: true,
+      });
+    }
+
+    /*
+     * 7. Find checkout order
+     */
 
     const orderReference =
       transaction.orderReference ??
@@ -92,24 +151,6 @@ export async function POST(req: Request) {
         received: true,
       });
     }
-
-    /*
-     * 5. Only successful payments
-     */
-
-    const status = transaction.status ?? data.status;
-
-    if (status !== "SUCCESS" && status !== "SUCCESSFUL") {
-      console.log("Ignoring payment status:", status);
-
-      return NextResponse.json({
-        received: true,
-      });
-    }
-
-    /*
-     * 6. Find payment order
-     */
 
     const { data: paymentOrder, error: paymentOrderError } = await supabaseAdmin
       .from("payment_orders")
@@ -132,7 +173,7 @@ export async function POST(req: Request) {
     }
 
     /*
-     * 7. Fulfill payment
+     * 8. Fulfill payment
      */
 
     await fulfillPayment({
@@ -145,13 +186,15 @@ export async function POST(req: Request) {
 
         email: transaction.customerEmail ?? paymentOrder.customer_email,
 
-        customerName: transaction.customerName ?? transaction.senderName,
+        customerName: transaction.customerName ?? transaction.senderName ?? "",
 
         cardToken: transaction.cardToken ?? data.cardToken ?? null,
 
         cardBrand: transaction.cardDetails?.cardType ?? null,
 
-        cardLast4: transaction.cardDetails?.cardPan?.slice(-4) ?? null,
+        cardLast4: transaction.cardDetails?.cardPan
+          ? transaction.cardDetails.cardPan.slice(-4)
+          : null,
 
         cardExpiry: transaction.cardDetails?.expiry ?? null,
 
@@ -160,7 +203,7 @@ export async function POST(req: Request) {
     });
 
     /*
-     * 8. Mark webhook processed
+     * 9. Mark processed
      */
 
     if (webhookEvent?.id) {

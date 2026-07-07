@@ -9,46 +9,57 @@ import { revalidatePath } from "next/cache";
 export async function signUp(formData: SignupFormValues) {
   const supabase = await createClient();
 
-  const { data: authData, error: authError } = await supabase.auth.signUp({
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.signUp({
     email: formData.email,
     password: formData.password,
   });
 
-  if (authError || !authData?.user) {
-    return { error: authError?.message || "Signup failed" };
+  if (authError || !user) {
+    return {
+      error: authError?.message ?? "Signup failed",
+    };
   }
 
-  const { error: insertError } = await supabase.from("users").insert({
-    id: authData.user.id,
-    email: authData.user.email,
+  const { error: profileError } = await supabase.from("users").insert({
+    id: user.id,
+    email: user.email,
     first_name: formData.firstName,
     last_name: formData.lastName,
   });
 
-  if (insertError) {
-    return { error: insertError.message };
+  if (profileError) {
+    console.error(profileError);
+
+    return {
+      error: "Unable to create user profile",
+    };
   }
 
   revalidatePath("/", "layout");
-  redirect("/");
+
+  redirect("/onboarding");
 }
 
 export async function login(formData: LoginFormValues) {
   const supabase = await createClient();
 
-  const data = {
+  const { error } = await supabase.auth.signInWithPassword({
     email: formData.email,
     password: formData.password,
-  };
-
-  const { error } = await supabase.auth.signInWithPassword(data);
+  });
 
   if (error) {
-    return { error: "login failed" };
+    return {
+      error: error.message,
+    };
   }
 
   revalidatePath("/", "layout");
-  redirect("/");
+
+  redirect("/dashboard");
 }
 
 export async function logout() {
@@ -57,5 +68,6 @@ export async function logout() {
   await supabase.auth.signOut();
 
   revalidatePath("/", "layout");
+
   redirect("/login");
 }

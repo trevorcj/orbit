@@ -1,9 +1,33 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { createClient } from "@/lib/supabase/server";
 import PaymentsPage from "@/components/payments/PaymentsPage";
 
 type PaymentStatus = "success" | "failed" | "pending" | "reversed";
 
 export default async function Page() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return null;
+  }
+
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("users")
+    .select("organisation_id")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError || !profile?.organisation_id) {
+    console.error("Organisation lookup failed:", profileError);
+    return null;
+  }
+
+  const organisationId = profile.organisation_id;
+
   const { data: payments, error } = await supabaseAdmin
     .from("payments")
     .select(
@@ -33,6 +57,7 @@ export default async function Page() {
       )
       `,
     )
+    .eq("organisation_id", organisationId)
     .order("created_at", {
       ascending: false,
     });

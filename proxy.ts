@@ -4,11 +4,11 @@ import { createClient } from "./lib/supabase/middleware";
 
 export async function proxy(request: NextRequest) {
   const { supabase, response } = createClient(request);
+
   const path = request.nextUrl.pathname;
 
   if (
     path.startsWith("/api") ||
-    path.startsWith("/_next") ||
     path.startsWith("/checkout") ||
     path.startsWith("/portal") ||
     path.includes(".")
@@ -18,34 +18,43 @@ export async function proxy(request: NextRequest) {
 
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
 
+  if (error) {
+    console.error("Auth error:", error);
+  }
+
+  const publicRoutes = ["/login", "/signup"];
+
   if (!user) {
-    if (path !== "/login" && path !== "/signup") {
+    if (!publicRoutes.includes(path)) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
+
     return response;
   }
 
-  if (path === "/login" || path === "/signup") {
+  if (publicRoutes.includes(path)) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  const { data: org } = await supabase
+  const { data: organisation } = await supabase
     .from("organisations")
     .select("id")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (org) {
-    if (!path.startsWith("/dashboard")) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+  if (!organisation) {
+    if (path !== "/onboarding") {
+      return NextResponse.redirect(new URL("/onboarding", request.url));
     }
+
     return response;
   }
 
-  if (path !== "/onboarding") {
-    return NextResponse.redirect(new URL("/onboarding", request.url));
+  if (path === "/onboarding") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return response;

@@ -5,6 +5,18 @@ import { CustomerStatus } from "@/components/customers/CustomersPage";
 export default async function Page() {
   const supabase = supabaseAdmin;
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("organisation_id")
+    .eq("id", user?.id)
+    .single();
+
+  const organisationId = profile?.organisation_id;
+
   const { data: customers, error } = await supabase
     .from("customers")
     .select(
@@ -25,7 +37,8 @@ export default async function Page() {
     )
     .order("created_at", {
       ascending: false,
-    });
+    })
+    .eq("organisation_id", organisationId);
 
   if (error) {
     console.error("CUSTOMERS FETCH ERROR:", error);

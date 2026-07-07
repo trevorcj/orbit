@@ -1,5 +1,8 @@
+import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import SubscriptionsPage from "@/components/subscriptions/SubscriptionsPage";
+
+export const dynamic = "force-dynamic";
 
 export type SubscriptionStatus =
   | "Active"
@@ -9,6 +12,26 @@ export type SubscriptionStatus =
 
 export default async function Page() {
   const supabase = supabaseAdmin;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: organisation, error: organisationError } = await supabase
+    .from("organisations")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+
+  if (organisationError || !organisation) {
+    console.error("ORGANISATION FETCH ERROR:", organisationError);
+
+    redirect("/onboarding");
+  }
 
   const { data: subscriptions, error } = await supabase
     .from("subscriptions")
@@ -37,6 +60,7 @@ export default async function Page() {
       )
       `,
     )
+    .eq("organisation_id", organisation.id)
     .order("created_at", {
       ascending: false,
     });

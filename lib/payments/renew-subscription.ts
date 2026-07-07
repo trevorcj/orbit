@@ -14,11 +14,11 @@ export async function renewSubscription(subscriptionId: string) {
     .select(
       `
       *,
-      customers (
-        id,
-        email
-      ),
-      plans (
+      customers!inner(
+id,
+email
+),
+      plans!inner (
         id,
         amount,
         billing_interval,
