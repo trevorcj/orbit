@@ -31,54 +31,6 @@ export async function getAccessToken() {
   return data.data.access_token;
 }
 
-export async function createCheckoutOrder(params: {
-  amount: number;
-  customerEmail: string;
-  callbackUrl: string;
-  productId: string;
-  planId: string;
-}) {
-  const token = await getAccessToken();
-
-  const orderReference = crypto.randomUUID();
-
-  const response = await fetch(`${BASE_URL}/v1/checkout/order`, {
-    method: "POST",
-
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      accountId: process.env.NOMBA_PARENT_ACCOUNT_ID!,
-    },
-
-    body: JSON.stringify({
-      order: {
-        orderReference,
-        amount: params.amount,
-        currency: "NGN",
-        customerEmail: params.customerEmail,
-        callbackUrl: params.callbackUrl,
-      },
-    }),
-  });
-
-  const text = await response.text();
-
-  console.log("NOMBA CHECKOUT:", response.status, text);
-
-  if (!response.ok) {
-    throw new Error(`Nomba checkout failed: ${text}`);
-  }
-
-  const data = JSON.parse(text);
-
-  return {
-    checkoutUrl: data?.data?.checkoutLink ?? null,
-
-    orderReference,
-  };
-}
-
 export async function chargeTokenizedCard(params: {
   amount: number;
   cardId: string;
@@ -199,4 +151,47 @@ export async function getWalletBalance() {
   const data = await response.json();
 
   return data.data;
+}
+
+export async function createCheckoutOrder(params: {
+  amount: number;
+  customerEmail: string;
+  callbackUrl: string;
+  productId: string;
+  planId: string;
+}) {
+  const token = await getAccessToken();
+  const orderReference = crypto.randomUUID();
+
+  const response = await fetch(`${BASE_URL}/v1/checkout/order`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      accountId: process.env.NOMBA_PARENT_ACCOUNT_ID!,
+    },
+    body: JSON.stringify({
+      order: {
+        orderReference,
+        amount: params.amount,
+        currency: "NGN",
+        customerEmail: params.customerEmail,
+        callbackUrl: params.callbackUrl,
+        tokenizeCard: "true", // 🔥 CRITICAL FIX: Tells Nomba to tokenize this card!
+      },
+    }),
+  });
+
+  const text = await response.text();
+  console.log("NOMBA CHECKOUT:", response.status, text);
+
+  if (!response.ok) {
+    throw new Error(`Nomba checkout failed: ${text}`);
+  }
+
+  const data = JSON.parse(text);
+  return {
+    checkoutUrl: data?.data?.checkoutLink ?? null,
+    orderReference,
+  };
 }

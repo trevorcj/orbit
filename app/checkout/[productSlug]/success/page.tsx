@@ -70,42 +70,41 @@ export default async function CheckoutSuccessPage({
         .from("payment_orders")
         .select(
           `
-            plan_id,
-            customer_email
-            `,
+          plan_id,
+          product_id,
+          customer_email,
+          customer_first_name,
+          customer_last_name
+        `,
         )
         .eq("order_reference", orderRef)
         .single();
 
       if (error || !paymentOrder) {
         console.error("Payment order lookup failed:", error);
-
         throw new Error("Payment order does not exist");
       }
 
       await fulfillPayment({
         orderReference: orderRef,
-
         planId: paymentOrder.plan_id,
-
         transaction: {
-          amount: result.data.amount,
-
+          amount: result.data.amount, // Comes down as "100.0" from Nomba log
           email:
             result.data.onlineCheckoutCustomerEmail ??
             paymentOrder.customer_email,
-
           customerName: result.data.senderName ?? "Nomba Customer",
 
-          cardToken: result.data.cardToken ?? null,
+          // 🔥 DYNAMIC REPAIR: Map the exact key Nomba returns in the successful payload!
+          cardToken:
+            result.data.onlineCheckoutTokenKey !== "N/A"
+              ? result.data.onlineCheckoutTokenKey
+              : null,
 
-          cardBrand: result.data.cardDetails?.cardType ?? null,
-
-          cardLast4: result.data.cardDetails?.cardPan?.slice(-4) ?? null,
-
-          cardExpiry: result.data.cardDetails?.expiryDate ?? null,
-
-          providerCustomerId: result.data.customerId ?? null,
+          cardBrand: result.data.onlineCheckoutCardType ?? "Card",
+          cardLast4: result.data.onlineCheckoutCardPanLast4Digits ?? "0000",
+          cardExpiry: null,
+          providerCustomerId: result.data.userId ?? null,
         },
       });
     }
