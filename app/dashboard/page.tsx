@@ -1,4 +1,3 @@
-import { getWalletBalance } from "@/lib/nomba";
 import { createClient } from "@/lib/supabase/server";
 import { ArrowUpRight, TrendingUp } from "lucide-react";
 
