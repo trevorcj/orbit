@@ -182,7 +182,7 @@ export default async function MerchantDashboardPage() {
       {/* LOWER REVENUE CHARTS & PRODUCT RANKINGS SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Side: Historical Earning Volume Graphic Canvas */}
-        <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 shadow-sm lg:col-span-2 flex flex-col gap-6 min-h-[350px]">
+        <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 shadow-sm lg:col-span-2 flex flex-col gap-6 min-h-87.5">
           <div className="flex justify-between items-center">
             <span className="text-sm font-bold text-zinc-900 tracking-tight">
               Revenue Volume Trends
@@ -192,7 +192,7 @@ export default async function MerchantDashboardPage() {
             </div>
           </div>
 
-          <div className="flex-1 w-full h-full relative flex items-end min-h-[220px] bg-gradient-to-t from-zinc-50/50 to-white/0 rounded-xl p-4 border border-zinc-100">
+          <div className="flex-1 w-full h-full relative flex items-end min-h-55 bg-linear-to-t from-zinc-50/50 to-white/0 rounded-xl p-4 border border-zinc-100">
             <svg
               className="w-full h-44 stroke-[#0F86EE] stroke-[2.5] fill-none overflow-visible"
               viewBox="0 0 100 100"
