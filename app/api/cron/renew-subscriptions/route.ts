@@ -11,7 +11,7 @@ export async function GET(request: Request) {
    */
   if (
     process.env.NODE_ENV === "production" &&
-    authHeader !== `Bearer ${process.env.CRON_SECRET}`
+    authHeader !== `Bearer ${process.env.BILLING_CRON_SECRET}`
   ) {
     return Response.json(
       {
