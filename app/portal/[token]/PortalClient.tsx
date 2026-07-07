@@ -5,13 +5,19 @@ import { useState } from "react";
 interface Subscription {
   id: string;
   status: string;
+  starts_at: string | null;
   renews_at: string | null;
+
   products?: {
     name: string;
-  } | null;
+  }[];
+
   plans?: {
     name: string;
-  } | null;
+    amount: number;
+    currency: string;
+    billing_interval: string;
+  }[];
 }
 
 interface Payment {
@@ -68,11 +74,9 @@ export default function PortalClient({ customer }: { customer: Customer }) {
 
           {subscription ? (
             <>
-              <p className="mt-3">
-                Product: {subscription.products?.name ?? "-"}
-              </p>
+              <p>Product: {subscription.products?.[0]?.name ?? "-"}</p>
 
-              <p>Plan: {subscription.plans?.name ?? "-"}</p>
+              <p>Plan: {subscription.plans?.[0]?.name ?? "-"}</p>
 
               <p>Status: {subscription.status}</p>
 

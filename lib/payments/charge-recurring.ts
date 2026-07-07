@@ -3,6 +3,14 @@ import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { chargeTokenizedCard } from "@/lib/nomba";
 
+interface RenewalSubscription {
+  plans: {
+    billing_interval: string;
+    billing_interval_days?: number | null;
+    billing_interval_minutes?: number | null;
+  };
+}
+
 export async function chargeRecurringSubscription(subscriptionId: string) {
   const supabase = supabaseAdmin;
 
@@ -117,7 +125,7 @@ export async function chargeRecurringSubscription(subscriptionId: string) {
   };
 }
 
-function calculateNextRenewal(subscription) {
+function calculateNextRenewal(subscription: RenewalSubscription) {
   const date = new Date();
 
   switch (subscription.plans.billing_interval) {
