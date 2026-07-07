@@ -40,6 +40,9 @@ export default function PortalClient({ customer }: { customer: Customer }) {
     try {
       await fetch("/api/portal/cancel", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           subscriptionId: subscription.id,
         }),
@@ -90,16 +93,14 @@ export default function PortalClient({ customer }: { customer: Customer }) {
               )}
             </>
           ) : (
-            <p className="mt-3 text-zinc-500">No subscription found.</p>
+            <p className="mt-3 text-zinc-500">No active subscription.</p>
           )}
         </div>
 
         <div className="mt-6">
           <h2 className="font-semibold mb-3">Payments</h2>
 
-          {customer.payments.length === 0 ? (
-            <p className="text-zinc-500">No payments yet.</p>
-          ) : (
+          {customer.payments?.length ? (
             customer.payments.map((payment) => (
               <div
                 key={payment.id}
@@ -109,6 +110,8 @@ export default function PortalClient({ customer }: { customer: Customer }) {
                 <span>{payment.status}</span>
               </div>
             ))
+          ) : (
+            <p className="text-zinc-500">No payments yet.</p>
           )}
         </div>
       </div>
