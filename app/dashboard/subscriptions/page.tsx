@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { createClient } from "@/lib/supabase/server";
 import SubscriptionsPage from "@/components/subscriptions/SubscriptionsPage";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export type SubscriptionStatus =
   | "Trialing";
 
 export default async function Page() {
-  const supabase = supabaseAdmin;
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -21,6 +21,9 @@ export default async function Page() {
     redirect("/login");
   }
 
+  /*
+   * Get organisation belonging to logged in merchant
+   */
   const { data: organisation, error: organisationError } = await supabase
     .from("organisations")
     .select("id")
@@ -33,6 +36,9 @@ export default async function Page() {
     redirect("/onboarding");
   }
 
+  /*
+   * Fetch subscriptions
+   */
   const { data: subscriptions, error } = await supabase
     .from("subscriptions")
     .select(
@@ -43,20 +49,19 @@ export default async function Page() {
       renews_at,
       created_at,
 
-      customer:customers (
+      customers (
         first_name,
         last_name,
         email
       ),
 
-      product:products (
-        name
-      ),
-
-      plan:plans (
+      plans (
         name,
         amount,
-        billing_interval
+        billing_interval,
+        products (
+          name
+        )
       )
       `,
     )
@@ -71,17 +76,19 @@ export default async function Page() {
 
   const formattedSubscriptions =
     subscriptions?.map((subscription) => {
-      const customer = Array.isArray(subscription.customer)
-        ? subscription.customer[0]
-        : subscription.customer;
+      const customer = Array.isArray(subscription.customers)
+        ? subscription.customers[0]
+        : subscription.customers;
 
-      const product = Array.isArray(subscription.product)
-        ? subscription.product[0]
-        : subscription.product;
+      const plan = Array.isArray(subscription.plans)
+        ? subscription.plans[0]
+        : subscription.plans;
 
-      const plan = Array.isArray(subscription.plan)
-        ? subscription.plan[0]
-        : subscription.plan;
+      const product = plan?.products
+        ? Array.isArray(plan.products)
+          ? plan.products[0]
+          : plan.products
+        : null;
 
       const customerName =
         `${customer?.first_name ?? ""} ${customer?.last_name ?? ""}`.trim() ||
@@ -89,7 +96,7 @@ export default async function Page() {
 
       let status: SubscriptionStatus = "Canceled";
 
-      switch (subscription.status) {
+      switch (subscription.status?.toUpperCase()) {
         case "ACTIVE":
           status = "Active";
           break;

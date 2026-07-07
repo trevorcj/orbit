@@ -1,22 +1,36 @@
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { createClient } from "@/lib/supabase/server";
 import CustomersPage from "@/components/customers/CustomersPage";
 import { CustomerStatus } from "@/components/customers/CustomersPage";
 
 export default async function Page() {
-  const supabase = supabaseAdmin;
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: profile } = await supabase
-    .from("users")
-    .select("organisation_id")
-    .eq("id", user?.id)
+  if (!user) return null;
+
+  /*
+   * Get merchant organisation
+   */
+  const { data: organisation, error: organisationError } = await supabase
+    .from("organisations")
+    .select("id")
+    .eq("user_id", user.id)
     .single();
 
-  const organisationId = profile?.organisation_id;
+  if (organisationError || !organisation) {
+    console.error("ORGANISATION FETCH ERROR:", organisationError);
 
+    return <CustomersPage customers={[]} />;
+  }
+
+  const organisationId = organisation.id;
+
+  /*
+   * Fetch customers belonging to this organisation
+   */
   const { data: customers, error } = await supabase
     .from("customers")
     .select(
@@ -30,18 +44,21 @@ export default async function Page() {
         id,
         status,
         payments (
-          amount
+          amount,
+          status
         )
       )
-    `,
+      `,
     )
+    .eq("organisation_id", organisationId)
     .order("created_at", {
       ascending: false,
-    })
-    .eq("organisation_id", organisationId);
+    });
 
   if (error) {
     console.error("CUSTOMERS FETCH ERROR:", error);
+
+    return <CustomersPage customers={[]} />;
   }
 
   const formattedCustomers =
@@ -50,15 +67,24 @@ export default async function Page() {
         customer.subscriptions?.reduce((total, subscription) => {
           const payments = subscription.payments ?? [];
 
+          const successfulPayments = payments.filter(
+            (payment) =>
+              payment.status === "success" || payment.status === "SUCCESS",
+          );
+
           return (
             total +
-            payments.reduce((sum, payment) => sum + Number(payment.amount), 0)
+            successfulPayments.reduce(
+              (sum, payment) => sum + Number(payment.amount ?? 0),
+              0,
+            )
           );
         }, 0) ?? 0;
 
       const activeSubscriptions =
-        customer.subscriptions?.filter((sub) => sub.status === "ACTIVE")
-          .length ?? 0;
+        customer.subscriptions?.filter(
+          (subscription) => subscription.status?.toUpperCase() === "ACTIVE",
+        ).length ?? 0;
 
       const customerStatus: CustomerStatus =
         activeSubscriptions > 0 ? "Active" : "Canceled";
@@ -73,11 +99,17 @@ export default async function Page() {
 
       return {
         id: customer.id,
+
         name,
+
         email: customer.email,
+
         subscriptions: activeSubscriptions,
+
         totalSpent: `₦${totalSpent.toLocaleString()}`,
+
         status: customerStatus,
+
         joined: new Date(customer.created_at).toLocaleDateString("en-NG", {
           year: "numeric",
           month: "short",

@@ -1,34 +1,24 @@
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PaymentsPage from "@/components/payments/PaymentsPage";
+import { getOrganisation } from "@/lib/get-organisation";
 
 type PaymentStatus = "success" | "failed" | "pending" | "reversed";
 
 export default async function Page() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, organisation } = await getOrganisation();
 
   if (!user) {
-    return null;
+    redirect("/login");
   }
 
-  const { data: profile, error: profileError } = await supabaseAdmin
-    .from("users")
-    .select("organisation_id")
-    .eq("id", user.id)
-    .single();
-
-  if (profileError || !profile?.organisation_id) {
-    console.error("Organisation lookup failed:", profileError);
-    return null;
+  if (!organisation) {
+    redirect("/onboarding");
   }
 
-  const organisationId = profile.organisation_id;
+  const supabase = await createClient();
 
-  const { data: payments, error } = await supabaseAdmin
+  const { data: payments, error } = await supabase
     .from("payments")
     .select(
       `
@@ -44,20 +34,20 @@ export default async function Page() {
       paid_at,
       created_at,
 
-      customers (
+      customers(
         first_name,
         last_name,
         email
       ),
 
-      subscriptions (
-        plans (
+      subscriptions(
+        plans(
           name
         )
       )
       `,
     )
-    .eq("organisation_id", organisationId)
+    .eq("organisation_id", organisation.id)
     .order("created_at", {
       ascending: false,
     });
@@ -86,9 +76,7 @@ export default async function Page() {
 
       let status: PaymentStatus = "pending";
 
-      const value = payment.status?.toUpperCase();
-
-      switch (value) {
+      switch (payment.status?.toUpperCase()) {
         case "SUCCESS":
           status = "success";
           break;
@@ -115,7 +103,7 @@ export default async function Page() {
 
         customer_id: payment.customer_id,
 
-        amount: Number(payment.amount),
+        amount: Number(payment.amount ?? 0),
 
         currency: payment.currency,
 
@@ -136,7 +124,7 @@ export default async function Page() {
 
         subscriptions: {
           plans: {
-            name: plan && "name" in plan ? plan.name : "One-time payment",
+            name: plan?.name ?? "One-time payment",
           },
         },
       };
