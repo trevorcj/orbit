@@ -180,3 +180,23 @@ export async function lookupAccount(accountNumber: string, bankCode: string) {
 
   return data.data;
 }
+
+export async function getWalletBalance() {
+  const token = await getAccessToken();
+
+  const response = await fetch(`${BASE_URL}/v1/wallet/balance`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      accountId: process.env.NOMBA_PARENT_ACCOUNT_ID!,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to fetch wallet balance");
+  }
+
+  const data = await response.json();
+
+  return data.data;
+}

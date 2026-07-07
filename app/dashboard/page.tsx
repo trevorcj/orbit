@@ -1,3 +1,4 @@
+import { getWalletBalance } from "@/lib/nomba";
 import { createClient } from "@/lib/supabase/server";
 import { ArrowUpRight, TrendingUp } from "lucide-react";
 
@@ -97,6 +98,8 @@ export default async function MerchantDashboardPage() {
     (a, b) => b.amount - a.amount,
   );
 
+  const balance = await getWalletBalance();
+
   return (
     <div className="flex flex-col gap-8 animate-in fade-in duration-300">
       {/* Upper Context Header Section */}
@@ -113,6 +116,8 @@ export default async function MerchantDashboardPage() {
           Live Sync active
         </div>
       </div>
+
+      <p>Balance: {balance}</p>
 
       {/* CORE EXECUTIVE REVENUE CARD GRIDS ROWS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

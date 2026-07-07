@@ -2,9 +2,17 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { renewSubscription } from "@/lib/payments/renew-subscription";
 
 export async function GET(request: Request) {
-  const auth = request.headers.get("authorization");
+  const authHeader = request.headers.get("authorization");
 
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  /*
+   * Protect cron endpoint in production.
+   * Vercel sends:
+   * Authorization: Bearer YOUR_CRON_SECRET
+   */
+  if (
+    process.env.NODE_ENV === "production" &&
+    authHeader !== `Bearer ${process.env.CRON_SECRET}`
+  ) {
     return Response.json(
       {
         error: "Unauthorized",
@@ -18,7 +26,7 @@ export async function GET(request: Request) {
   const supabase = supabaseAdmin;
 
   /*
-   * Find subscriptions ready for renewal
+   * Find subscriptions that are due for renewal
    */
 
   const { data: subscriptions, error } = await supabase
@@ -28,7 +36,7 @@ export async function GET(request: Request) {
         id,
         status,
         renews_at
-        `,
+      `,
     )
     .eq("status", "ACTIVE")
     .lte("renews_at", new Date().toISOString());
@@ -48,10 +56,15 @@ export async function GET(request: Request) {
 
   console.log("Renewal candidates:", subscriptions?.length ?? 0);
 
-  const results = [];
+  const results: Array<{
+    subscriptionId: string;
+    success: boolean;
+    error?: string;
+    paymentReference?: string;
+  }> = [];
 
   /*
-   * Process each subscription
+   * Renew subscriptions one by one
    */
 
   for (const subscription of subscriptions ?? []) {
@@ -60,7 +73,6 @@ export async function GET(request: Request) {
 
       results.push({
         subscriptionId: subscription.id,
-
         ...result,
       });
     } catch (error) {
@@ -68,9 +80,7 @@ export async function GET(request: Request) {
 
       results.push({
         subscriptionId: subscription.id,
-
         success: false,
-
         error: error instanceof Error ? error.message : "Unknown error",
       });
     }
@@ -78,9 +88,7 @@ export async function GET(request: Request) {
 
   return Response.json({
     success: true,
-
     processed: results.length,
-
     results,
   });
 }
