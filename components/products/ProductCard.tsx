@@ -67,7 +67,11 @@ export default function ProductCard({ product }: { product: Product }) {
           </div>
 
           <div className="rounded-full border border-zinc-200 px-3 py-1 text-xs text-zinc-500">
-            0 subscribers
+            {product.plans?.reduce(
+              (total, plan) => total + (plan.subscriptions?.length ?? 0),
+              0,
+            )}{" "}
+            subscribers
           </div>
         </div>
       </div>

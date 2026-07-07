@@ -22,8 +22,9 @@ export interface Product {
 
     name: string;
 
-    amount?: number;
-
-    billing_interval?: string;
+    subscriptions?: {
+      id: string;
+      status: string;
+    }[];
   }[];
 }

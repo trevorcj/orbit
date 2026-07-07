@@ -18,23 +18,26 @@ export default async function Products() {
     .from("products")
     .select(
       `
-      id,
-      organisation_id,
-      name,
-      slug,
-      description,
-      brand_color,
-      is_active,
-      created_at,
-      updated_at,
+    id,
+    organisation_id,
+    name,
+    slug,
+    description,
+    brand_color,
+    is_active,
+    created_at,
+    updated_at,
 
-      plans(
+    plans(
+      id,
+      name,
+
+      subscriptions(
         id,
-        name,
-        amount,
-        billing_interval
+        status
       )
-      `,
+    )
+    `,
     )
     .eq("organisation_id", organisation.id)
     .order("created_at", {
