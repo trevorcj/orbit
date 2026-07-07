@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Bold, ChevronDown, Italic, List, Underline, X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createPlan } from "@/actions/plans";
@@ -18,21 +18,27 @@ export default function CreatePlanSheet({
 }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+
   const [description, setDescription] = useState("");
+  const [billingInterval, setBillingInterval] = useState("monthly");
 
   if (!open) return null;
 
   return (
     <>
-      <div onClick={onClose} className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px]" />
+      <div
+        onClick={onClose}
+        className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px]"
+      />
 
-      <div className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[770px] flex-col bg-white shadow-2xl">
+      <div className="fixed right-0 top-0 z-50 flex h-full w-full max-w-192.5 flex-col bg-white shadow-2xl">
         <div className="flex items-center justify-between px-12 py-10">
           <h2 className="text-[22px] font-semibold tracking-[-0.01em] text-zinc-950">
             Create plan
           </h2>
-          <button onClick={onClose} aria-label="Close create plan sheet">
-            <X size={24} className="text-zinc-950" />
+
+          <button onClick={onClose}>
+            <X size={24} />
           </button>
         </div>
 
@@ -46,7 +52,7 @@ export default function CreatePlanSheet({
                 router.refresh();
                 onClose();
               } else {
-                toast.error(res.message || "Failed to create plan");
+                toast.error(res.message || "Failed");
               }
             })
           }
@@ -54,114 +60,121 @@ export default function CreatePlanSheet({
           <div className="space-y-8">
             <Input
               type="text"
-              placeholder="Acme Pro"
-              isRequired
+              placeholder="Netflix Premium"
               name="name"
               label="Plan name"
-              className="h-14 w-full border border-zinc-200 px-4 text-[16px]"
+              isRequired
               required
+              className="h-14 w-full border border-zinc-200 px-4 text-[16px]"
             />
 
             <div className="grid grid-cols-1 gap-7 md:grid-cols-2">
               <div>
                 <label className="mb-3 block text-[16px] font-medium text-zinc-700">
-                  Price <span className="text-orange-500">*</span>
+                  Price
                 </label>
-                <div className="flex h-14 overflow-hidden rounded-lg border border-zinc-200 focus-within:border-zinc-300">
-                  <div className="flex items-center border-r border-zinc-200 px-4 text-[16px] text-zinc-950">
-                    NGN
-                  </div>
+
+                <div className="flex h-14 overflow-hidden rounded-lg border">
+                  <div className="flex items-center border-r px-4">NGN</div>
+
                   <input
                     type="number"
                     name="amount"
-                    placeholder="25000"
                     min="1"
-                    className="min-w-0 flex-1 px-4 text-[16px] text-zinc-950 outline-none placeholder:text-zinc-400"
                     required
+                    placeholder="2000"
+                    className="flex-1 px-4 outline-none"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="mb-3 block text-[16px] font-medium text-zinc-700">
-                  Billing interval <span className="text-orange-500">*</span>
+                  Billing cycle
                 </label>
+
                 <div className="relative">
                   <select
                     name="billing_interval"
-                    defaultValue="monthly"
-                    className="h-14 w-full appearance-none rounded-lg border border-zinc-200 bg-white px-4 text-[16px] text-zinc-500 outline-none focus:border-zinc-300"
-                    required>
+                    value={billingInterval}
+                    onChange={(e) => setBillingInterval(e.target.value)}
+                    className="h-14 w-full rounded-lg border px-4 appearance-none">
                     <option value="monthly">Monthly</option>
-                    <option value="quarterly">Quarterly</option>
-                    <option value="yearly">Yearly</option>
+
+                    <option value="yearly">Annually</option>
+
+                    <option value="custom">Custom</option>
+
+                    <option value="demo">DEMO - 2 minutes</option>
                   </select>
+
                   <ChevronDown
+                    className="absolute right-4 top-1/2 -translate-y-1/2"
                     size={20}
-                    className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600"
                   />
                 </div>
               </div>
             </div>
 
+            {billingInterval === "custom" && (
+              <div>
+                <label className="mb-3 block text-[16px] font-medium">
+                  Billing period (days)
+                </label>
+
+                <input
+                  name="billing_interval_days"
+                  type="number"
+                  min="1"
+                  placeholder="30"
+                  required
+                  className="h-14 w-full max-w-86.25 rounded-lg border px-4"
+                />
+              </div>
+            )}
+
             <div>
-              <label className="mb-3 block text-[16px] font-medium text-zinc-700">
+              <label className="mb-3 block text-[16px] font-medium">
                 Trial period (days)
               </label>
+
               <input
                 type="number"
                 name="trial_period_days"
-                placeholder="14"
                 min="0"
-                className="h-14 w-full max-w-[345px] rounded-lg border border-zinc-200 px-4 text-[16px] text-zinc-950 outline-none placeholder:text-zinc-400 focus:border-zinc-300"
+                placeholder="0"
+                className="h-14 w-full max-w-86.25 rounded-lg border px-4"
               />
-              <p className="mt-3 text-[15px] text-zinc-400">Optional. Set 0 for no trial.</p>
             </div>
 
             <div>
-              <label className="mb-3 block text-[16px] font-medium text-zinc-700">
-                Features <span className="text-orange-500">*</span>
+              <label className="mb-3 block text-[16px] font-medium">
+                Features (one per line)
               </label>
-              <div className="overflow-hidden rounded-lg border border-zinc-200">
-                <div className="flex h-8 items-center border-b border-zinc-200 bg-zinc-50">
-                  <button type="button" className="flex h-full w-9 items-center justify-center border-r border-zinc-200">
-                    <Bold size={14} />
-                  </button>
-                  <button type="button" className="flex h-full w-9 items-center justify-center border-r border-zinc-200">
-                    <Italic size={14} />
-                  </button>
-                  <button type="button" className="flex h-full w-9 items-center justify-center border-r border-zinc-200">
-                    <Underline size={14} />
-                  </button>
-                  <button type="button" className="flex h-full w-9 items-center justify-center border-r border-zinc-200">
-                    <List size={14} />
-                  </button>
-                </div>
-                <textarea
-                  name="features"
-                  placeholder="• Access to all premium features…"
-                  className="h-36 w-full resize-none px-5 py-4 text-[16px] leading-7 text-zinc-950 outline-none placeholder:text-zinc-400"
-                  required
-                />
-              </div>
+
+              <textarea
+                name="features"
+                required
+                placeholder="• Unlimited access"
+                className="h-36 w-full rounded-lg border px-5 py-4"
+              />
             </div>
 
             <div>
-              <label className="mb-3 block text-[16px] font-medium text-zinc-700">
+              <label className="mb-3 block text-[16px] font-medium">
                 Short description
               </label>
-              <div className="relative">
-                <textarea
-                  name="description"
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value.slice(0, 300))}
-                  placeholder="Briefly describe what the product is about..."
-                  className="h-42 w-full resize-none rounded-lg border border-zinc-200 px-4 py-4 text-[16px] leading-7 text-zinc-950 outline-none placeholder:text-zinc-400 focus:border-zinc-300"
-                />
-                <span className="absolute bottom-4 right-4 text-[16px] text-zinc-400">
-                  {description.length}/300
-                </span>
-              </div>
+
+              <textarea
+                name="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value.slice(0, 300))}
+                className="h-42 w-full rounded-lg border px-4 py-4"
+              />
+
+              <p className="text-right text-sm text-zinc-400">
+                {description.length}/300
+              </p>
             </div>
           </div>
 
@@ -169,12 +182,13 @@ export default function CreatePlanSheet({
             <button
               type="button"
               onClick={onClose}
-              className="h-13 rounded-full border border-zinc-200 px-8 text-[16px] font-semibold text-zinc-950 transition hover:bg-zinc-50">
+              className="h-13 rounded-full border px-8">
               Cancel
             </button>
+
             <button
               disabled={pending}
-              className="h-13 rounded-full bg-[#0F86EE] px-9 text-[16px] font-semibold text-white transition hover:bg-[#0d78d6] disabled:cursor-not-allowed disabled:opacity-60">
+              className="h-13 rounded-full bg-[#0F86EE] px-9 text-white">
               {pending ? "Creating..." : "Create Plan"}
             </button>
           </div>

@@ -10,6 +10,7 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/api") ||
     path.startsWith("/_next") ||
     path.startsWith("/checkout") ||
+    path.startsWith("/portal") ||
     path.includes(".")
   ) {
     return response;

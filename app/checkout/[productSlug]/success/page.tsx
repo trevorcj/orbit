@@ -25,9 +25,12 @@ export default async function CheckoutSuccessPage({
   }
 
   let verificationResult = null;
-  let verificationError: string | null = null;
 
   try {
+    /*
+     * Verify payment directly with Nomba
+     */
+
     const token = await getAccessToken();
 
     const url = new URL(
@@ -38,10 +41,13 @@ export default async function CheckoutSuccessPage({
 
     const response = await fetch(url.toString(), {
       method: "GET",
+
       headers: {
         Authorization: `Bearer ${token}`,
+
         accountId: process.env.NOMBA_PARENT_ACCOUNT_ID!,
       },
+
       cache: "no-store",
     });
 
@@ -52,18 +58,21 @@ export default async function CheckoutSuccessPage({
     verificationResult = result;
 
     if (!response.ok || result?.code !== "00") {
-      verificationError = result?.description ?? "Unable to verify payment.";
+      throw new Error(result?.description ?? "Unable to verify payment.");
     }
 
-    if (result?.data?.status === "SUCCESS") {
-      const supabase = supabaseAdmin;
+    /*
+     * Fulfill successful payment
+     */
 
-      const { data: paymentOrder, error } = await supabase
+    if (result?.data?.status === "SUCCESS") {
+      const { data: paymentOrder, error } = await supabaseAdmin
         .from("payment_orders")
         .select(
           `
-      plan_id
-      `,
+            plan_id,
+            customer_email
+            `,
         )
         .eq("order_reference", orderRef)
         .single();
@@ -82,14 +91,26 @@ export default async function CheckoutSuccessPage({
         transaction: {
           amount: result.data.amount,
 
-          email: result.data.onlineCheckoutCustomerEmail,
+          email:
+            result.data.onlineCheckoutCustomerEmail ??
+            paymentOrder.customer_email,
 
-          customerName: result.data.senderName,
+          customerName: result.data.senderName ?? "Nomba Customer",
+
+          cardToken: result.data.cardToken ?? null,
+
+          cardBrand: result.data.cardDetails?.cardType ?? null,
+
+          cardLast4: result.data.cardDetails?.cardPan?.slice(-4) ?? null,
+
+          cardExpiry: result.data.cardDetails?.expiryDate ?? null,
+
+          providerCustomerId: result.data.customerId ?? null,
         },
       });
     }
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error("Payment verification failed:", error);
 
     return (
       <PaymentPendingView message="Your payment was received successfully. We're still activating your subscription. This usually takes less than a minute." />
@@ -128,9 +149,7 @@ export default async function CheckoutSuccessPage({
         </div>
       </div>
 
-      <div className="text-xs text-zinc-400">
-        Your subscription is being activated.
-      </div>
+      <div className="text-xs text-zinc-400">Your subscription is active.</div>
     </div>
   );
 }

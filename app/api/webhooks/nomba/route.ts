@@ -1,3 +1,5 @@
+// app/api/webhooks/nomba/route.ts
+
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
@@ -7,17 +9,19 @@ export async function POST(req: Request) {
   console.log("🔥 NOMBA WEBHOOK RECEIVED");
 
   try {
-    const signature = req.headers.get("nomba-signature");
     const rawBody = await req.text();
 
-    console.log("Signature:", signature);
-    console.log("Body:", rawBody);
+    const signature = req.headers.get("nomba-signature");
 
     /*
-     * 1. Verify Nomba webhook signature
+     * 1. Verify webhook signature
      */
 
-    const webhookSecret = process.env.NOMBA_WEBHOOK_SECRET!;
+    const webhookSecret = process.env.NOMBA_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      throw new Error("Missing Nomba webhook secret");
+    }
 
     const expectedSignature = crypto
       .createHmac("sha256", webhookSecret)
@@ -38,7 +42,7 @@ export async function POST(req: Request) {
     }
 
     /*
-     * 2. Parse webhook payload
+     * 2. Parse payload
      */
 
     const payload = JSON.parse(rawBody);
@@ -46,7 +50,7 @@ export async function POST(req: Request) {
     console.log("NOMBA PAYLOAD:", JSON.stringify(payload, null, 2));
 
     /*
-     * 3. Save webhook event
+     * 3. Store webhook event
      */
 
     const eventType =
@@ -56,7 +60,9 @@ export async function POST(req: Request) {
       .from("webhook_events")
       .insert({
         provider: "nomba",
+
         event_type: eventType,
+
         payload,
       })
       .select("id")
@@ -67,7 +73,7 @@ export async function POST(req: Request) {
     }
 
     /*
-     * 4. Extract transaction data
+     * 4. Extract transaction
      */
 
     const data = payload.data ?? {};
@@ -80,26 +86,7 @@ export async function POST(req: Request) {
       payload.orderReference;
 
     if (!orderReference) {
-      console.error("No order reference found in webhook");
-
-      return NextResponse.json(
-        {
-          received: true,
-        },
-        {
-          status: 200,
-        },
-      );
-    }
-
-    /*
-     * 5. Only process successful payments
-     */
-
-    const status = transaction.status ?? data.status;
-
-    if (status !== "SUCCESS" && status !== "SUCCESSFUL") {
-      console.log("Payment not successful. Ignoring:", status);
+      console.error("Missing order reference");
 
       return NextResponse.json({
         received: true,
@@ -107,10 +94,24 @@ export async function POST(req: Request) {
     }
 
     /*
-     * 6. Find original payment order
+     * 5. Only successful payments
      */
 
-    const { data: paymentOrder, error } = await supabaseAdmin
+    const status = transaction.status ?? data.status;
+
+    if (status !== "SUCCESS" && status !== "SUCCESSFUL") {
+      console.log("Ignoring payment status:", status);
+
+      return NextResponse.json({
+        received: true,
+      });
+    }
+
+    /*
+     * 6. Find payment order
+     */
+
+    const { data: paymentOrder, error: paymentOrderError } = await supabaseAdmin
       .from("payment_orders")
       .select(
         `
@@ -122,8 +123,8 @@ export async function POST(req: Request) {
       .eq("order_reference", orderReference)
       .single();
 
-    if (error || !paymentOrder) {
-      console.error("Payment order not found:", error);
+    if (paymentOrderError || !paymentOrder) {
+      console.error("Payment order lookup failed:", paymentOrderError);
 
       return NextResponse.json({
         received: true,
@@ -131,7 +132,7 @@ export async function POST(req: Request) {
     }
 
     /*
-     * 7. Fulfill subscription
+     * 7. Fulfill payment
      */
 
     await fulfillPayment({
@@ -145,6 +146,16 @@ export async function POST(req: Request) {
         email: transaction.customerEmail ?? paymentOrder.customer_email,
 
         customerName: transaction.customerName ?? transaction.senderName,
+
+        cardToken: transaction.cardToken ?? data.cardToken ?? null,
+
+        cardBrand: transaction.cardDetails?.cardType ?? null,
+
+        cardLast4: transaction.cardDetails?.cardPan?.slice(-4) ?? null,
+
+        cardExpiry: transaction.cardDetails?.expiry ?? null,
+
+        providerCustomerId: transaction.customerId ?? null,
       },
     });
 
@@ -161,13 +172,13 @@ export async function POST(req: Request) {
         .eq("id", webhookEvent.id);
     }
 
-    console.log("✅ Nomba webhook processed successfully");
+    console.log("✅ NOMBA WEBHOOK PROCESSED");
 
     return NextResponse.json({
       received: true,
     });
   } catch (error) {
-    console.error("🔥 Nomba webhook failure:", error);
+    console.error("🔥 NOMBA WEBHOOK ERROR:", error);
 
     return NextResponse.json(
       {
@@ -182,6 +193,6 @@ export async function POST(req: Request) {
 
 export async function GET() {
   return NextResponse.json({
-    message: "Webhook endpoint alive",
+    message: "Nomba webhook endpoint alive",
   });
 }

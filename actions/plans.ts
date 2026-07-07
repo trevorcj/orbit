@@ -47,11 +47,21 @@ export async function createPlan(productId: string, formData: FormData) {
   const name = String(formData.get("name") || "").trim();
   const amount = Number(formData.get("amount") || 0);
   const billingInterval = String(formData.get("billing_interval") || "monthly");
+
+  const billingIntervalDays = Number(
+    formData.get("billing_interval_days") || 0,
+  );
   const trialPeriodDays = Number(formData.get("trial_period_days") || 0);
   const features = normalizeFeatures(formData.get("features"));
   const description = String(formData.get("description") || "").trim();
 
-  if (!name || !amount || amount < 1 || !billingInterval || features.length === 0) {
+  if (
+    !name ||
+    !amount ||
+    amount < 1 ||
+    !billingInterval ||
+    features.length === 0
+  ) {
     return { success: false, message: "Please complete all required fields" };
   }
 
@@ -62,6 +72,16 @@ export async function createPlan(productId: string, formData: FormData) {
     amount,
     currency: "NGN",
     billing_interval: billingInterval,
+    billing_interval_days:
+      billingInterval === "custom"
+        ? billingIntervalDays
+        : billingInterval === "monthly"
+          ? 30
+          : billingInterval === "yearly"
+            ? 365
+            : null,
+
+    billing_interval_minutes: billingInterval === "demo" ? 2 : null,
     trial_period_days: Number.isFinite(trialPeriodDays) ? trialPeriodDays : 0,
     features,
     description,
@@ -91,7 +111,8 @@ export async function deletePlan(planId: string) {
     .eq("user_id", user.id)
     .single();
 
-  if (!organisation) return { success: false, message: "Organisation not found" };
+  if (!organisation)
+    return { success: false, message: "Organisation not found" };
 
   const { error } = await supabase
     .from("plans")
