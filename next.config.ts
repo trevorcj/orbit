@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import path from "node:path";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["orbit.outray.app", "localhost"],
   images: {
     remotePatterns: [
       {

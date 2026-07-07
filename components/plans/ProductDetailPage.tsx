@@ -9,6 +9,7 @@ import { Plan } from "@/types/plan";
 import CreatePlanSheet from "./CreatePlanSheet";
 import { deleteProduct } from "@/actions/delete-product";
 import { deletePlan } from "@/actions/plans";
+import Link from "next/link";
 
 function formatCurrency(amount: number | null, interval: string | null) {
   const formatter = new Intl.NumberFormat("en-NG", {
@@ -100,20 +101,25 @@ export default function ProductDetailPage({
                 {plans.map((plan) => (
                   <div
                     key={plan.id}
-                    className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-                    <div className="flex min-h-44 justify-between gap-6 px-9 py-9">
+                    className="overflow-hidden rounded-2xl border border-zinc-200 bg-white hover:border-zinc-300 transition-colors">
+                    {/* Wrap the core clickable content of the card in a Next.js Link */}
+                    <Link
+                      href={`/dashboard/products/${product.slug}/plans/${plan.id}`}
+                      className="block flex min-h-44 justify-between gap-6 px-9 py-9 cursor-pointer group">
                       <div>
-                        <p className="text-[22px] font-semibold text-zinc-950">
+                        <p className="text-[22px] font-semibold text-zinc-950 group-hover:text-[#0F86EE] transition-colors">
                           {plan.name}
                         </p>
-                        <p className="mt-8 max-w-[330px] text-[17px] leading-7 text-zinc-500">
-                          {plan.description || plan.features?.[0] || "Subscription plan"}
+                        <p className="mt-8 max-w-82.5 text-[17px] leading-7 text-zinc-500">
+                          {plan.description ||
+                            plan.features?.[0] ||
+                            "Subscription plan"}
                         </p>
                       </div>
                       <span className="h-fit rounded-full bg-[#E9F8EF] px-4 py-1.5 text-[15px] font-medium text-[#14783A]">
                         {plan.is_active ? "Active" : "Inactive"}
                       </span>
-                    </div>
+                    </Link>
 
                     <div className="flex items-center justify-between border-t border-zinc-100 px-9 py-8">
                       <span className="rounded-full border border-zinc-200 px-4 py-2 text-[17px] font-medium text-zinc-950">
@@ -123,16 +129,23 @@ export default function ProductDetailPage({
                       <div className="flex items-center gap-7">
                         <button
                           onClick={copyCheckout}
-                          aria-label="Copy checkout URL">
-                          <Copy size={20} className="text-zinc-500" />
+                          aria-label="Copy checkout URL"
+                          className="cursor-pointer p-1 rounded hover:bg-zinc-50">
+                          <Copy
+                            size={20}
+                            className="text-zinc-500 hover:text-zinc-800 transition-colors"
+                          />
                         </button>
                         <button
                           onClick={async () => {
                             const res = await deletePlan(plan.id);
                             if (res.success) toast.success("Plan deleted");
-                            else toast.error(res.message || "Failed to delete plan");
+                            else
+                              toast.error(
+                                res.message || "Failed to delete plan",
+                              );
                           }}
-                          className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50"
+                          className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 hover:bg-red-100 transition-colors cursor-pointer"
                           aria-label="Delete plan">
                           <Trash2 size={20} className="text-red-500" />
                         </button>
@@ -142,14 +155,20 @@ export default function ProductDetailPage({
                 ))}
               </div>
             ) : (
-              <div className="mt-8 flex min-h-[540px] items-center justify-center rounded-2xl border border-zinc-200 bg-white">
+              <div className="mt-8 flex min-h-135 items-center justify-center rounded-2xl border border-zinc-200 bg-white">
                 <div className="flex max-w-md flex-col items-center text-center">
-                  <Image src="/empty-illustration.svg" alt="" width={110} height={110} />
+                  <Image
+                    src="/empty-illustration.svg"
+                    alt=""
+                    width={110}
+                    height={110}
+                  />
                   <p className="mt-10 text-[22px] font-semibold text-zinc-950">
                     No plans yet
                   </p>
                   <p className="mt-6 text-[18px] leading-7 text-zinc-500">
-                    Add your first plan to start selling subscriptions for this product
+                    Add your first plan to start selling subscriptions for this
+                    product
                   </p>
                   <button
                     onClick={() => setSheetOpen(true)}
@@ -163,7 +182,9 @@ export default function ProductDetailPage({
             <div className="mt-8 space-y-8">
               <div className="rounded-2xl border border-zinc-200 bg-white px-10 py-10">
                 <div className="mb-12 flex items-center justify-between">
-                  <h2 className="text-[22px] font-semibold text-zinc-950">General</h2>
+                  <h2 className="text-[22px] font-semibold text-zinc-950">
+                    General
+                  </h2>
                   <button className="h-13 rounded-full border border-zinc-200 px-8 text-[17px] font-semibold text-zinc-950">
                     Edit
                   </button>
@@ -172,11 +193,15 @@ export default function ProductDetailPage({
                 <div className="grid max-w-3xl grid-cols-1 gap-x-32 gap-y-12 md:grid-cols-2">
                   <div>
                     <p className="text-[17px] text-zinc-500">Product name</p>
-                    <p className="mt-4 text-[18px] text-zinc-950">{product.name}</p>
+                    <p className="mt-4 text-[18px] text-zinc-950">
+                      {product.name}
+                    </p>
                   </div>
                   <div>
                     <p className="text-[17px] text-zinc-500">slug</p>
-                    <p className="mt-4 text-[18px] text-zinc-950">{product.slug}</p>
+                    <p className="mt-4 text-[18px] text-zinc-950">
+                      {product.slug}
+                    </p>
                   </div>
                   <div>
                     <p className="text-[17px] text-zinc-500">Description</p>
@@ -203,7 +228,9 @@ export default function ProductDetailPage({
               </div>
 
               <div className="rounded-2xl border border-zinc-200 bg-white px-10 py-10">
-                <h2 className="text-[22px] font-semibold text-zinc-950">Danger zone</h2>
+                <h2 className="text-[22px] font-semibold text-zinc-950">
+                  Danger zone
+                </h2>
                 <button
                   onClick={async () => {
                     await deleteProduct(product.id);

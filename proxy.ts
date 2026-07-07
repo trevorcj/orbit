@@ -9,6 +9,7 @@ export async function proxy(request: NextRequest) {
   if (
     path.startsWith("/api") ||
     path.startsWith("/_next") ||
+    path.startsWith("/checkout") ||
     path.includes(".")
   ) {
     return response;
