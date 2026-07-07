@@ -59,8 +59,12 @@ export async function fulfillPayment({
     .eq("is_active", true)
     .single();
 
-  if (planError || !plan) {
+  if (planError) {
     console.error(planError);
+    throw new Error("Unable to fetch plan");
+  }
+
+  if (!plan) {
     throw new Error("Plan not found");
   }
 

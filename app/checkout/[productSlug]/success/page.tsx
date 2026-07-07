@@ -88,14 +88,12 @@ export default async function CheckoutSuccessPage({
         },
       });
     }
-  } catch (error) {
-    console.error("Nomba verification error:", error);
+  } catch (err) {
+    console.error(err);
 
-    verificationError = "Could not verify payment.";
-  }
-
-  if (verificationError) {
-    return <PaymentErrorView error={verificationError} />;
+    return (
+      <PaymentPendingView message="Your payment was received successfully. We're still activating your subscription. This usually takes less than a minute." />
+    );
   }
 
   return (
@@ -147,6 +145,20 @@ function PaymentErrorView({ error }: { error: string }) {
       <h1 className="mt-5 text-3xl font-bold">Verification Failed</h1>
 
       <p className="mt-3 text-zinc-500 text-center">{error}</p>
+    </div>
+  );
+}
+
+function PaymentPendingView({ message }: { message: string }) {
+  return (
+    <div className="min-h-screen bg-white flex flex-col justify-center items-center px-6">
+      <div className="h-14 w-14 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+        <div className="h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+
+      <h1 className="mt-5 text-3xl font-bold">Payment Received</h1>
+
+      <p className="mt-3 text-zinc-500 text-center max-w-md">{message}</p>
     </div>
   );
 }

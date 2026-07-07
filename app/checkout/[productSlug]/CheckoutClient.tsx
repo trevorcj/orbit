@@ -90,24 +90,44 @@ export default function CheckoutClient({
 
           {/* Pricing Selector Matrix Tab Row if multiple options exist */}
           {plans.length > 1 && (
-            <div className="flex flex-col gap-2">
-              <span className="text-[12px] uppercase text-zinc-500 tracking-wider font-semibold">
+            <div className="flex flex-col gap-3">
+              <span className="text-[11px] uppercase text-zinc-400 tracking-wider font-bold pl-0.5">
                 Select Billing Plan
               </span>
-              <div className="grid grid-cols-2 gap-2 bg-zinc-950 p-1.5 rounded-xl border border-zinc-800">
-                {plans.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setSelectedPlan(p)}
-                    className={`py-2 px-3 text-xs font-medium rounded-lg transition-all cursor-pointer truncate ${
-                      selectedPlan.id === p.id
-                        ? "bg-[#0F86EE] text-white shadow-sm"
-                        : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
-                    }`}>
-                    {p.name}
-                  </button>
-                ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                {plans.map((p) => {
+                  const isSelected = selectedPlan.id === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setSelectedPlan(p)}
+                      className={`flex items-center justify-between p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
+                        isSelected
+                          ? "border-emerald-600 bg-white" // Green active border matching the card design look
+                          : "border-zinc-100 bg-white hover:border-zinc-200 hover:bg-zinc-50/50"
+                      }`}>
+                      <span
+                        className={`text-xs font-bold truncate pr-3 ${
+                          isSelected ? "text-zinc-900" : "text-zinc-700"
+                        }`}>
+                        {p.name}
+                      </span>
+
+                      {/* Custom Radio Circular Selector Target */}
+                      <div
+                        className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+                          isSelected
+                            ? "border-emerald-600 bg-white"
+                            : "border-zinc-200 bg-white"
+                        }`}>
+                        {isSelected && (
+                          <div className="w-2.5 h-2.5 rounded-full bg-emerald-600 border border-white" />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}

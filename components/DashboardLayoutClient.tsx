@@ -15,6 +15,7 @@ import {
   Search,
   Menu,
   X,
+  HandCoins,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -193,6 +194,19 @@ ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
                   onClick={() => setMobileOpen(false)}>
                   <CreditCard size={18} className={state.iconColor} />
                   Subscriptions
+                </Link>
+              );
+            })()}
+
+            {(() => {
+              const state = getLinkStyles("/dashboard/payments");
+              return (
+                <Link
+                  href="/dashboard/payments"
+                  className={state.className}
+                  onClick={() => setMobileOpen(false)}>
+                  <HandCoins size={18} className={state.iconColor} />
+                  Payments
                 </Link>
               );
             })()}

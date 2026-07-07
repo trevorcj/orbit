@@ -45,96 +45,111 @@ export default function ProductDetailPage({
 
   return (
     <>
-      <div className="mx-auto flex w-full max-w-[1580px] flex-col gap-12 px-3 py-4 lg:px-4">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <p className="text-[18px] font-medium text-zinc-500">
+      <div className="mx-auto flex w-full max-w-full flex-col gap-8 px-4 py-6">
+        {/* Header Section */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2">
+            <p className="text-[13px] font-medium text-zinc-400">
               Products &gt; {product.name}
             </p>
 
-            <div className="mt-16 flex items-center gap-6">
-              <h1 className="text-[28px] font-semibold tracking-[-0.02em] text-zinc-950">
+            <div className="flex items-center gap-3">
+              <h1 className="text-[20px] font-semibold tracking-tight text-zinc-900">
                 {product.name}
               </h1>
-              <span className="rounded-full bg-[#E9F8EF] px-4 py-1.5 text-[15px] font-medium text-[#14783A]">
+              <span
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border uppercase tracking-wider text-[10px] ${
+                  product.is_active
+                    ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+                    : "bg-zinc-50 text-zinc-500 border-zinc-200"
+                }`}>
                 {product.is_active ? "Active" : "Inactive"}
               </span>
             </div>
 
-            <p className="mt-7 text-[18px] text-zinc-500">
+            <p className="text-sm text-zinc-500 max-w-xl">
               {product.description || "No description yet"}
             </p>
           </div>
 
           <button
             onClick={() => setSheetOpen(true)}
-            className="h-14 rounded-full bg-[#0F86EE] px-16 text-[17px] font-semibold text-white shadow-sm transition hover:bg-[#0d78d6]">
+            className="h-11 rounded-full bg-[#0F86EE] px-8 text-[15px] font-semibold text-white transition hover:bg-[#0d78d6] cursor-pointer w-fit">
             Create plan
           </button>
         </div>
 
+        {/* Tab Controls */}
         <div>
-          <div className="flex border-b border-zinc-200">
+          <div className="flex border-b border-zinc-100 pb-px">
             <button
               onClick={() => setTab("plans")}
-              className={`px-8 pb-4 text-[18px] font-semibold ${
+              className={`px-4 pb-3 text-sm font-medium transition-all relative cursor-pointer ${
                 tab === "plans"
-                  ? "border-b-2 border-[#0F86EE] text-zinc-950"
-                  : "text-zinc-400"
+                  ? "text-[#0F86EE]"
+                  : "text-zinc-400 hover:text-zinc-600"
               }`}>
               Plans
+              {tab === "plans" && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0F86EE]" />
+              )}
             </button>
             <button
               onClick={() => setTab("settings")}
-              className={`px-8 pb-4 text-[18px] font-semibold ${
+              className={`px-4 pb-3 text-sm font-medium transition-all relative cursor-pointer ${
                 tab === "settings"
-                  ? "border-b-2 border-[#0F86EE] text-zinc-950"
-                  : "text-zinc-400"
+                  ? "text-[#0F86EE]"
+                  : "text-zinc-400 hover:text-zinc-600"
               }`}>
               Settings
+              {tab === "settings" && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0F86EE]" />
+              )}
             </button>
           </div>
 
+          {/* Tab Viewport Grid Panels */}
           {tab === "plans" ? (
             plans.length ? (
-              <div className="mt-8 grid gap-8 xl:grid-cols-3">
+              <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {plans.map((plan) => (
                   <div
                     key={plan.id}
-                    className="overflow-hidden rounded-2xl border border-zinc-200 bg-white hover:border-zinc-300 transition-colors">
-                    {/* Wrap the core clickable content of the card in a Next.js Link */}
+                    className="overflow-hidden rounded-xl border border-zinc-100 bg-white hover:border-zinc-200 transition-colors flex flex-col justify-between">
                     <Link
                       href={`/dashboard/products/${product.slug}/plans/${plan.id}`}
-                      className="block flex min-h-44 justify-between gap-6 px-9 py-9 cursor-pointer group">
-                      <div>
-                        <p className="text-[22px] font-semibold text-zinc-950 group-hover:text-[#0F86EE] transition-colors">
+                      className="block flex-1 p-6 cursor-pointer group relative">
+                      <div className="flex items-start justify-between gap-4">
+                        <p className="text-base font-semibold text-zinc-900 group-hover:text-[#0F86EE] transition-colors">
                           {plan.name}
                         </p>
-                        <p className="mt-8 max-w-82.5 text-[17px] leading-7 text-zinc-500">
-                          {plan.description ||
-                            plan.features?.[0] ||
-                            "Subscription plan"}
-                        </p>
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border uppercase tracking-wider ${
+                            plan.is_active
+                              ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+                              : "bg-zinc-50 text-zinc-500 border-zinc-200"
+                          }`}>
+                          {plan.is_active ? "Active" : "Inactive"}
+                        </span>
                       </div>
-                      <span className="h-fit rounded-full bg-[#E9F8EF] px-4 py-1.5 text-[15px] font-medium text-[#14783A]">
-                        {plan.is_active ? "Active" : "Inactive"}
-                      </span>
+                      <p className="mt-3 text-sm text-zinc-400 line-clamp-2 max-w-xs">
+                        {plan.description ||
+                          plan.features?.[0] ||
+                          "Subscription plan"}
+                      </p>
                     </Link>
 
-                    <div className="flex items-center justify-between border-t border-zinc-100 px-9 py-8">
-                      <span className="rounded-full border border-zinc-200 px-4 py-2 text-[17px] font-medium text-zinc-950">
+                    <div className="flex items-center justify-between border-t border-zinc-50 px-6 py-4 bg-zinc-50/30">
+                      <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-semibold text-zinc-800">
                         {formatCurrency(plan.amount, plan.billing_interval)}
                       </span>
 
-                      <div className="flex items-center gap-7">
+                      <div className="flex items-center gap-4">
                         <button
                           onClick={copyCheckout}
                           aria-label="Copy checkout URL"
-                          className="cursor-pointer p-1 rounded hover:bg-zinc-50">
-                          <Copy
-                            size={20}
-                            className="text-zinc-500 hover:text-zinc-800 transition-colors"
-                          />
+                          className="cursor-pointer p-1.5 rounded-lg border border-zinc-200 bg-white text-zinc-400 hover:text-zinc-600 transition-colors">
+                          <Copy size={16} />
                         </button>
                         <button
                           onClick={async () => {
@@ -145,9 +160,9 @@ export default function ProductDetailPage({
                                 res.message || "Failed to delete plan",
                               );
                           }}
-                          className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 hover:bg-red-100 transition-colors cursor-pointer"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 bg-red-50 hover:bg-red-100 transition-colors cursor-pointer"
                           aria-label="Delete plan">
-                          <Trash2 size={20} className="text-red-500" />
+                          <Trash2 size={16} className="text-red-500" />
                         </button>
                       </div>
                     </div>
@@ -155,90 +170,113 @@ export default function ProductDetailPage({
                 ))}
               </div>
             ) : (
-              <div className="mt-8 flex min-h-135 items-center justify-center rounded-2xl border border-zinc-200 bg-white">
-                <div className="flex max-w-md flex-col items-center text-center">
+              <div className="mt-6 flex min-h-[360px] items-center justify-center rounded-xl border border-zinc-100 bg-white">
+                <div className="flex max-w-sm flex-col items-center text-center p-6">
                   <Image
                     src="/empty-illustration.svg"
                     alt=""
-                    width={110}
-                    height={110}
+                    width={80}
+                    height={80}
                   />
-                  <p className="mt-10 text-[22px] font-semibold text-zinc-950">
+                  <p className="mt-6 text-base font-semibold text-zinc-900">
                     No plans yet
                   </p>
-                  <p className="mt-6 text-[18px] leading-7 text-zinc-500">
+                  <p className="mt-2 text-sm text-zinc-400">
                     Add your first plan to start selling subscriptions for this
                     product
                   </p>
                   <button
                     onClick={() => setSheetOpen(true)}
-                    className="mt-10 h-14 rounded-full border border-zinc-200 px-24 text-[18px] font-semibold text-zinc-950 transition hover:bg-zinc-50">
+                    className="mt-6 h-10 rounded-full border border-zinc-200 px-8 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 cursor-pointer">
                     Add plan
                   </button>
                 </div>
               </div>
             )
           ) : (
-            <div className="mt-8 space-y-8">
-              <div className="rounded-2xl border border-zinc-200 bg-white px-10 py-10">
-                <div className="mb-12 flex items-center justify-between">
-                  <h2 className="text-[22px] font-semibold text-zinc-950">
-                    General
-                  </h2>
-                  <button className="h-13 rounded-full border border-zinc-200 px-8 text-[17px] font-semibold text-zinc-950">
+            <div className="mt-6 space-y-6">
+              {/* General Settings Section */}
+              <div className="rounded-xl border border-zinc-100 bg-white p-6 ">
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-base font-bold text-zinc-900">
+                      General
+                    </h2>
+                    <p className="text-xs text-zinc-400 mt-0.5">
+                      Manage this product configuration.
+                    </p>
+                  </div>
+                  <button className="h-9 rounded-lg border border-zinc-200 px-4 text-xs font-semibold text-zinc-700 bg-white hover:bg-zinc-50 cursor-pointer">
                     Edit
                   </button>
                 </div>
 
-                <div className="grid max-w-3xl grid-cols-1 gap-x-32 gap-y-12 md:grid-cols-2">
+                <div className="grid max-w-3xl grid-cols-1 gap-x-16 gap-y-6 sm:grid-cols-2">
                   <div>
-                    <p className="text-[17px] text-zinc-500">Product name</p>
-                    <p className="mt-4 text-[18px] text-zinc-950">
+                    <p className="text-xs font-medium text-zinc-400">
+                      Product name
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-zinc-800">
                       {product.name}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[17px] text-zinc-500">slug</p>
-                    <p className="mt-4 text-[18px] text-zinc-950">
+                    <p className="text-xs font-medium text-zinc-400">Slug</p>
+                    <p className="mt-1 text-sm text-zinc-600 font-mono">
                       {product.slug}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[17px] text-zinc-500">Description</p>
-                    <p className="mt-4 text-[18px] text-zinc-950 line-clamp-1">
-                      {product.description}
+                    <p className="text-xs font-medium text-zinc-400">
+                      Description
+                    </p>
+                    <p className="mt-1 text-sm text-zinc-600 line-clamp-1">
+                      {product.description || "—"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[17px] text-zinc-500">Product status</p>
-                    <p className="mt-4 text-[18px] text-zinc-950">
+                    <p className="text-xs font-medium text-zinc-400">
+                      Product status
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-zinc-800">
                       {product.is_active ? "Active" : "Inactive"}
                     </p>
                   </div>
-                  <div className="md:col-span-2">
-                    <p className="text-[17px] text-zinc-500">Checkout URL</p>
+                  <div className="sm:col-span-2">
+                    <p className="text-xs font-medium text-zinc-400">
+                      Checkout URL
+                    </p>
                     <button
                       onClick={copyCheckout}
-                      className="mt-4 inline-flex items-center gap-4 text-[18px] text-zinc-950 underline">
+                      className="mt-1 inline-flex items-center gap-2 text-sm text-zinc-800 hover:text-blue-600 transition-colors font-mono underline break-all text-left">
                       {shortCheckoutUrl}
-                      <Copy size={18} className="text-zinc-500" />
+                      <Copy size={14} className="text-zinc-400 flex-shrink-0" />
                     </button>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-zinc-200 bg-white px-10 py-10">
-                <h2 className="text-[22px] font-semibold text-zinc-950">
-                  Danger zone
-                </h2>
-                <button
-                  onClick={async () => {
-                    await deleteProduct(product.id);
-                    toast.success("Product deleted");
-                  }}
-                  className="mt-14 h-14 rounded-full bg-red-100 px-8 text-[17px] font-semibold text-red-600">
-                  Delete Product
-                </button>
+              {/* Danger Zone Section */}
+              <div className="rounded-xl border border-red-100 bg-white p-6 ">
+                <div>
+                  <h2 className="text-base font-bold text-red-600">
+                    Danger zone
+                  </h2>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    Irreversible actions concerning this product tracking
+                    record.
+                  </p>
+                </div>
+                <div className="mt-4 pt-2">
+                  <button
+                    onClick={async () => {
+                      await deleteProduct(product.id);
+                      toast.success("Product deleted");
+                    }}
+                    className="h-10 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 px-5 text-xs font-semibold text-red-600 transition-colors cursor-pointer">
+                    Delete Product
+                  </button>
+                </div>
               </div>
             </div>
           )}
