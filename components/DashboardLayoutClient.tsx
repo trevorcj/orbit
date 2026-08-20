@@ -212,10 +212,10 @@ ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
             })()}
 
             {(() => {
-              const state = getLinkStyles("/dashboard/developers");
+              const state = getLinkStyles("/dashboard/settings");
               return (
                 <Link
-                  href="/dashboard/developers"
+                  href="/dashboard/settings"
                   className={state.className}
                   onClick={() => setMobileOpen(false)}>
                   <Code2 size={18} className={state.iconColor} />
@@ -262,7 +262,8 @@ ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
                 />
               ) : (
                 <div className="w-9 h-9 rounded-full bg-[#0F86EE] text-white font-bold flex items-center justify-center text-xs shadow-xs shrink-0">
-                  {`${userProfile.firstName?.[0] || ""}${userProfile.lastName?.[0] || ""}`.toUpperCase() || "U"}
+                  {`${userProfile.firstName?.[0] || ""}${userProfile.lastName?.[0] || ""}`.toUpperCase() ||
+                    "U"}
                 </div>
               )}
 
