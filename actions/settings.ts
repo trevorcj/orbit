@@ -73,11 +73,12 @@ export async function updateUserProfile(params: {
     .update({
       first_name: params.firstName.trim(),
       last_name: params.lastName.trim(),
+      updated_at: new Date().toISOString(),
     })
     .eq("id", user.id);
 
   if (error) {
-    console.error("User profile update error:", error);
+    console.error("Failed to update profile:", error);
     return { success: false, error: error.message };
   }
 
@@ -86,7 +87,7 @@ export async function updateUserProfile(params: {
 }
 
 /**
- * Fetches the organization owned by the authenticated session user
+ * Fetches organization details for the current user
  */
 export async function getOrganizationDetails(): Promise<OrganizationData | null> {
   const supabase = await createClient();
@@ -96,31 +97,29 @@ export async function getOrganizationDetails(): Promise<OrganizationData | null>
 
   if (!user) return null;
 
-  const { data: org, error: orgError } = await supabaseAdmin
+  const { data: org } = await supabaseAdmin
     .from("organisations")
     .select("id, name, slug, logo_url, user_id")
     .eq("user_id", user.id)
-    .maybeSingle();
+    .single();
 
-  if (orgError || !org) {
-    return null;
-  }
+  if (!org) return null;
 
   return {
     id: org.id,
-    name: org.name || "My Organization",
+    name: org.name || "Organization",
     slug: org.slug || "",
-    logo_url: org.logo_url,
+    logo_url: org.logo_url || null,
     owner_email: user.email || "",
   };
 }
 
 /**
- * Updates specific mutable organization fields safely
+ * Updates organization details
  */
-export async function updateOrganizationDetails(formData: {
+export async function updateOrganizationDetails(params: {
   name: string;
-  logo_url?: string | null;
+  logoUrl?: string;
 }) {
   const supabase = await createClient();
   const {
@@ -129,22 +128,23 @@ export async function updateOrganizationDetails(formData: {
 
   if (!user) return { success: false, error: "Unauthorized" };
 
-  if (!formData.name.trim()) {
-    return { success: false, error: "Organization name cannot be blank." };
+  const updatePayload: { name: string; updated_at: string; logo_url?: string } = {
+    name: params.name.trim(),
+    updated_at: new Date().toISOString(),
+  };
+
+  if (params.logoUrl !== undefined) {
+    updatePayload.logo_url = params.logoUrl;
   }
 
   const { error } = await supabaseAdmin
     .from("organisations")
-    .update({
-      name: formData.name.trim(),
-      ...(formData.logo_url !== undefined ? { logo_url: formData.logo_url } : {}),
-      updated_at: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq("user_id", user.id);
 
   if (error) {
-    console.error("Organization profile save failure:", error);
-    return { success: false, error: "Unable to sync organization changes." };
+    console.error("Failed to update organization:", error);
+    return { success: false, error: error.message };
   }
 
   revalidatePath("/dashboard/settings");
@@ -152,7 +152,7 @@ export async function updateOrganizationDetails(formData: {
 }
 
 /**
- * Fetches current payout account info
+ * Fetches payout bank details for the organization
  */
 export async function getPayoutDetails(): Promise<PayoutData | null> {
   const supabase = await createClient();
@@ -164,18 +164,20 @@ export async function getPayoutDetails(): Promise<PayoutData | null> {
 
   const { data: org } = await supabaseAdmin
     .from("organisations")
-    .select("id, settlement_bank_name, settlement_bank_code, settlement_account_number, settlement_account_name")
+    .select(
+      "id, settlement_bank_name, settlement_bank_code, settlement_account_number, settlement_account_name",
+    )
     .eq("user_id", user.id)
-    .maybeSingle();
+    .single();
 
   if (!org) return null;
 
   return {
     id: org.id,
-    bankName: org.settlement_bank_name,
-    bankCode: org.settlement_bank_code,
-    accountNumber: org.settlement_account_number,
-    accountName: org.settlement_account_name,
+    bankName: org.settlement_bank_name || null,
+    bankCode: org.settlement_bank_code || null,
+    accountNumber: org.settlement_account_number || null,
+    accountName: org.settlement_account_name || null,
   };
 }
 
@@ -213,4 +215,25 @@ export async function updatePayoutDetails(params: {
 
   revalidatePath("/dashboard/settings");
   return { success: true };
+}
+
+/**
+ * Safely fetches developer endpoints and secrets from environment variables
+ */
+export async function getDeveloperSettings() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://orbit-billing-nomba.vercel.app";
+  const cronSecret = process.env.BILLING_CRON_SECRET || "";
+
+  return {
+    webhookUrl: `${appUrl}/api/webhooks/paystack`,
+    cronUrl: `${appUrl}/api/cron/renew`,
+    cronSecret,
+  };
 }

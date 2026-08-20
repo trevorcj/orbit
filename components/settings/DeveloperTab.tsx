@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Eye,
   EyeOff,
@@ -8,20 +8,29 @@ import {
   Check,
   Webhook,
   Clock,
-  Key,
+  Loader2,
 } from "lucide-react";
-import Input from "@/components/Input";
 import { toast } from "sonner";
+import { getDeveloperSettings } from "@/actions/settings";
 
 export default function DeveloperTab() {
   const [revealCronSecret, setRevealCronSecret] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [devSettings, setDevSettings] = useState<{
+    webhookUrl: string;
+    cronUrl: string;
+    cronSecret: string;
+  } | null>(null);
 
-  const appUrl =
-    typeof window !== "undefined" ? window.location.origin : "https://passive-granite.outray.app";
-  const webhookUrl = `${appUrl}/api/webhooks/paystack`;
-  const cronUrl = `${appUrl}/api/cron/renew`;
-  const cronSecret = "MMV8nSTP5spfj9sFbUQhBOc+Q5KFA5aUvRCvyyh/RHw=";
+  useEffect(() => {
+    getDeveloperSettings().then((data) => {
+      if (data) {
+        setDevSettings(data);
+      }
+      setLoading(false);
+    });
+  }, []);
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -29,6 +38,18 @@ export default function DeveloperTab() {
     toast.success(`${label} copied to clipboard!`);
     setTimeout(() => setCopiedKey(null), 2000);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-12 bg-white rounded-xl border border-zinc-100 max-w-3xl">
+        <Loader2 className="animate-spin text-zinc-400" size={24} />
+      </div>
+    );
+  }
+
+  const webhookUrl = devSettings?.webhookUrl || "";
+  const cronUrl = devSettings?.cronUrl || "";
+  const cronSecret = devSettings?.cronSecret || "";
 
   return (
     <div className="flex flex-col gap-8 p-8 rounded-xl border border-zinc-100 bg-white max-w-3xl">
@@ -104,7 +125,7 @@ export default function DeveloperTab() {
           <div className="flex-1 flex items-center gap-2 bg-white rounded-lg border border-zinc-200 px-3 h-10">
             <span className="text-[11px] font-semibold text-zinc-400 shrink-0">Authorization:</span>
             <span className="font-mono text-xs text-zinc-600 truncate">
-              {revealCronSecret ? `Bearer ${cronSecret}` : "Bearer MMV8nST•••••••••••••••••••••••••"}
+              {revealCronSecret ? `Bearer ${cronSecret}` : "Bearer •••••••••••••••••••••••••"}
             </span>
           </div>
           <button
