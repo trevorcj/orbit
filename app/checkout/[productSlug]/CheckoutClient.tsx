@@ -72,7 +72,7 @@ export default function CheckoutClient({
       : selectedPlan.billing_interval === "quarterly"
         ? "quarter"
         : selectedPlan.billing_interval === "demo"
-          ? "1 min"
+          ? "day"
           : "month";
 
   const initialFirstName = initialName?.split(" ")[0] || "";
@@ -170,7 +170,7 @@ export default function CheckoutClient({
                           )}
                         </div>
                         <span className="text-xs text-zinc-400 capitalize mt-0.5">
-                          {plan.billing_interval === "demo" ? "1 min" : plan.billing_interval} billing
+                          {plan.billing_interval === "demo" ? "1 day" : plan.billing_interval} billing
                         </span>
                       </div>
 

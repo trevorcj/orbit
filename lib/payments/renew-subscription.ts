@@ -193,9 +193,9 @@ export async function renewSubscription(subscriptionId: string) {
         break;
 
       case "demo":
-        nextRenewal.setMinutes(
-          nextRenewal.getMinutes() +
-            Number(plan.billing_interval_minutes ?? 2),
+        nextRenewal.setDate(
+          nextRenewal.getDate() +
+            Number(plan.billing_interval_days ?? 1),
         );
         break;
 

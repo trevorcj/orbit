@@ -141,7 +141,7 @@ export default function PlanDetail({
                     : plan.billing_interval === "quarterly"
                       ? "quarter"
                       : plan.billing_interval === "demo"
-                        ? "1 minute"
+                        ? "1 day"
                         : "month"}
                 </span>
               </div>
@@ -222,7 +222,7 @@ export default function PlanDetail({
               <div className="flex flex-col gap-1">
                 <span className="text-zinc-400 text-xs">Billing interval</span>
                 <span className="text-zinc-900 text-[14px] capitalize font-medium">
-                  {plan.billing_interval === "demo" ? "DEMO (1 min)" : plan.billing_interval || "Monthly"}
+                  {plan.billing_interval === "demo" ? "DEMO (1 day)" : plan.billing_interval || "Monthly"}
                 </span>
               </div>
 

@@ -236,8 +236,8 @@ export async function fulfillPayment({
         break;
 
       case "demo":
-        renewsAt.setMinutes(
-          renewsAt.getMinutes() + Number(plan.billing_interval_minutes || 1),
+        renewsAt.setDate(
+          renewsAt.getDate() + Number(plan.billing_interval_days || 1),
         );
         break;
 
@@ -389,7 +389,7 @@ export async function fulfillPayment({
       planName: plan.name,
       amount: amountNumeric,
       currency: plan.currency || "NGN",
-      billingInterval: plan.billing_interval === "demo" ? "1 minute (Demo)" : plan.billing_interval || "monthly",
+      billingInterval: plan.billing_interval === "demo" ? "1 day (Demo)" : plan.billing_interval || "monthly",
       nextBillingDate: nextBillingDateString,
       portalUrl,
       isTrial,

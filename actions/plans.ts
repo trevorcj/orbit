@@ -75,13 +75,15 @@ export async function createPlan(productId: string, formData: FormData) {
     billing_interval_days:
       billingInterval === "custom"
         ? billingIntervalDays
-        : billingInterval === "monthly"
-          ? 30
-          : billingInterval === "yearly"
-            ? 365
-            : null,
+        : billingInterval === "demo"
+          ? 1
+          : billingInterval === "monthly"
+            ? 30
+            : billingInterval === "yearly"
+              ? 365
+              : null,
 
-    billing_interval_minutes: billingInterval === "demo" ? 1 : null,
+    billing_interval_minutes: null,
     trial_period_days: Number.isFinite(trialPeriodDays) ? trialPeriodDays : 0,
     features,
     description,

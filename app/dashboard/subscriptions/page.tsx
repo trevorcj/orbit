@@ -124,7 +124,7 @@ export default async function Page() {
             : plan?.billing_interval === "quarterly"
               ? "Quarterly"
               : plan?.billing_interval === "demo"
-                ? "Demo (2m)"
+                ? "Demo (1d)"
                 : plan?.billing_interval === "custom"
                   ? "Custom"
                   : "Monthly",
