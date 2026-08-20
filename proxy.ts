@@ -25,7 +25,7 @@ export async function proxy(request: NextRequest) {
     console.error("Auth error:", error);
   }
 
-  const publicRoutes = ["/login", "/signup"];
+  const publicRoutes = ["/login", "/signup", "/docs"];
 
   if (!user) {
     if (!publicRoutes.includes(path)) {

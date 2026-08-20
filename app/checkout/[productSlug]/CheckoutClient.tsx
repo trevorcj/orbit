@@ -10,6 +10,11 @@ import Image from "next/image";
 interface CheckoutClientProps {
   product: Product;
   plans: Plan[];
+  preselectedPlanId?: string | null;
+  initialEmail?: string;
+  initialName?: string;
+  returnUrl?: string;
+  cancelUrl?: string;
   organisation: {
     id: string;
     name: string | null;
@@ -20,10 +25,15 @@ interface CheckoutClientProps {
 export default function CheckoutClient({
   product,
   plans,
+  preselectedPlanId,
+  initialEmail,
+  initialName,
+  returnUrl,
+  cancelUrl,
   organisation,
 }: CheckoutClientProps) {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(
-    plans?.[0] ?? null,
+    plans?.find((plan) => plan.id === preselectedPlanId) ?? plans?.[0] ?? null,
   );
   const [loading, setLoading] = useState(false);
 
@@ -64,6 +74,9 @@ export default function CheckoutClient({
         : selectedPlan.billing_interval === "demo"
           ? "1 min"
           : "month";
+
+  const initialFirstName = initialName?.split(" ")[0] || "";
+  const initialLastName = initialName?.split(" ").slice(1).join(" ") || "";
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-white antialiased font-sans text-zinc-900">
@@ -238,6 +251,14 @@ export default function CheckoutClient({
           <input type="hidden" name="planId" value={selectedPlan.id} />
           <input type="hidden" name="productId" value={product.id} />
 
+          {returnUrl && (
+            <input type="hidden" name="returnUrl" value={returnUrl} />
+          )}
+
+          {cancelUrl && (
+            <input type="hidden" name="cancelUrl" value={cancelUrl} />
+          )}
+
           <div>
             <h2 className="font-bold text-xl text-zinc-900 tracking-tight">
               Payment details
@@ -257,6 +278,7 @@ export default function CheckoutClient({
                 name="email"
                 type="email"
                 required
+                defaultValue={initialEmail}
                 placeholder="name@example.com"
                 className="h-11 w-full border border-zinc-200 rounded-lg px-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 transition-colors bg-white"
               />
@@ -270,6 +292,7 @@ export default function CheckoutClient({
                 <input
                   name="firstName"
                   required
+                  defaultValue={initialFirstName}
                   placeholder="John"
                   className="h-11 w-full border border-zinc-200 rounded-lg px-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 transition-colors bg-white"
                 />
@@ -282,6 +305,7 @@ export default function CheckoutClient({
                 <input
                   name="lastName"
                   required
+                  defaultValue={initialLastName}
                   placeholder="Doe"
                   className="h-11 w-full border border-zinc-200 rounded-lg px-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 transition-colors bg-white"
                 />

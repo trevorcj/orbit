@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendEmail, generateCancellationNoticeEmail } from "@/lib/email";
+import { dispatchOrbitEvent } from "@/lib/developer-api/webhooks";
 
 export async function POST(req: Request) {
   try {
@@ -20,6 +21,7 @@ export async function POST(req: Request) {
       .select(
         `
         id,
+        organisation_id,
         status,
         renews_at,
         customer_id,
@@ -69,7 +71,19 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Send email confirmation
+    // 3. Dispatch developer webhook event
+    dispatchOrbitEvent({
+      organisationId: subscription.organisation_id,
+      type: "subscription.cancelled",
+      data: {
+        id: subscription.id,
+        status: "cancelled",
+        cancel_at_period_end: true,
+        current_period_end: endsAt,
+      },
+    }).catch((e) => console.error("Webhook dispatch error:", e));
+
+    // 4. Send email confirmation to customer
     const customer = subscription.customers as unknown as {
       email: string;
       first_name: string | null;

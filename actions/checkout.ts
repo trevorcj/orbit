@@ -12,6 +12,9 @@ export async function initiateSubscriptionPayment(formData: FormData) {
   const firstName = String(formData.get("firstName") || "").trim();
   const lastName = String(formData.get("lastName") || "").trim();
 
+  const returnUrl = String(formData.get("returnUrl") || "").trim();
+  const cancelUrl = String(formData.get("cancelUrl") || "").trim();
+
   if (!planId || !productId || !email || !firstName || !lastName) {
     throw new Error("Please complete all required details.");
   }
@@ -87,7 +90,14 @@ export async function initiateSubscriptionPayment(formData: FormData) {
 
   const orderReference = `orbit_ord_${crypto.randomUUID()}`;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const callbackUrl = `${appUrl}/checkout/${product.slug}/success`;
+  
+  const callbackUrl = new URL(`/checkout/${product.slug}/success`, appUrl);
+  if (returnUrl) {
+    callbackUrl.searchParams.set("return_url", returnUrl);
+  }
+  if (cancelUrl) {
+    callbackUrl.searchParams.set("cancel_url", cancelUrl);
+  }
 
   /*
    * 3. Initialize Paystack Transaction in Kobo
@@ -95,7 +105,7 @@ export async function initiateSubscriptionPayment(formData: FormData) {
   const checkoutData = await initializePaystackTransaction({
     email,
     amount: amountInKobo,
-    callbackUrl,
+    callbackUrl: callbackUrl.toString(),
     reference: orderReference,
     channels: ["card"],
     metadata: {
@@ -108,6 +118,8 @@ export async function initiateSubscriptionPayment(formData: FormData) {
       customerLastName: lastName,
       isTrial,
       trialPeriodDays: trialDays,
+      returnUrl: returnUrl || undefined,
+      cancelUrl: cancelUrl || undefined,
       custom_fields: [
         {
           display_name: "Customer Name",

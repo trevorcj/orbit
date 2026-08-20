@@ -13,6 +13,8 @@ interface SuccessPageProps {
     reference?: string;
     trxref?: string;
     orderReference?: string;
+    return_url?: string;
+    cancel_url?: string;
   }>;
 }
 
@@ -203,6 +205,14 @@ export default async function CheckoutSuccessPage({
               className="w-full h-11 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer">
               <span>Return to Checkout</span>
             </Link>
+          )}
+
+          {sParams.return_url && (
+            <a
+              href={sParams.return_url}
+              className="w-full h-11 rounded-lg border border-zinc-200 hover:bg-zinc-50 text-zinc-800 font-semibold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer">
+              <span>Return to app</span>
+            </a>
           )}
 
           <p className="text-[11px] text-zinc-400">

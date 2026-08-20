@@ -1,5 +1,8 @@
 import SettingsTabs from "@/components/settings/SettingsTabs";
+import { getDeveloperData } from "@/actions/developer";
 
-export default function SettingsPage() {
-  return <SettingsTabs />;
+export default async function SettingsPage() {
+  const developerData = await getDeveloperData();
+
+  return <SettingsTabs developerData={developerData} />;
 }

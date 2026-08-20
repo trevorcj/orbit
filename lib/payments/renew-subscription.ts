@@ -6,6 +6,7 @@ import {
   generateRenewalReceiptEmail,
   generatePaymentFailedEmail,
 } from "@/lib/email";
+import { dispatchOrbitEvent } from "@/lib/developer-api/webhooks";
 
 export async function renewSubscription(subscriptionId: string) {
   const supabase = supabaseAdmin;
@@ -96,6 +97,17 @@ export async function renewSubscription(subscriptionId: string) {
           updated_at: now.toISOString(),
         })
         .eq("id", subscription.id);
+
+      await dispatchOrbitEvent({
+        organisationId: subscription.organisation_id,
+        type: "subscription.cancelled",
+        data: {
+          id: subscription.id,
+          status: "cancelled",
+          cancel_at_period_end: true,
+          current_period_end: periodEnd.toISOString(),
+        },
+      }).catch((e) => console.error("Webhook dispatch error:", e));
 
       return {
         success: false,
@@ -233,6 +245,40 @@ export async function renewSubscription(subscriptionId: string) {
       }),
     }).catch((e) => console.error("Email send error:", e));
 
+    /*
+     * 9. Dispatch developer webhook events
+     */
+    dispatchOrbitEvent({
+      organisationId: subscription.organisation_id,
+      type: "subscription.renewed",
+      data: {
+        id: subscription.id,
+        status: "active",
+        renewal_count: (subscription.renewal_count ?? 0) + 1,
+        current_period_end: nextRenewal.toISOString(),
+        plan: {
+          id: plan.id,
+          name: plan.name,
+          amount: amount,
+          currency: "NGN",
+          interval: plan.billing_interval,
+        },
+      },
+    }).catch((e) => console.error("Webhook dispatch error:", e));
+
+    dispatchOrbitEvent({
+      organisationId: subscription.organisation_id,
+      type: "payment.succeeded",
+      data: {
+        subscription_id: subscription.id,
+        customer_id: customer.id,
+        amount,
+        currency: "NGN",
+        provider: "paystack",
+        reference: merchantTxRef,
+      },
+    }).catch((e) => console.error("Webhook dispatch error:", e));
+
     return {
       success: true,
       subscriptionId,
@@ -280,6 +326,29 @@ export async function renewSubscription(subscriptionId: string) {
         portalUrl,
       }),
     }).catch((e) => console.error("Email send error:", e));
+
+    dispatchOrbitEvent({
+      organisationId: subscription.organisation_id,
+      type: "payment.failed",
+      data: {
+        subscription_id: subscription.id,
+        customer_id: customer.id,
+        amount,
+        currency: "NGN",
+        provider: "paystack",
+        reference: merchantTxRef,
+      },
+    }).catch((e) => console.error("Webhook dispatch error:", e));
+
+    dispatchOrbitEvent({
+      organisationId: subscription.organisation_id,
+      type: "subscription.updated",
+      data: {
+        id: subscription.id,
+        status: isPastDue ? "past_due" : "failed_attempt",
+        failed_payment_attempts: attempts,
+      },
+    }).catch((e) => console.error("Webhook dispatch error:", e));
 
     throw error;
   }

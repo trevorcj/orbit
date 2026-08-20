@@ -5,6 +5,7 @@ import {
   generateCustomerSubscriptionEmail,
   generateMerchantSubscriberAlertEmail,
 } from "@/lib/email";
+import { dispatchOrbitEvent } from "@/lib/developer-api/webhooks";
 
 interface FulfillPaymentInput {
   orderReference: string;
@@ -421,6 +422,33 @@ export async function fulfillPayment({
         }
       });
   }
+
+  /*
+   * 12. Dispatch Orbit Developer Webhooks
+   */
+  dispatchOrbitEvent({
+    organisationId: plan.organisation_id,
+    type: "subscription.created",
+    data: {
+      id: subscriptionId,
+      customer: { id: customer.id, email },
+      plan: { id: plan.id, name: plan.name, amount: amountNumeric },
+    },
+  }).catch((e) => console.error("Developer webhook dispatch error:", e));
+
+  dispatchOrbitEvent({
+    organisationId: plan.organisation_id,
+    type: "payment.succeeded",
+    data: {
+      id: payment?.id,
+      subscription_id: subscriptionId,
+      customer_id: customer.id,
+      amount: amountNumeric,
+      currency: plan.currency || "NGN",
+      provider: "paystack",
+      reference: orderReference,
+    },
+  }).catch((e) => console.error("Developer webhook dispatch error:", e));
 
   return {
     success: true,
