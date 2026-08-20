@@ -9,7 +9,13 @@ import {
   Download,
   Plus,
   MoreVertical,
+  Copy,
+  Mail,
+  ExternalLink,
+  Code2,
+  Check,
 } from "lucide-react";
+import { toast } from "sonner";
 
 export type CustomerStatus = "Active" | "Past due" | "Canceled" | "Trialing";
 
@@ -17,6 +23,7 @@ interface Customer {
   id: string;
   name: string;
   email: string;
+  portalToken?: string | null;
   subscriptions: number;
   totalSpent: string;
   status: CustomerStatus;
@@ -33,12 +40,17 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
     "All" | "Active" | "Past due" | "Canceled" | "Trialing"
   >("All");
   const [openFilter, setOpenFilter] = useState(false);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   const customersPerPage = 10;
 
   useEffect(() => {
-    const handler = () => setOpenFilter(false);
+    const handler = () => {
+      setOpenFilter(false);
+      setActiveMenuId(null);
+    };
     window.addEventListener("click", handler);
     return () => window.removeEventListener("click", handler);
   }, []);
@@ -47,7 +59,8 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
     return customers.filter((c) => {
       const matchesSearch =
         c.name.toLowerCase().includes(query.toLowerCase()) ||
-        c.email.toLowerCase().includes(query.toLowerCase());
+        c.email.toLowerCase().includes(query.toLowerCase()) ||
+        c.id.toLowerCase().includes(query.toLowerCase());
 
       const matchesStatus = status === "All" ? true : c.status === status;
 
@@ -56,7 +69,6 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
   }, [query, status, customers]);
 
   const totalCustomers = filtered.length;
-
   const totalPages = Math.ceil(totalCustomers / customersPerPage);
 
   const paginatedCustomers = filtered.slice(
@@ -85,6 +97,13 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
       bg: "bg-indigo-50",
       border: "border-indigo-200",
     },
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(text);
+    toast.success(`${label} copied to clipboard`);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const handleExportCSV = () => {
@@ -120,7 +139,6 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
       ].join("\n");
 
     const encodedUri = encodeURI(csvContent);
-
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     link.setAttribute(
@@ -152,11 +170,6 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
             <Download size={16} />
             Export
           </button>
-
-          <button className="flex h-11 items-center gap-2 rounded-full text-[15px] bg-[#0F86EE] px-6 font-semibold text-white hover:bg-[#0d7ad9] transition-colors cursor-pointer">
-            <Plus size={18} />
-            Add customer
-          </button>
         </div>
       </div>
 
@@ -174,7 +187,7 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
               setQuery(e.target.value);
               setCurrentPage(1);
             }}
-            placeholder="Search customers..."
+            placeholder="Search by name, email, or ID..."
             className="h-11 w-full rounded border border-zinc-200 pl-11 pr-4 text-[14px] transition-all duration-200 focus:outline-none focus:border-zinc-300"
           />
         </div>
@@ -188,7 +201,7 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
           </button>
 
           {openFilter && (
-            <div className="absolute right-0 top-12 w-40 rounded border border-zinc-200 bg-white shadow-sm overflow-hidden z-50">
+            <div className="absolute right-0 top-12 w-40 rounded-lg border border-zinc-200 bg-white shadow-lg overflow-hidden z-50 py-1">
               {(
                 ["All", "Active", "Past due", "Canceled", "Trialing"] as const
               ).map((opt) => (
@@ -199,7 +212,7 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
                     setCurrentPage(1);
                     setOpenFilter(false);
                   }}
-                  className="w-full px-4 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 transition-colors">
+                  className="w-full px-4 py-2 text-left text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors">
                   {opt === "All" ? "All status" : opt}
                 </button>
               ))}
@@ -209,32 +222,37 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
       </div>
 
       {/* Data Table */}
-      <div className="w-full overflow-x-auto bg-white rounded-lg border border-zinc-100">
+      <div className="w-full overflow-x-auto bg-white rounded-xl border border-zinc-200 shadow-xs">
         <table className="w-full border-collapse text-left text-sm text-zinc-600">
           <thead>
-            <tr className="border-b border-zinc-100 text-zinc-400 font-medium text-xs">
-              <th className="py-4 px-6 font-medium">Customer</th>
-              <th className="py-4 px-6 font-medium">Email</th>
-              <th className="py-4 px-6 font-medium">Subscriptions</th>
-              <th className="py-4 px-6 font-medium">Total spent</th>
-              <th className="py-4 px-6 font-medium">Status</th>
-              <th className="py-4 px-6 font-medium">Joined</th>
-              <th className="py-4 px-4 w-10"></th>
+            <tr className="border-b border-zinc-100 bg-zinc-50/50 text-zinc-500 font-medium text-xs">
+              <th className="py-3.5 px-6 font-semibold">Customer</th>
+              <th className="py-3.5 px-6 font-semibold">Email</th>
+              <th className="py-3.5 px-6 font-semibold">Subscriptions</th>
+              <th className="py-3.5 px-6 font-semibold">Total spent</th>
+              <th className="py-3.5 px-6 font-semibold">Status</th>
+              <th className="py-3.5 px-6 font-semibold">Joined</th>
+              <th className="py-3.5 px-4 w-12 text-center font-semibold">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-50">
+          <tbody className="divide-y divide-zinc-100">
             {paginatedCustomers.map((customer) => (
               <tr
                 key={customer.id}
-                className="hover:bg-zinc-50/50 transition-colors group">
-                <td className="py-4 px-6 font-semibold text-zinc-800">
-                  {customer.name}
+                className="hover:bg-zinc-50/70 transition-colors group">
+                <td className="py-4 px-6 font-semibold text-zinc-900">
+                  <div className="flex flex-col">
+                    <span>{customer.name}</span>
+                    <span className="text-[11px] font-mono text-zinc-400 font-normal">
+                      {customer.id}
+                    </span>
+                  </div>
                 </td>
-                <td className="py-4 px-6 text-zinc-400">{customer.email}</td>
-                <td className="py-4 px-6 text-zinc-600 font-medium">
+                <td className="py-4 px-6 text-zinc-500">{customer.email}</td>
+                <td className="py-4 px-6 text-zinc-700 font-medium">
                   {customer.subscriptions}
                 </td>
-                <td className="py-4 px-6 font-semibold text-zinc-800">
+                <td className="py-4 px-6 font-semibold text-zinc-900">
                   {customer.totalSpent}
                 </td>
                 <td className="py-4 px-6">
@@ -245,11 +263,72 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
                     {customer.status}
                   </span>
                 </td>
-                <td className="py-4 px-6 text-zinc-400">{customer.joined}</td>
-                <td className="py-4 px-4 text-center">
-                  <button className="p-1 rounded text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 opacity-0 group-hover:opacity-100 transition-opacity">
+                <td className="py-4 px-6 text-zinc-500 text-xs">{customer.joined}</td>
+                <td className="py-4 px-4 text-center relative" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() =>
+                      setActiveMenuId(
+                        activeMenuId === customer.id ? null : customer.id,
+                      )
+                    }
+                    className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer">
                     <MoreVertical size={16} />
                   </button>
+
+                  {activeMenuId === customer.id && (
+                    <div className="absolute right-4 top-12 w-56 rounded-xl border border-zinc-200 bg-white shadow-xl py-1.5 z-50 text-left">
+                      <div className="px-3 py-1.5 border-b border-zinc-100 text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
+                        Customer Actions
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          copyToClipboard(customer.id, "Customer ID");
+                          setActiveMenuId(null);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
+                        {copiedId === customer.id ? (
+                          <Check size={14} className="text-emerald-600" />
+                        ) : (
+                          <Copy size={14} className="text-zinc-400" />
+                        )}
+                        <span>Copy Customer ID</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          copyToClipboard(customer.email, "Customer Email");
+                          setActiveMenuId(null);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
+                        <Mail size={14} className="text-zinc-400" />
+                        <span>Copy Email Address</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const apiEndpoint = `/api/v1/customers/${customer.id}/subscription`;
+                          copyToClipboard(apiEndpoint, "API Endpoint");
+                          setActiveMenuId(null);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
+                        <Code2 size={14} className="text-zinc-400" />
+                        <span>Copy API Query Route</span>
+                      </button>
+
+                      {customer.portalToken && (
+                        <a
+                          href={`/portal/${customer.portalToken}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setActiveMenuId(null)}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#0F86EE] hover:bg-blue-50/50 transition-colors border-t border-zinc-100">
+                          <ExternalLink size={14} />
+                          <span>View Customer Portal</span>
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}
@@ -258,7 +337,7 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
 
         {filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-zinc-400 text-sm">
-            No customers found matching the filters.
+            No customers found matching your search.
           </div>
         )}
       </div>

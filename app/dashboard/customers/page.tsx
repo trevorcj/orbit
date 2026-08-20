@@ -38,6 +38,7 @@ export default async function Page() {
       email,
       first_name,
       last_name,
+      portal_token,
       created_at,
       subscriptions (
         id,
@@ -113,6 +114,7 @@ export default async function Page() {
         id: customer.id,
         name,
         email: customer.email,
+        portalToken: customer.portal_token,
         subscriptions: activeSubscriptions + (hasTrial ? 1 : 0),
         totalSpent: `₦${totalSpent.toLocaleString()}`,
         status: customerStatus,
