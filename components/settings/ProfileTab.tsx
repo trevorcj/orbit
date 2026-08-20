@@ -10,10 +10,16 @@ export default function ProfileTab() {
   const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [theme, setTheme] = useState("system");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedTheme = localStorage.getItem("orbit-theme") || "system";
+      setTheme(savedTheme);
+    }
+
     getUserProfile().then((data) => {
       if (data) {
         setProfile(data);
@@ -103,8 +109,66 @@ export default function ProfileTab() {
           </span>
         </div>
 
+        {/* Appearance / Theme Settings */}
+        <div className="flex flex-col gap-2 pt-3 border-t border-zinc-100">
+          <div className="text-[14px] text-zinc-800 font-medium">Appearance & Theme</div>
+          <p className="text-[11px] text-zinc-400">
+            Choose your preferred theme across the Orbit dashboard interface.
+          </p>
+
+          <div className="grid grid-cols-3 gap-3 mt-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                setTheme("light");
+                if (typeof window !== "undefined") localStorage.setItem("orbit-theme", "light");
+                toast.success("Theme set to Light");
+              }}
+              className={`flex flex-col items-center justify-center p-3.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                theme === "light"
+                  ? "border-[#0F86EE] bg-blue-50/40 text-[#0F86EE] font-semibold"
+                  : "border-zinc-200 hover:border-zinc-300 text-zinc-700 bg-white"
+              }`}>
+              <span className="text-base mb-1">☀️</span>
+              <span>Light</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setTheme("dark");
+                if (typeof window !== "undefined") localStorage.setItem("orbit-theme", "dark");
+                toast.success("Theme set to Dark");
+              }}
+              className={`flex flex-col items-center justify-center p-3.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                theme === "dark"
+                  ? "border-[#0F86EE] bg-blue-50/40 text-[#0F86EE] font-semibold"
+                  : "border-zinc-200 hover:border-zinc-300 text-zinc-700 bg-white"
+              }`}>
+              <span className="text-base mb-1">🌙</span>
+              <span>Dark</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setTheme("system");
+                if (typeof window !== "undefined") localStorage.setItem("orbit-theme", "system");
+                toast.success("Theme set to System preference");
+              }}
+              className={`flex flex-col items-center justify-center p-3.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                theme === "system"
+                  ? "border-[#0F86EE] bg-blue-50/40 text-[#0F86EE] font-semibold"
+                  : "border-zinc-200 hover:border-zinc-300 text-zinc-700 bg-white"
+              }`}>
+              <span className="text-base mb-1">💻</span>
+              <span>System</span>
+            </button>
+          </div>
+        </div>
+
         {/* User Specific Circular Avatar Controls */}
-        <div className="flex flex-col gap-1.5 pt-2">
+        <div className="flex flex-col gap-1.5 pt-3 border-t border-zinc-100">
           <div className="text-[14px] text-zinc-800 font-medium">Avatar</div>
           <div className="flex items-center gap-4 mt-1">
             <div className="w-14 h-14 rounded-full bg-[#0F86EE] text-white overflow-hidden border border-zinc-200 flex items-center justify-center text-lg font-bold">

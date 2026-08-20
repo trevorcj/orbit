@@ -278,80 +278,11 @@ export default async function MerchantDashboardPage() {
         </div>
       </div>
 
-      {/* LOWER REVENUE CHARTS & PRODUCT RANKINGS SECTION */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Side: Real Dynamic Recharts Area Chart */}
-        <div className="rounded-lg border border-zinc-200 bg-white p-7 lg:col-span-2 flex flex-col justify-between">
-          <RevenueChart data={chartSeries} totalRevenue={grossRevenue} />
-        </div>
-
-        {/* Right Side: Plan Performance Rankings */}
+      {/* LOWER REVENUE CHARTS SECTION */}
+      <div className="w-full">
+        {/* Real Dynamic Recharts Area Chart */}
         <div className="rounded-lg border border-zinc-200 bg-white p-7 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-semibold text-zinc-900">
-                  Plan Breakdown
-                </h3>
-                <p className="text-xs text-zinc-400 mt-0.5">
-                  Subscribers & volume by tier
-                </p>
-              </div>
-              <Link
-                href="/dashboard/products"
-                className="text-xs font-semibold text-[#0F86EE] hover:underline flex items-center gap-1">
-                <span>View all</span>
-                <ExternalLink size={12} />
-              </Link>
-            </div>
-
-            <div className="flex flex-col gap-3 mt-6">
-              {planPerformance.length === 0 ? (
-                <div className="text-center py-10 text-xs text-zinc-400">
-                  <p>No plans created yet.</p>
-                  <Link
-                    href="/dashboard/products"
-                    className="mt-2 inline-block text-xs font-semibold text-[#0F86EE]">
-                    Create your first plan &rarr;
-                  </Link>
-                </div>
-              ) : (
-                planPerformance.slice(0, 4).map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex flex-col gap-1.5 p-3.5 rounded-lg bg-zinc-50/70 border border-zinc-100">
-                    <div className="flex justify-between items-center text-xs">
-                      <div>
-                        <span className="font-semibold text-zinc-800">
-                          {item.name}
-                        </span>
-                        <span className="text-[11px] text-zinc-400 ml-1.5">
-                          ({item.productName})
-                        </span>
-                      </div>
-                      <span className="font-mono font-bold text-zinc-900">
-                        ₦{item.amount.toLocaleString()}
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between items-center text-xs text-zinc-500">
-                      <span className="capitalize">{item.interval}</span>
-                      <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-600 font-medium">
-                        {item.subscribers}{" "}
-                        {item.subscribers === 1 ? "subscriber" : "subscribers"}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-zinc-100 mt-6 text-center">
-            <span className="text-xs text-zinc-400">
-              Live subscription states synced across Orbit
-            </span>
-          </div>
+          <RevenueChart data={chartSeries} totalRevenue={grossRevenue} />
         </div>
       </div>
     </div>

@@ -295,3 +295,73 @@ export async function chargePaystackAuthorization(options: {
 }
 
 export const chargeAuthorization = chargePaystackAuthorization;
+
+/**
+ * Create Paystack transfer recipient for settlement payouts
+ */
+export async function createPaystackTransferRecipient(params: {
+  accountNumber: string;
+  bankCode: string;
+  accountName: string;
+}): Promise<string> {
+  const secretKey = getSecretKey();
+  const response = await fetch(`${PAYSTACK_BASE_URL}/transferrecipient`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      type: "nuban",
+      name: params.accountName,
+      account_number: params.accountNumber,
+      bank_code: params.bankCode,
+      currency: "NGN",
+    }),
+  });
+
+  const json = await response.json();
+  if (!response.ok || !json.status) {
+    throw new Error(
+      json.message || "Failed to create Paystack transfer recipient",
+    );
+  }
+
+  return json.data.recipient_code;
+}
+
+/**
+ * Initiate Paystack transfer to merchant bank account
+ */
+export async function initiatePaystackTransfer(params: {
+  amountInKobo: number;
+  recipientCode: string;
+  reference: string;
+  reason?: string;
+}): Promise<{ transfer_code: string; status: string }> {
+  const secretKey = getSecretKey();
+  const response = await fetch(`${PAYSTACK_BASE_URL}/transfer`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      source: "balance",
+      amount: params.amountInKobo,
+      recipient: params.recipientCode,
+      reference: params.reference,
+      reason: params.reason || "Orbit settlement payout",
+    }),
+  });
+
+  const json = await response.json();
+  if (!response.ok || !json.status) {
+    throw new Error(
+      json.message || `Paystack transfer failed (${response.status})`,
+    );
+  }
+
+  return json.data;
+}
+

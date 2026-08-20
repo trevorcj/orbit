@@ -222,7 +222,7 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
       </div>
 
       {/* Data Table */}
-      <div className="w-full overflow-x-auto bg-white rounded-xl border border-zinc-200 shadow-xs min-h-[360px]">
+      <div className="w-full overflow-x-auto bg-white rounded-xl border border-zinc-200 shadow-xs">
         <table className="w-full border-collapse text-left text-sm text-zinc-600">
           <thead>
             <tr className="border-b border-zinc-100 bg-zinc-50/50 text-zinc-500 font-medium text-xs">
@@ -272,9 +272,9 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
                     </button>
 
                     {activeMenuId === customer.id && (
-                      <div className="absolute right-0 top-8 w-56 rounded-xl border border-zinc-200 bg-white shadow-2xl py-1.5 z-50 text-left">
-                        <div className="px-3 py-1.5 border-b border-zinc-100 text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
-                          Customer Actions
+                      <div className="absolute right-0 top-8 w-52 rounded-lg border border-zinc-200 bg-white shadow-md p-1 z-50 text-left">
+                        <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                          Customer
                         </div>
 
                         <button
@@ -282,7 +282,7 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
                             copyToClipboard(customer.id, "Customer ID");
                             setActiveMenuId(null);
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors cursor-pointer">
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors cursor-pointer">
                           {copiedId === customer.id ? (
                             <Check size={14} className="text-emerald-600" />
                           ) : (
@@ -296,7 +296,7 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
                             copyToClipboard(customer.email, "Customer Email");
                             setActiveMenuId(null);
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors cursor-pointer">
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors cursor-pointer">
                           <Mail size={14} className="text-zinc-400" />
                           <span>Copy Email Address</span>
                         </button>
@@ -307,21 +307,23 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
                             copyToClipboard(apiEndpoint, "API Endpoint");
                             setActiveMenuId(null);
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors cursor-pointer">
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors cursor-pointer">
                           <Code2 size={14} className="text-zinc-400" />
                           <span>Copy API Query Route</span>
                         </button>
 
                         {customer.portalToken && (
-                          <a
-                            href={`/portal/${customer.portalToken}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={() => setActiveMenuId(null)}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#0F86EE] hover:bg-blue-50/50 transition-colors border-t border-zinc-100">
-                            <ExternalLink size={14} />
-                            <span>View Customer Portal</span>
-                          </a>
+                          <div className="pt-1 mt-1 border-t border-zinc-100">
+                            <a
+                              href={`/portal/${customer.portalToken}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => setActiveMenuId(null)}
+                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-[#0F86EE] hover:bg-blue-50/50 transition-colors">
+                              <ExternalLink size={14} />
+                              <span>View Customer Portal</span>
+                            </a>
+                          </div>
                         )}
                       </div>
                     )}
