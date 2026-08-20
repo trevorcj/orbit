@@ -83,41 +83,41 @@ export default function BankSelect({
 
   return (
     <div className="relative flex flex-col gap-1.5" ref={dropdownRef}>
-      <label className="text-[14px] text-zinc-800 font-medium">Bank</label>
+      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Bank</label>
       <button
         type="button"
         disabled={loading}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-3.5 rounded-lg border border-orbit-border bg-white text-left text-sm transition-all focus:outline-none focus:border-orbit-primary disabled:bg-zinc-50 disabled:cursor-not-allowed">
-        <span className={selectedBank ? "text-zinc-900 font-medium" : "text-zinc-400"}>
+        className="w-full flex items-center justify-between p-3.5 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] text-left text-sm transition-all focus:outline-none focus:border-[#0F86EE] disabled:bg-zinc-50 dark:disabled:bg-[#0c1524] disabled:cursor-not-allowed cursor-pointer">
+        <span className={selectedBank ? "text-zinc-900 dark:text-white font-medium" : "text-zinc-400 dark:text-zinc-500"}>
           {loading
             ? "Loading banks..."
             : selectedBank
               ? selectedBank.name
               : "Select bank"}
         </span>
-        <ChevronDown size={16} className={`text-zinc-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown size={16} className={`text-zinc-400 dark:text-zinc-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-xl border border-zinc-200 bg-white shadow-xl max-h-72 overflow-hidden flex flex-col animate-in fade-in-50 zoom-in-95">
-          <div className="p-2 border-b border-zinc-100 bg-zinc-50/50">
+        <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] shadow-xl max-h-72 overflow-hidden flex flex-col animate-in fade-in-50 zoom-in-95">
+          <div className="p-2 border-b border-zinc-100 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524]">
             <div className="relative flex items-center">
-              <Search size={14} className="absolute left-3 text-zinc-400" />
+              <Search size={14} className="absolute left-3 text-zinc-400 dark:text-zinc-500" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search bank..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs bg-white rounded-md border border-zinc-200 focus:outline-none focus:border-orbit-primary"
+                className="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-[#152238] dark:text-white rounded-md border border-zinc-200 dark:border-[#1e2d47] focus:outline-none focus:border-[#0F86EE]"
                 autoFocus
               />
             </div>
           </div>
 
-          <div className="overflow-y-auto max-h-56 divide-y divide-zinc-50">
+          <div className="overflow-y-auto max-h-56 divide-y divide-zinc-50 dark:divide-[#1e2d47]">
             {filteredBanks.length === 0 ? (
-              <div className="p-4 text-xs text-center text-zinc-400">
+              <div className="p-4 text-xs text-center text-zinc-400 dark:text-zinc-500">
                 No bank found matching &ldquo;{search}&rdquo;
               </div>
             ) : (
@@ -132,13 +132,13 @@ export default function BankSelect({
                       setIsOpen(false);
                       setSearch("");
                     }}
-                    className={`w-full text-left px-4 py-2.5 text-xs flex items-center justify-between transition-colors ${
+                    className={`w-full text-left px-4 py-2.5 text-xs flex items-center justify-between transition-colors cursor-pointer ${
                       isSelected
-                        ? "bg-blue-50/60 text-[#0F86EE] font-semibold"
-                        : "hover:bg-zinc-50 text-zinc-700"
+                        ? "bg-blue-50/60 dark:bg-blue-900/30 text-[#0F86EE] dark:text-[#38bdf8] font-semibold"
+                        : "hover:bg-zinc-50 dark:hover:bg-[#152238] text-zinc-700 dark:text-zinc-300"
                     }`}>
                     <span>{bank.name}</span>
-                    {isSelected && <Check size={14} className="text-[#0F86EE]" />}
+                    {isSelected && <Check size={14} className="text-[#0F86EE] dark:text-[#38bdf8]" />}
                   </button>
                 );
               })

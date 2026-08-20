@@ -18,7 +18,6 @@ import {
   ArrowUpRight,
   Wallet,
   Clock,
-  ShieldCheck,
   Percent,
 } from "lucide-react";
 
@@ -164,68 +163,68 @@ export default function PayoutsTab() {
       {/* 1. FINANCIAL SUMMARY METRIC CARDS (SHADCN / VERCEL CLEAN BORDERS) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Available Balance Card */}
-        <div className="p-5 rounded-xl border border-zinc-200 bg-white flex flex-col justify-between">
+        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Available Balance
               </span>
-              <Wallet size={15} className="text-[#0F86EE]" />
+              <Wallet size={15} className="text-[#0F86EE] dark:text-[#38bdf8]" />
             </div>
-            <div className="text-2xl font-bold text-zinc-900 tracking-tight mt-2">
+            <div className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight mt-2 font-mono">
               ₦{loading ? "..." : (data?.availableBalance || 0).toLocaleString()}
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
-            <span className="text-zinc-500">Net (95%):</span>
-            <span className="font-semibold text-emerald-600 font-mono">
+          <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-[#1e2d47] flex items-center justify-between text-xs">
+            <span className="text-zinc-500 dark:text-zinc-400">Net (95%):</span>
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400 font-mono">
               ₦{loading ? "..." : (data?.netReceivable || 0).toLocaleString()}
             </span>
           </div>
         </div>
 
         {/* Lifetime Settled Card */}
-        <div className="p-5 rounded-xl border border-zinc-200 bg-white flex flex-col justify-between">
+        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Lifetime Settled
               </span>
-              <Building2 size={15} className="text-zinc-400" />
+              <Building2 size={15} className="text-zinc-400 dark:text-zinc-500" />
             </div>
-            <div className="text-2xl font-bold text-zinc-900 tracking-tight mt-2">
+            <div className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight mt-2 font-mono">
               ₦{loading ? "..." : (data?.lifetimeSettled || 0).toLocaleString()}
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-zinc-100 text-xs text-zinc-400">
+          <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-[#1e2d47] text-xs text-zinc-400 dark:text-zinc-500">
             Total funds deposited to bank
           </div>
         </div>
 
         {/* Autopay Schedule Card */}
-        <div className="p-5 rounded-xl border border-zinc-200 bg-white flex flex-col justify-between">
+        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Next Autopay
               </span>
-              <Clock size={15} className="text-zinc-400" />
+              <Clock size={15} className="text-zinc-400 dark:text-zinc-500" />
             </div>
-            <div className="text-sm font-bold text-zinc-900 tracking-tight mt-2">
+            <div className="text-sm font-bold text-zinc-900 dark:text-white tracking-tight mt-2">
               {loading ? "..." : data?.nextAutopayDate || "Every Friday"}
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between">
+          <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-[#1e2d47] flex items-center justify-between">
             <button
               onClick={() => {
                 if (data) setWithdrawAmount(data.availableBalance);
                 setShowWithdrawModal(true);
               }}
               disabled={!data?.canRequestPayout}
-              className="text-xs font-semibold text-[#0F86EE] hover:text-[#0d7ad9] disabled:text-zinc-400 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer">
+              className="text-xs font-semibold text-[#0F86EE] dark:text-[#38bdf8] hover:text-[#0d7ad9] disabled:text-zinc-400 dark:disabled:text-zinc-600 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer">
               <span>Request Payout</span>
               <ArrowUpRight size={13} />
             </button>
@@ -235,67 +234,67 @@ export default function PayoutsTab() {
 
       {/* Rate Limit Notice if Active */}
       {data?.cooldownMessage && (
-        <div className="p-3.5 rounded-lg border border-amber-200 bg-amber-50/60 text-xs text-amber-800 flex items-center gap-2">
-          <Clock size={14} className="shrink-0 text-amber-600" />
+        <div className="p-3.5 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/60 dark:bg-amber-950/40 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2">
+          <Clock size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
           <span>{data.cooldownMessage}</span>
         </div>
       )}
 
       {/* Orbit 5% Platform Fee Transparency Banner */}
-      <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/50 flex items-start gap-3 text-xs text-zinc-600">
-        <div className="w-6 h-6 rounded-md bg-[#0F86EE]/10 text-[#0F86EE] flex items-center justify-center shrink-0 mt-0.5">
+      <div className="p-4 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524] flex items-start gap-3 text-xs text-zinc-600 dark:text-zinc-300">
+        <div className="w-6 h-6 rounded-md bg-[#0F86EE]/10 dark:bg-[#0F86EE]/20 text-[#0F86EE] dark:text-[#38bdf8] flex items-center justify-center shrink-0 mt-0.5">
           <Percent size={14} />
         </div>
         <div>
-          <span className="font-semibold text-zinc-900">Orbit 5% Platform Fee: </span>
+          <span className="font-semibold text-zinc-900 dark:text-white">Orbit 5% Platform Fee: </span>
           Orbit retains a flat 5% platform cut on settled withdrawals to cover payment gateway processing, recurring billing automation, and infrastructure. 95% of all funds are deposited into your linked bank account.
         </div>
       </div>
 
       {/* 2. SETTLEMENT BANK ACCOUNT MANAGER */}
-      <div className="flex flex-col gap-6 p-6 rounded-xl border border-zinc-200 bg-white">
+      <div className="flex flex-col gap-6 p-6 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
         <div>
-          <h2 className="text-base font-bold text-zinc-900">Settlement Bank Account</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <h2 className="text-base font-bold text-zinc-900 dark:text-white">Settlement Bank Account</h2>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
             This is where subscription revenue will be transferred.
           </p>
         </div>
 
         {/* Current Linked Bank Box */}
         {loading ? (
-          <div className="p-4 rounded-lg border border-zinc-100 bg-zinc-50 animate-pulse text-xs text-zinc-400">
+          <div className="p-4 rounded-lg border border-zinc-100 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#0c1524] animate-pulse text-xs text-zinc-400">
             Loading bank details...
           </div>
         ) : data?.bankDetails?.accountNumber ? (
-          <div className="flex items-center justify-between p-4 rounded-lg border border-zinc-200 bg-zinc-50/40">
+          <div className="flex items-center justify-between p-4 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/40 dark:bg-[#152238]">
             <div className="flex items-center gap-3.5">
               <div className="w-9 h-9 rounded-lg bg-[#0F86EE] flex items-center justify-center text-white font-bold">
                 <Building2 size={18} />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-zinc-900">
+                <span className="text-sm font-bold text-zinc-900 dark:text-white">
                   {data.bankDetails.bankName}
                 </span>
-                <span className="text-xs text-zinc-500 font-mono mt-0.5">
+                <span className="text-xs text-zinc-500 dark:text-zinc-400 font-mono mt-0.5">
                   {data.bankDetails.accountNumber} • {data.bankDetails.accountName}
                 </span>
               </div>
             </div>
-            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+            <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 rounded-full">
               Active for payouts
             </span>
           </div>
         ) : (
-          <div className="p-4 rounded-lg border border-dashed border-zinc-300 text-xs text-zinc-500">
+          <div className="p-4 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 text-xs text-zinc-500 dark:text-zinc-400">
             No bank account linked yet. Please fill out the form below to receive payouts.
           </div>
         )}
 
-        <hr className="border-zinc-100" />
+        <hr className="border-zinc-100 dark:border-[#1e2d47]" />
 
         {/* Update Form */}
         <div className="flex flex-col gap-5">
-          <h3 className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
+          <h3 className="text-xs font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-wider">
             {data?.bankDetails?.accountNumber ? "Change Payout Account" : "Link Bank Account"}
           </h3>
 
@@ -318,26 +317,26 @@ export default function PayoutsTab() {
               onChange={(e) =>
                 setAccountNumber(e.target.value.replace(/\D/g, ""))
               }
-              className="border-zinc-200"
+              className="border-zinc-200 dark:border-[#1e2d47] dark:bg-[#152238] dark:text-white"
             />
           </div>
 
           {checkingBank && (
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
+            <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
               <Loader2 className="animate-spin" size={14} />
               <span>Verifying account with Paystack...</span>
             </div>
           )}
 
           {accountName && (
-            <div className="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg font-medium">
+            <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 px-3 py-2 rounded-lg font-medium">
               <CheckCircle2 size={15} />
               <span>Account Name: <strong>{accountName}</strong></span>
             </div>
           )}
 
           {lookupError && (
-            <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-lg">
+            <div className="flex items-center gap-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 px-3 py-2 rounded-lg">
               <AlertCircle size={15} />
               <span>{lookupError}</span>
             </div>
@@ -347,7 +346,7 @@ export default function PayoutsTab() {
             <button
               onClick={handleSaveBank}
               disabled={savingBank || !accountName}
-              className="h-10 px-6 rounded-lg text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white disabled:opacity-50 transition-colors cursor-pointer flex items-center gap-2">
+              className="h-10 px-6 rounded-lg text-xs font-semibold bg-zinc-900 dark:bg-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 text-white disabled:opacity-50 transition-colors cursor-pointer flex items-center gap-2">
               {savingBank && <Loader2 className="animate-spin" size={14} />}
               <span>Save Payout Account</span>
             </button>
@@ -359,17 +358,17 @@ export default function PayoutsTab() {
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-zinc-900">Payout History</h2>
-            <p className="text-xs text-zinc-500 mt-0.5">
+            <h2 className="text-base font-bold text-zinc-900 dark:text-white">Payout History</h2>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
               Record of all past settlements transferred to your bank account.
             </p>
           </div>
         </div>
 
-        <div className="w-full overflow-x-auto bg-white rounded-xl border border-zinc-200 shadow-xs">
-          <table className="w-full border-collapse text-left text-xs text-zinc-600">
+        <div className="w-full overflow-x-auto bg-white dark:bg-[#111c2e] rounded-xl border border-zinc-200 dark:border-[#1e2d47] shadow-xs">
+          <table className="w-full border-collapse text-left text-xs text-zinc-600 dark:text-zinc-300">
             <thead>
-              <tr className="border-b border-zinc-100 bg-zinc-50/50 text-zinc-500 font-medium">
+              <tr className="border-b border-zinc-100 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524] text-zinc-500 dark:text-zinc-400 font-medium">
                 <th className="py-3 px-5 font-semibold">Date</th>
                 <th className="py-3 px-5 font-semibold">Gross Requested</th>
                 <th className="py-3 px-5 font-semibold">Orbit Fee (5%)</th>
@@ -378,31 +377,31 @@ export default function PayoutsTab() {
                 <th className="py-3 px-5 font-semibold">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100">
+            <tbody className="divide-y divide-zinc-100 dark:divide-[#1e2d47]">
               {data?.history && data.history.length > 0 ? (
                 data.history.map((item) => (
-                  <tr key={item.id} className="hover:bg-zinc-50/70 transition-colors">
-                    <td className="py-3 px-5 text-zinc-500">
+                  <tr key={item.id} className="hover:bg-zinc-50/70 dark:hover:bg-[#152238] transition-colors">
+                    <td className="py-3 px-5 text-zinc-500 dark:text-zinc-400">
                       {new Date(item.createdAt).toLocaleDateString("en-NG", {
                         year: "numeric",
                         month: "short",
                         day: "numeric",
                       })}
                     </td>
-                    <td className="py-3 px-5 font-semibold text-zinc-900 font-mono">
+                    <td className="py-3 px-5 font-semibold text-zinc-900 dark:text-white font-mono">
                       ₦{item.grossAmount.toLocaleString()}
                     </td>
-                    <td className="py-3 px-5 text-zinc-500 font-mono">
+                    <td className="py-3 px-5 text-zinc-500 dark:text-zinc-400 font-mono">
                       -₦{item.feeAmount.toLocaleString()}
                     </td>
-                    <td className="py-3 px-5 font-bold text-emerald-600 font-mono">
+                    <td className="py-3 px-5 font-bold text-emerald-600 dark:text-emerald-400 font-mono">
                       ₦{item.netAmount.toLocaleString()}
                     </td>
-                    <td className="py-3 px-5 text-zinc-600">
+                    <td className="py-3 px-5 text-zinc-600 dark:text-zinc-300">
                       {item.bankName} (•••{item.accountNumber.slice(-4)})
                     </td>
                     <td className="py-3 px-5">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 capitalize">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 capitalize">
                         {item.status}
                       </span>
                     </td>
@@ -410,7 +409,7 @@ export default function PayoutsTab() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-zinc-400">
+                  <td colSpan={6} className="py-8 text-center text-zinc-400 dark:text-zinc-500">
                     No payouts processed yet.
                   </td>
                 </tr>
@@ -422,24 +421,24 @@ export default function PayoutsTab() {
 
       {/* 4. WITHDRAWAL POPUP MODAL */}
       {showWithdrawModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl border border-zinc-200 shadow-xl w-full max-w-md p-6 flex flex-col gap-5">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#111c2e] rounded-xl border border-zinc-200 dark:border-[#1e2d47] shadow-xl w-full max-w-md p-6 flex flex-col gap-5 text-zinc-900 dark:text-white">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-zinc-900">Request Payout</h3>
+              <h3 className="text-base font-bold text-zinc-900 dark:text-white">Request Payout</h3>
               <button
                 onClick={() => setShowWithdrawModal(false)}
-                className="text-zinc-400 hover:text-zinc-600 text-sm font-semibold cursor-pointer">
+                className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm font-semibold cursor-pointer">
                 ✕
               </button>
             </div>
 
             <div className="flex flex-col gap-3">
-              <label className="text-xs font-semibold text-zinc-700">
+              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                 Withdrawal Amount (NGN)
               </label>
 
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-sm">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 font-bold text-sm">
                   ₦
                 </span>
                 <input
@@ -453,37 +452,37 @@ export default function PayoutsTab() {
                     )
                   }
                   placeholder="e.g. 50000"
-                  className="w-full pl-8 pr-4 h-11 rounded-lg border border-zinc-200 text-sm font-semibold focus:outline-none focus:border-[#0F86EE]"
+                  className="w-full pl-8 pr-4 h-11 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-[#0F86EE]"
                 />
               </div>
 
-              <div className="flex items-center justify-between text-xs text-zinc-500">
+              <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
                 <span>Available: ₦{(data?.availableBalance || 0).toLocaleString()}</span>
                 <button
                   type="button"
                   onClick={() => setWithdrawAmount(data?.availableBalance || 0)}
-                  className="text-[#0F86EE] font-semibold hover:underline cursor-pointer">
+                  className="text-[#0F86EE] dark:text-[#38bdf8] font-semibold hover:underline cursor-pointer">
                   Max Available
                 </button>
               </div>
             </div>
 
             {/* Live 5% Fee Math Breakdown Box */}
-            <div className="p-3.5 rounded-lg bg-zinc-50 border border-zinc-200 flex flex-col gap-2 text-xs">
-              <div className="flex justify-between text-zinc-600">
+            <div className="p-3.5 rounded-lg bg-zinc-50 dark:bg-[#0c1524] border border-zinc-200 dark:border-[#1e2d47] flex flex-col gap-2 text-xs">
+              <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
                 <span>Gross Withdrawal:</span>
-                <span className="font-mono font-semibold">₦{calculatedGross.toLocaleString()}</span>
+                <span className="font-mono font-semibold text-zinc-900 dark:text-white">₦{calculatedGross.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-zinc-500">
+              <div className="flex justify-between text-zinc-500 dark:text-zinc-400">
                 <span>Orbit Platform Fee (5%):</span>
-                <span className="font-mono text-zinc-500">-₦{calculatedFee.toLocaleString()}</span>
+                <span className="font-mono text-zinc-500 dark:text-zinc-400">-₦{calculatedFee.toLocaleString()}</span>
               </div>
-              <hr className="border-zinc-200" />
-              <div className="flex justify-between text-sm font-bold text-zinc-900">
+              <hr className="border-zinc-200 dark:border-[#1e2d47]" />
+              <div className="flex justify-between text-sm font-bold text-zinc-900 dark:text-white">
                 <span>You Receive (95%):</span>
-                <span className="font-mono text-emerald-600">₦{calculatedNet.toLocaleString()}</span>
+                <span className="font-mono text-emerald-600 dark:text-emerald-400">₦{calculatedNet.toLocaleString()}</span>
               </div>
-              <div className="text-[11px] text-zinc-400 mt-1">
+              <div className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">
                 Destination: {data?.bankDetails?.bankName} ({data?.bankDetails?.accountNumber})
               </div>
             </div>
@@ -492,7 +491,7 @@ export default function PayoutsTab() {
               <button
                 type="button"
                 onClick={() => setShowWithdrawModal(false)}
-                className="h-10 px-4 rounded-lg border border-zinc-200 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 cursor-pointer">
+                className="h-10 px-4 rounded-lg border border-zinc-200 dark:border-[#1e2d47] text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-[#152238] cursor-pointer">
                 Cancel
               </button>
 

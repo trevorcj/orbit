@@ -28,14 +28,14 @@ export default function SettingsTabs({
     <div className="flex flex-col gap-8 w-full max-w-full mx-auto p-6">
       {/* Top Page Header */}
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-zinc-900">Settings</h1>
-        <p className="text-sm text-zinc-500">
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Settings</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Manage your organization settings and preferences.
         </p>
       </div>
 
       {/* Tab Navigation Menu */}
-      <div className="flex items-center gap-8 border-b border-zinc-100 pb-px">
+      <div className="flex items-center gap-8 border-b border-zinc-100 dark:border-[#1e2d47] pb-px">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -45,13 +45,13 @@ export default function SettingsTabs({
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 pb-3 text-[14px] font-medium transition-all relative cursor-pointer ${
                 isActive
-                  ? "text-[#0F86EE]"
-                  : "text-zinc-500 hover:text-zinc-800"
+                  ? "text-[#0F86EE] dark:text-[#38bdf8]"
+                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200"
               }`}>
               <Icon size={16} />
               {tab.label}
               {isActive && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0F86EE]" />
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0F86EE] dark:bg-[#38bdf8]" />
               )}
             </button>
           );

@@ -3,23 +3,19 @@
 import { useEffect, useState } from "react";
 import Input from "@/components/Input";
 import { getUserProfile, updateUserProfile, UserProfileData } from "@/actions/settings";
+import { useTheme } from "@/components/ThemeProvider";
 import { toast } from "sonner";
-import { Loader2, User } from "lucide-react";
+import { Loader2, Sun, Moon, Monitor } from "lucide-react";
 
 export default function ProfileTab() {
+  const { theme, setTheme } = useTheme();
   const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [theme, setTheme] = useState("system");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("orbit-theme") || "system";
-      setTheme(savedTheme);
-    }
-
     getUserProfile().then((data) => {
       if (data) {
         setProfile(data);
@@ -54,7 +50,7 @@ export default function ProfileTab() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12 bg-white rounded-xl border border-zinc-100 max-w-2xl">
+      <div className="flex items-center justify-center p-12 bg-white dark:bg-[#131f33] rounded-xl border border-zinc-100 dark:border-[#1e2d47] max-w-2xl">
         <Loader2 className="animate-spin text-zinc-400" size={24} />
       </div>
     );
@@ -63,11 +59,11 @@ export default function ProfileTab() {
   const initials = `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase() || "U";
 
   return (
-    <form onSubmit={handleSave} className="flex flex-col gap-6 p-8 rounded-xl border border-zinc-100 bg-white max-w-2xl">
+    <form onSubmit={handleSave} className="flex flex-col gap-6 p-8 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] max-w-2xl shadow-xs">
       <div>
-        <h2 className="text-base font-bold text-zinc-900">Profile</h2>
-        <p className="text-xs text-zinc-500 mt-0.5">
-          Manage your personal information.
+        <h2 className="text-base font-bold text-zinc-900 dark:text-white">Profile & Preferences</h2>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+          Manage your personal account details and theme preferences.
         </p>
       </div>
 
@@ -80,7 +76,7 @@ export default function ProfileTab() {
             placeholder="John"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            className="border-zinc-200"
+            className="border-zinc-200 dark:border-[#1e2d47] dark:bg-[#152238] dark:text-white"
           />
 
           <Input
@@ -90,7 +86,7 @@ export default function ProfileTab() {
             placeholder="Doe"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            className="border-zinc-200"
+            className="border-zinc-200 dark:border-[#1e2d47] dark:bg-[#152238] dark:text-white"
           />
         </div>
 
@@ -102,16 +98,16 @@ export default function ProfileTab() {
             placeholder=""
             disabled
             value={profile?.email || ""}
-            className="border-zinc-200 bg-zinc-50 !text-zinc-400 cursor-not-allowed"
+            className="border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#0c1524] !text-zinc-400 cursor-not-allowed"
           />
           <span className="text-[11px] text-zinc-400 pl-0.5">
             Email is associated with your login and cannot be changed here.
           </span>
         </div>
 
-        {/* Appearance / Theme Settings */}
-        <div className="flex flex-col gap-2 pt-3 border-t border-zinc-100">
-          <div className="text-[14px] text-zinc-800 font-medium">Appearance & Theme</div>
+        {/* Appearance / Theme Settings (Paystack Style with Lucide Icons) */}
+        <div className="flex flex-col gap-2 pt-3 border-t border-zinc-100 dark:border-[#1e2d47]">
+          <div className="text-[14px] text-zinc-800 dark:text-zinc-200 font-medium">Appearance & Theme</div>
           <p className="text-[11px] text-zinc-400">
             Choose your preferred theme across the Orbit dashboard interface.
           </p>
@@ -121,15 +117,14 @@ export default function ProfileTab() {
               type="button"
               onClick={() => {
                 setTheme("light");
-                if (typeof window !== "undefined") localStorage.setItem("orbit-theme", "light");
                 toast.success("Theme set to Light");
               }}
               className={`flex flex-col items-center justify-center p-3.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
                 theme === "light"
-                  ? "border-[#0F86EE] bg-blue-50/40 text-[#0F86EE] font-semibold"
-                  : "border-zinc-200 hover:border-zinc-300 text-zinc-700 bg-white"
+                  ? "border-[#0F86EE] bg-blue-50/50 dark:bg-blue-900/30 text-[#0F86EE] font-semibold"
+                  : "border-zinc-200 dark:border-[#1e2d47] hover:border-zinc-300 dark:hover:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-[#152238]"
               }`}>
-              <span className="text-base mb-1">☀️</span>
+              <Sun size={18} className="mb-1 text-amber-500" />
               <span>Light</span>
             </button>
 
@@ -137,15 +132,14 @@ export default function ProfileTab() {
               type="button"
               onClick={() => {
                 setTheme("dark");
-                if (typeof window !== "undefined") localStorage.setItem("orbit-theme", "dark");
                 toast.success("Theme set to Dark");
               }}
               className={`flex flex-col items-center justify-center p-3.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
                 theme === "dark"
-                  ? "border-[#0F86EE] bg-blue-50/40 text-[#0F86EE] font-semibold"
-                  : "border-zinc-200 hover:border-zinc-300 text-zinc-700 bg-white"
+                  ? "border-[#0F86EE] bg-blue-50/50 dark:bg-blue-900/30 text-[#0F86EE] font-semibold"
+                  : "border-zinc-200 dark:border-[#1e2d47] hover:border-zinc-300 dark:hover:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-[#152238]"
               }`}>
-              <span className="text-base mb-1">🌙</span>
+              <Moon size={18} className="mb-1 text-blue-400" />
               <span>Dark</span>
             </button>
 
@@ -153,30 +147,29 @@ export default function ProfileTab() {
               type="button"
               onClick={() => {
                 setTheme("system");
-                if (typeof window !== "undefined") localStorage.setItem("orbit-theme", "system");
-                toast.success("Theme set to System preference");
+                toast.success("Theme set to System");
               }}
               className={`flex flex-col items-center justify-center p-3.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
                 theme === "system"
-                  ? "border-[#0F86EE] bg-blue-50/40 text-[#0F86EE] font-semibold"
-                  : "border-zinc-200 hover:border-zinc-300 text-zinc-700 bg-white"
+                  ? "border-[#0F86EE] bg-blue-50/50 dark:bg-blue-900/30 text-[#0F86EE] font-semibold"
+                  : "border-zinc-200 dark:border-[#1e2d47] hover:border-zinc-300 dark:hover:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-[#152238]"
               }`}>
-              <span className="text-base mb-1">💻</span>
+              <Monitor size={18} className="mb-1 text-zinc-400" />
               <span>System</span>
             </button>
           </div>
         </div>
 
         {/* User Specific Circular Avatar Controls */}
-        <div className="flex flex-col gap-1.5 pt-3 border-t border-zinc-100">
-          <div className="text-[14px] text-zinc-800 font-medium">Avatar</div>
+        <div className="flex flex-col gap-1.5 pt-3 border-t border-zinc-100 dark:border-[#1e2d47]">
+          <div className="text-[14px] text-zinc-800 dark:text-zinc-200 font-medium">Avatar</div>
           <div className="flex items-center gap-4 mt-1">
-            <div className="w-14 h-14 rounded-full bg-[#0F86EE] text-white overflow-hidden border border-zinc-200 flex items-center justify-center text-lg font-bold">
+            <div className="w-14 h-14 rounded-full bg-[#0F86EE] text-white overflow-hidden border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg font-bold">
               {initials}
             </div>
 
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-zinc-700">Account Avatar</span>
+              <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Account Avatar</span>
               <span className="text-[11px] text-zinc-400 mt-0.5">
                 Automatically generated from your initials.
               </span>

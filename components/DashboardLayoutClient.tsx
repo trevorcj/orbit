@@ -56,21 +56,21 @@ export default function DashboardLayoutClient({
     return {
       className: `flex items-center gap-3 px-2 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
         isActive
-          ? "text-zinc-900 bg-zinc-50"
-          : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
+          ? "text-zinc-900 dark:text-white bg-zinc-50 dark:bg-[#131f33]"
+          : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-[#131f33]"
       }`,
-      iconColor: isActive ? "text-zinc-900" : "text-zinc-500",
+      iconColor: isActive ? "text-zinc-900 dark:text-white" : "text-zinc-500 dark:text-zinc-400",
     };
   };
 
   const userFullName = `${userProfile.firstName} ${userProfile.lastName}`;
 
   return (
-    <div className="flex h-screen w-full bg-white text-zinc-900 antialiased overflow-hidden">
+    <div className="flex h-screen w-full bg-white dark:bg-[#0B1320] text-zinc-900 dark:text-zinc-100 antialiased overflow-hidden">
       {mobileOpen && (
         <div
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-40 bg-black/30 md:hidden"
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
         />
       )}
 
@@ -79,7 +79,7 @@ export default function DashboardLayoutClient({
           <div className="mb-6 flex items-center gap-3 md:hidden">
             <button
               onClick={() => setMobileOpen(true)}
-              className="rounded border border-zinc-200 p-3 text-sm cursor-pointer">
+              className="rounded border border-zinc-200 dark:border-[#1a2942] p-3 text-sm cursor-pointer">
               <X size={16} />
             </button>
           </div>
@@ -87,7 +87,7 @@ export default function DashboardLayoutClient({
       )}
 
       <aside
-        className={`w-64 border-r border-zinc-100 flex flex-col justify-between p-6 bg-white shrink-0
+        className={`w-64 border-r border-zinc-100 dark:border-[#1a2942] flex flex-col justify-between p-6 bg-white dark:bg-[#09101d] shrink-0
 fixed md:static z-50 h-full transition-transform duration-200
 ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
 `}>
@@ -99,7 +99,15 @@ ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
                 alt="Orbit Logo"
                 width={100}
                 height={20}
-                className="w-auto h-6"
+                className="w-auto h-6 dark:hidden"
+                priority
+              />
+              <Image
+                src="/orbit-dark.svg"
+                alt="Orbit Logo"
+                width={100}
+                height={20}
+                className="w-auto h-6 hidden dark:block"
                 priority
               />
             </span>
@@ -107,21 +115,21 @@ ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
 
           <div className="relative mb-8">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500"
               size={16}
             />
             <input
               type="text"
               placeholder="Search"
-              className="w-full pl-9 pr-4 py-2 rounded bg-zinc-50 border-0 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-200"
+              className="w-full pl-9 pr-4 py-2 rounded-lg bg-zinc-50 dark:bg-[#131f33] border-0 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-200 dark:focus:ring-[#1a2942]"
             />
           </div>
 
           <div className="mb-8">
-            <p className="px-2 text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+            <p className="px-2 text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-3">
               Organisations
             </p>
-            <div className="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-zinc-50 cursor-pointer transition-colors">
+            <div className="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-[#131f33] cursor-pointer transition-colors">
               {organization?.logoUrl ? (
                 <Image
                   src={organization.logoUrl}
@@ -131,18 +139,18 @@ ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
                   height={32}
                 />
               ) : (
-                <div className="w-8 h-8 rounded bg-zinc-100 flex items-center justify-center font-bold text-sm text-zinc-700">
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-[#131f33] flex items-center justify-center font-bold text-sm text-zinc-700 dark:text-zinc-300">
                   {getInitials(organization?.name || "A")}
                 </div>
               )}
-              <span className="text-sm font-semibold text-zinc-700 truncate max-w-35">
+              <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 truncate max-w-35">
                 {organization?.name || "Acme Inc."}
               </span>
             </div>
           </div>
 
           <nav className="space-y-1">
-            <p className="px-2 text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+            <p className="px-2 text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-3">
               General
             </p>
 
@@ -210,19 +218,6 @@ ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
                 </Link>
               );
             })()}
-
-            {(() => {
-              const state = getLinkStyles("/dashboard/settings");
-              return (
-                <Link
-                  href="/dashboard/settings"
-                  className={state.className}
-                  onClick={() => setMobileOpen(false)}>
-                  <Code2 size={18} className={state.iconColor} />
-                  Developers
-                </Link>
-              );
-            })()}
           </nav>
         </div>
 
@@ -243,14 +238,14 @@ ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
             <Link
               href="mailto: trevorcjustus@gmail.com"
               target="_blank"
-              className="flex items-center gap-3 px-2 py-2 rounded text-sm font-semibold text-zinc-500 hover:text-zinc-900 transition-colors"
+              className="flex items-center gap-3 px-2 py-2 rounded text-sm font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
               onClick={() => setMobileOpen(false)}>
               <HelpCircle size={18} />
               Help Center
             </Link>
           </nav>
 
-          <div className="pt-4 border-t border-zinc-100 flex items-center justify-between">
+          <div className="pt-4 border-t border-zinc-100 dark:border-[#1a2942] flex items-center justify-between">
             <div className="flex items-center gap-3">
               {userProfile?.avatarUrl ? (
                 <Image
@@ -268,17 +263,17 @@ ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
               )}
 
               <div className="flex flex-col text-left overflow-hidden">
-                <span className="text-xs font-bold text-zinc-900 leading-none truncate max-w-30">
+                <span className="text-xs font-bold text-zinc-900 dark:text-white leading-none truncate max-w-30">
                   {userFullName.trim() || "Merchant"}
                 </span>
-                <span className="text-[11px] text-zinc-400 mt-1 truncate max-w-30">
+                <span className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1 truncate max-w-30">
                   {userProfile.email}
                 </span>
               </div>
             </div>
             <button
               type="button"
-              className="text-zinc-900 cursor-pointer bg-transparent border-0 p-1 flex items-center justify-center transition-colors"
+              className="text-zinc-900 dark:text-zinc-400 hover:dark:text-white cursor-pointer bg-transparent border-0 p-1 flex items-center justify-center transition-colors"
               onClick={() => {
                 startTransition(async () => {
                   await logout();
@@ -286,15 +281,15 @@ ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
               }}
               aria-label="Log out">
               <LogOut size={18} />
-            </button>{" "}
+            </button>
           </div>
         </div>
       </aside>
-      <main className="flex-1 overflow-y-auto bg-white p-7 text-left">
+      <main className="flex-1 overflow-y-auto bg-white dark:bg-[#0B1320] p-7 text-left">
         <div className="mb-6 flex items-center gap-3 md:hidden">
           <button
             onClick={() => setMobileOpen(true)}
-            className="rounded border border-zinc-200 p-3 text-sm cursor-pointer">
+            className="rounded border border-zinc-200 dark:border-[#1a2942] p-3 text-sm cursor-pointer">
             <Menu />
           </button>
         </div>

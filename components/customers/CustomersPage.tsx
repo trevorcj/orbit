@@ -173,11 +173,11 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
         </div>
       </div>
 
-      {/* Control Actions (Search & Filter) */}
-      <div className="flex items-center justify-between gap-3 w-full">
-        <div className="relative w-[320px]">
+      {/* Search & Filter Bar */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="relative w-full sm:w-80">
           <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500"
             size={18}
           />
 
@@ -188,20 +188,20 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
               setCurrentPage(1);
             }}
             placeholder="Search by name, email, or ID..."
-            className="h-11 w-full rounded border border-zinc-200 pl-11 pr-4 text-[14px] transition-all duration-200 focus:outline-none focus:border-zinc-300"
+            className="h-11 w-full rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] pl-11 pr-4 text-[14px] text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 transition-all duration-200 focus:outline-none focus:border-[#0F86EE]"
           />
         </div>
 
         <div className="relative" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => setOpenFilter(!openFilter)}
-            className="flex h-11 w-40 items-center justify-between rounded border border-zinc-200 px-4 text-sm text-zinc-700 bg-white transition-all duration-200 focus:outline-none focus:border-zinc-300">
+            className="flex h-11 w-40 items-center justify-between rounded-lg border border-zinc-200 dark:border-[#1e2d47] px-4 text-sm text-zinc-700 dark:text-zinc-200 bg-white dark:bg-[#111c2e] transition-all duration-200 focus:outline-none focus:border-[#0F86EE]">
             {status === "All" ? "All status" : status}
-            <ChevronDown size={18} className="text-zinc-500" />
+            <ChevronDown size={18} className="text-zinc-500 dark:text-zinc-400" />
           </button>
 
           {openFilter && (
-            <div className="absolute right-0 top-12 w-40 rounded-lg border border-zinc-200 bg-white shadow-lg overflow-hidden z-50 py-1">
+            <div className="absolute right-0 top-12 w-40 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] shadow-lg overflow-hidden z-50 py-1">
               {(
                 ["All", "Active", "Past due", "Canceled", "Trialing"] as const
               ).map((opt) => (
@@ -212,7 +212,7 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
                     setCurrentPage(1);
                     setOpenFilter(false);
                   }}
-                  className="w-full px-4 py-2 text-left text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors">
+                  className="w-full px-4 py-2 text-left text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-[#152238] transition-colors">
                   {opt === "All" ? "All status" : opt}
                 </button>
               ))}
@@ -222,10 +222,10 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
       </div>
 
       {/* Data Table */}
-      <div className="w-full overflow-x-auto bg-white rounded-xl border border-zinc-200 shadow-xs">
-        <table className="w-full border-collapse text-left text-sm text-zinc-600">
+      <div className="w-full overflow-x-auto bg-white dark:bg-[#111c2e] rounded-xl border border-zinc-200 dark:border-[#1e2d47] shadow-xs">
+        <table className="w-full border-collapse text-left text-sm text-zinc-600 dark:text-zinc-300">
           <thead>
-            <tr className="border-b border-zinc-100 bg-zinc-50/50 text-zinc-500 font-medium text-xs">
+            <tr className="border-b border-zinc-100 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524] text-zinc-500 dark:text-zinc-400 font-medium text-xs">
               <th className="py-3.5 px-6 font-semibold">Customer</th>
               <th className="py-3.5 px-6 font-semibold">Email</th>
               <th className="py-3.5 px-6 font-semibold">Subscriptions</th>
@@ -235,19 +235,19 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
               <th className="py-3.5 px-4 w-12 text-center font-semibold">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100">
+          <tbody className="divide-y divide-zinc-100 dark:divide-[#1e2d47]">
             {paginatedCustomers.map((customer) => (
               <tr
                 key={customer.id}
-                className="hover:bg-zinc-50/70 transition-colors group">
-                <td className="py-4 px-6 font-semibold text-zinc-900">
+                className="hover:bg-zinc-50/70 dark:hover:bg-[#152238] transition-colors group">
+                <td className="py-4 px-6 font-semibold text-zinc-900 dark:text-white">
                   {customer.name}
                 </td>
-                <td className="py-4 px-6 text-zinc-500">{customer.email}</td>
-                <td className="py-4 px-6 text-zinc-700 font-medium">
+                <td className="py-4 px-6 text-zinc-500 dark:text-zinc-400">{customer.email}</td>
+                <td className="py-4 px-6 text-zinc-700 dark:text-zinc-300 font-medium">
                   {customer.subscriptions}
                 </td>
-                <td className="py-4 px-6 font-semibold text-zinc-900">
+                <td className="py-4 px-6 font-semibold text-zinc-900 dark:text-white font-mono">
                   {customer.totalSpent}
                 </td>
                 <td className="py-4 px-6">
@@ -258,7 +258,7 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
                     {customer.status}
                   </span>
                 </td>
-                <td className="py-4 px-6 text-zinc-500 text-xs">{customer.joined}</td>
+                <td className="py-4 px-6 text-zinc-500 dark:text-zinc-400 text-xs">{customer.joined}</td>
                 <td className="py-4 px-4 text-center">
                   <div className="relative inline-block text-left" onClick={(e) => e.stopPropagation()}>
                     <button
@@ -267,13 +267,13 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
                           activeMenuId === customer.id ? null : customer.id,
                         )
                       }
-                      className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer">
+                      className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-[#152238] transition-colors cursor-pointer">
                       <MoreVertical size={16} />
                     </button>
 
                     {activeMenuId === customer.id && (
-                      <div className="absolute right-0 top-8 w-52 rounded-lg border border-zinc-200 bg-white shadow-md p-1 z-50 text-left">
-                        <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                      <div className="absolute right-0 top-8 w-52 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] shadow-md p-1 z-50 text-left">
+                        <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
                           Customer
                         </div>
 
@@ -282,11 +282,11 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
                             copyToClipboard(customer.id, "Customer ID");
                             setActiveMenuId(null);
                           }}
-                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors cursor-pointer">
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-[#152238] hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer">
                           {copiedId === customer.id ? (
-                            <Check size={14} className="text-emerald-600" />
+                            <Check size={14} className="text-emerald-600 dark:text-emerald-400" />
                           ) : (
-                            <Copy size={14} className="text-zinc-400" />
+                            <Copy size={14} className="text-zinc-400 dark:text-zinc-500" />
                           )}
                           <span>Copy Customer ID</span>
                         </button>
@@ -296,8 +296,8 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
                             copyToClipboard(customer.email, "Customer Email");
                             setActiveMenuId(null);
                           }}
-                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors cursor-pointer">
-                          <Mail size={14} className="text-zinc-400" />
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-[#152238] hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer">
+                          <Mail size={14} className="text-zinc-400 dark:text-zinc-500" />
                           <span>Copy Email Address</span>
                         </button>
 
@@ -307,19 +307,19 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
                             copyToClipboard(apiEndpoint, "API Endpoint");
                             setActiveMenuId(null);
                           }}
-                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors cursor-pointer">
-                          <Code2 size={14} className="text-zinc-400" />
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-[#152238] hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer">
+                          <Code2 size={14} className="text-zinc-400 dark:text-zinc-500" />
                           <span>Copy API Query Route</span>
                         </button>
 
                         {customer.portalToken && (
-                          <div className="pt-1 mt-1 border-t border-zinc-100">
+                          <div className="pt-1 mt-1 border-t border-zinc-100 dark:border-[#1e2d47]">
                             <a
                               href={`/portal/${customer.portalToken}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={() => setActiveMenuId(null)}
-                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-[#0F86EE] hover:bg-blue-50/50 transition-colors">
+                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-[#0F86EE] dark:text-[#38bdf8] hover:bg-blue-50/50 dark:hover:bg-blue-900/30 transition-colors">
                               <ExternalLink size={14} />
                               <span>View Customer Portal</span>
                             </a>
@@ -335,14 +335,14 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
         </table>
 
         {filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-zinc-400 text-sm">
+          <div className="flex flex-col items-center justify-center py-12 text-zinc-400 dark:text-zinc-500 text-sm">
             No customers found matching your search.
           </div>
         )}
       </div>
 
       {/* Pagination Footer */}
-      <div className="flex items-center justify-between border-t border-zinc-100 pt-4 text-sm text-zinc-400">
+      <div className="flex items-center justify-between border-t border-zinc-100 dark:border-[#1e2d47] pt-4 text-sm text-zinc-400 dark:text-zinc-500">
         <span>
           Showing{" "}
           {totalCustomers === 0 ? 0 : (currentPage - 1) * customersPerPage + 1}{" "}
@@ -353,7 +353,7 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
           <button
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            className="p-2 rounded hover:bg-zinc-100 text-zinc-400 disabled:opacity-40">
+            className="p-2 rounded hover:bg-zinc-100 dark:hover:bg-[#152238] text-zinc-400 disabled:opacity-40">
             <ChevronLeft size={16} />
           </button>
 
@@ -365,8 +365,8 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
                 onClick={() => setCurrentPage(page)}
                 className={`w-8 h-8 flex items-center justify-center rounded text-xs ${
                   currentPage === page
-                    ? "border border-zinc-300 bg-zinc-50 text-blue-600 font-semibold"
-                    : "text-zinc-500 hover:bg-zinc-100"
+                    ? "border border-zinc-300 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#152238] text-blue-600 dark:text-[#38bdf8] font-semibold"
+                    : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#152238]"
                 }`}>
                 {page}
               </button>
@@ -377,7 +377,7 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
           <button
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            className="p-2 rounded hover:bg-zinc-100 text-zinc-400 disabled:opacity-40">
+            className="p-2 rounded hover:bg-zinc-100 dark:hover:bg-[#152238] text-zinc-400 disabled:opacity-40">
             <ChevronRight size={16} />
           </button>
         </div>

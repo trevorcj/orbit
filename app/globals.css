@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: var(--font-plus-jakarta-sans);
   --font-custom: var(--font-boing);
@@ -14,6 +16,11 @@
 
 body {
   color: var(--color-orbit-black);
+}
+
+.dark body {
+  color: #f8fafc;
+  background-color: #0B1320;
 }
 
 h1 {

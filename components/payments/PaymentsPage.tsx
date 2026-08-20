@@ -114,89 +114,81 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
       "...",
       totalPages,
     ];
-  }, [totalPages, currentPage]);
+  }, [currentPage, totalPages]);
 
-  const statusConfig: Record<
-    PaymentStatus,
-    {
-      text: string;
-      bg: string;
-      border: string;
-      display: string;
-    }
-  > = {
+  const statusConfig = {
     success: {
-      text: "text-emerald-600",
-      bg: "bg-emerald-50",
-      border: "border-emerald-200",
+      text: "text-emerald-600 dark:text-emerald-400",
+      bg: "bg-emerald-50 dark:bg-emerald-950/50",
+      border: "border-emerald-200 dark:border-emerald-800",
       display: "Success",
     },
 
     failed: {
-      text: "text-red-600",
-      bg: "bg-red-50",
-      border: "border-red-200",
+      text: "text-rose-600 dark:text-rose-400",
+      bg: "bg-rose-50 dark:bg-rose-950/50",
+      border: "border-rose-200 dark:border-rose-800",
       display: "Failed",
     },
 
     pending: {
-      text: "text-orange-600",
-      bg: "bg-orange-50",
-      border: "border-orange-200",
+      text: "text-amber-600 dark:text-amber-400",
+      bg: "bg-amber-50 dark:bg-amber-950/50",
+      border: "border-amber-200 dark:border-amber-800",
       display: "Pending",
     },
 
     reversed: {
-      text: "text-zinc-600",
-      bg: "bg-zinc-50",
-      border: "border-zinc-200",
+      text: "text-zinc-600 dark:text-zinc-400",
+      bg: "bg-zinc-100 dark:bg-zinc-800",
+      border: "border-zinc-200 dark:border-zinc-700",
       display: "Reversed",
     },
   };
 
-  const formatMoney = (value: number, currency: string) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency,
-      minimumFractionDigits: 0,
-    }).format(value);
+  const formatMoney = (amount: number, currency: string) => {
+    return `₦${Number(amount).toLocaleString("en-NG", {
+      minimumFractionDigits: 2,
+    })}`;
   };
 
-  const formatDateTime = (date: string | null) => {
-    if (!date) return "—";
+  const formatDateTime = (dateString: string | null) => {
+    if (!dateString) return "—";
 
-    return new Date(date).toLocaleString("en-US", {
-      month: "short",
-      day: "2-digit",
+    return new Date(dateString).toLocaleDateString("en-NG", {
       year: "numeric",
+      month: "short",
+      day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
   };
 
   const handleExportCSV = () => {
+    if (!filteredPayments.length) return;
+
     const headers = [
-      "ID",
       "Customer",
       "Email",
       "Plan",
+      "Reference",
       "Amount",
       "Currency",
+      "Provider",
       "Status",
-      "Reference",
       "Paid At",
     ];
 
-    const rows = filteredPayments.map((payment) => [
-      payment.id,
-      payment.customers?.name ?? "N/A",
-      payment.customers?.email ?? "N/A",
-      payment.subscriptions?.plans?.name ?? "One-time",
-      payment.amount,
-      payment.currency,
-      payment.status,
-      payment.provider_reference ?? "",
-      payment.paid_at ?? "",
+    const rows = filteredPayments.map((p) => [
+      p.customers?.name ?? "Unknown Customer",
+      p.customers?.email ?? "—",
+      p.subscriptions?.plans?.name ?? "One-time",
+      p.provider_reference ?? "—",
+      p.amount,
+      p.currency,
+      p.provider,
+      p.status,
+      p.paid_at ? new Date(p.paid_at).toISOString() : "—",
     ]);
 
     const csv = [headers, ...rows]
@@ -227,15 +219,16 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
 
     URL.revokeObjectURL(url);
   };
+
   return (
     <>
       <div className="flex flex-col gap-8 w-full max-w-full mx-auto p-6 relative">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-bold text-zinc-900">Payments</h1>
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Payments</h1>
 
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Track incoming platform payments, transactions, and invoice
               states.
             </p>
@@ -243,7 +236,7 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
 
           <button
             onClick={handleExportCSV}
-            className="flex h-11 items-center gap-2 rounded-lg border border-zinc-200 px-5 text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-50 transition-colors cursor-pointer">
+            className="flex h-11 items-center gap-2 rounded-lg border border-zinc-200 dark:border-[#1e2d47] px-5 text-sm font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-[#111c2e] hover:bg-zinc-50 dark:hover:bg-[#152238] transition-colors cursor-pointer">
             <Download size={16} />
             Export Transactions
           </button>
@@ -251,9 +244,9 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
 
         {/* Search + Filter */}
         <div className="flex items-center justify-between gap-3 w-full">
-          <div className="relative w-[320px]">
+          <div className="relative w-full sm:w-80">
             <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500"
               size={18}
             />
 
@@ -261,28 +254,28 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
               value={query}
               onChange={(e) => handleQueryChange(e.target.value)}
               placeholder="Search reference, customer, plan..."
-              className="h-11 w-full rounded border border-zinc-200 pl-11 pr-4 text-sm bg-white focus:outline-none"
+              className="h-11 w-full rounded-lg border border-zinc-200 dark:border-[#1e2d47] pl-11 pr-4 text-sm bg-white dark:bg-[#111c2e] text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-[#0F86EE]"
             />
           </div>
 
           <div className="relative" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setOpenFilter(!openFilter)}
-              className="flex h-11 w-40 items-center justify-between rounded border border-zinc-200 px-4 text-sm bg-white capitalize">
+              className="flex h-11 w-40 items-center justify-between rounded-lg border border-zinc-200 dark:border-[#1e2d47] px-4 text-sm text-zinc-700 dark:text-zinc-200 bg-white dark:bg-[#111c2e] capitalize cursor-pointer">
               {status === "all" ? "All status" : status}
 
-              <ChevronDown size={18} />
+              <ChevronDown size={18} className="text-zinc-500 dark:text-zinc-400" />
             </button>
 
             {openFilter && (
-              <div className="absolute right-0 top-12 w-40 rounded border border-zinc-200 bg-white overflow-hidden z-50">
+              <div className="absolute right-0 top-12 w-40 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] overflow-hidden z-50 py-1 shadow-lg">
                 {(
                   ["all", "success", "failed", "pending", "reversed"] as const
                 ).map((option) => (
                   <button
                     key={option}
                     onClick={() => handleStatusChange(option)}
-                    className="w-full px-4 py-2.5 text-left text-sm hover:bg-zinc-50 capitalize">
+                    className="w-full px-4 py-2 text-left text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-[#152238] capitalize cursor-pointer">
                     {option === "all" ? "All status" : option}
                   </button>
                 ))}
@@ -292,64 +285,64 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
         </div>
 
         {/* Table */}
-        <div className="w-full overflow-x-auto bg-white rounded-lg border border-zinc-100">
-          <table className="w-full border-collapse text-left text-sm text-zinc-600">
+        <div className="w-full overflow-x-auto bg-white dark:bg-[#111c2e] rounded-xl border border-zinc-200 dark:border-[#1e2d47] shadow-xs">
+          <table className="w-full border-collapse text-left text-sm text-zinc-600 dark:text-zinc-300">
             <thead>
-              <tr className="border-b border-zinc-100 text-zinc-400 text-xs bg-zinc-50/50">
-                <th className="py-4 px-6">Customer</th>
+              <tr className="border-b border-zinc-100 dark:border-[#1e2d47] text-zinc-500 dark:text-zinc-400 text-xs bg-zinc-50/50 dark:bg-[#0c1524]">
+                <th className="py-4 px-6 font-semibold">Customer</th>
 
-                <th className="py-4 px-6">Product/Plan</th>
+                <th className="py-4 px-6 font-semibold">Product/Plan</th>
 
-                <th className="py-4 px-6">Reference</th>
+                <th className="py-4 px-6 font-semibold">Reference</th>
 
-                <th className="py-4 px-6">Amount</th>
+                <th className="py-4 px-6 font-semibold">Amount</th>
 
-                <th className="py-4 px-6">Provider</th>
+                <th className="py-4 px-6 font-semibold">Provider</th>
 
-                <th className="py-4 px-6">Status</th>
+                <th className="py-4 px-6 font-semibold">Status</th>
 
-                <th className="py-4 px-6">Paid Date</th>
+                <th className="py-4 px-6 font-semibold">Paid Date</th>
 
                 <th />
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-zinc-50">
+            <tbody className="divide-y divide-zinc-100 dark:divide-[#1e2d47]">
               {paginatedPayments.map((payment) => (
                 <tr
                   key={payment.id}
                   onClick={() => setSelectedPayment(payment)}
-                  className="hover:bg-zinc-50 cursor-pointer group">
+                  className="hover:bg-zinc-50/70 dark:hover:bg-[#152238] cursor-pointer group transition-colors">
                   <td className="py-4 px-6">
                     <div className="flex flex-col">
-                      <span className="font-semibold text-zinc-800">
+                      <span className="font-semibold text-zinc-900 dark:text-white">
                         {payment.customers?.name ?? "Unknown Customer"}
                       </span>
 
-                      <span className="text-xs text-zinc-400">
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
                         {payment.customers?.email ?? "—"}
                       </span>
                     </div>
                   </td>
 
-                  <td className="py-4 px-6">
+                  <td className="py-4 px-6 text-zinc-700 dark:text-zinc-300">
                     {payment.subscriptions?.plans?.name ?? "One-off charge"}
                   </td>
 
-                  <td className="py-4 px-6 font-mono text-xs">
+                  <td className="py-4 px-6 font-mono text-xs text-zinc-600 dark:text-zinc-400">
                     {payment.provider_reference ?? "—"}
                   </td>
 
-                  <td className="py-4 px-6 font-semibold text-zinc-800">
+                  <td className="py-4 px-6 font-semibold text-zinc-900 dark:text-white font-mono">
                     {formatMoney(payment.amount, payment.currency)}
                   </td>
 
-                  <td className="py-4 px-6 capitalize">{payment.provider}</td>
+                  <td className="py-4 px-6 capitalize text-zinc-600 dark:text-zinc-300">{payment.provider}</td>
 
                   <td className="py-4 px-6">
                     <span
                       className={`
-                        inline-flex px-2.5 py-1 rounded-full text-xs border
+                        inline-flex px-2.5 py-1 rounded-full text-xs font-semibold border
                         ${statusConfig[payment.status].bg}
                         ${statusConfig[payment.status].text}
                         ${statusConfig[payment.status].border}
@@ -358,7 +351,7 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
                     </span>
                   </td>
 
-                  <td className="py-4 px-6 text-zinc-400">
+                  <td className="py-4 px-6 text-zinc-500 dark:text-zinc-400">
                     {formatDateTime(payment.paid_at).split(",")[0]}
                   </td>
 
@@ -368,7 +361,7 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
                         e.stopPropagation();
                         setSelectedPayment(payment);
                       }}
-                      className="opacity-0 group-hover:opacity-100">
+                      className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
                       <MoreVertical size={16} />
                     </button>
                   </td>
@@ -378,7 +371,7 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
           </table>
 
           {filteredPayments.length === 0 && (
-            <div className="py-16 text-center text-sm text-zinc-400">
+            <div className="py-16 text-center text-sm text-zinc-400 dark:text-zinc-500">
               No payments found.
             </div>
           )}
@@ -386,7 +379,7 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
 
         {/* Pagination */}
         {totalItems > 0 && (
-          <div className="flex items-center justify-between pt-4 text-sm text-zinc-400">
+          <div className="flex items-center justify-between pt-4 text-sm text-zinc-400 dark:text-zinc-500 border-t border-zinc-100 dark:border-[#1e2d47]">
             <span>
               Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
               {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}{" "}
@@ -397,7 +390,7 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                className="p-2 disabled:opacity-40">
+                className="p-2 disabled:opacity-40 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#152238] rounded">
                 <ChevronLeft size={16} />
               </button>
 
@@ -416,8 +409,8 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
                       w-8 h-8 rounded text-xs
                       ${
                         currentPage === page
-                          ? "border bg-zinc-50 text-blue-600"
-                          : "hover:bg-zinc-100"
+                          ? "border border-zinc-300 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#152238] text-blue-600 dark:text-[#38bdf8] font-semibold"
+                          : "hover:bg-zinc-100 dark:hover:bg-[#152238] text-zinc-500 dark:text-zinc-400"
                       }
                     `}>
                     {page}
@@ -430,7 +423,7 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
                 onClick={() =>
                   setCurrentPage((p) => Math.min(p + 1, totalPages))
                 }
-                className="p-2 disabled:opacity-40">
+                className="p-2 disabled:opacity-40 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#152238] rounded">
                 <ChevronRight size={16} />
               </button>
             </div>
@@ -440,75 +433,77 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
 
       {/* Payment Details Drawer */}
       {selectedPayment && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/40">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/50">
           <div className="flex-1" onClick={() => setSelectedPayment(null)} />
 
-          <div className="w-full max-w-md bg-white h-full p-6 flex flex-col justify-between">
+          <div className="w-full max-w-md bg-white dark:bg-[#111c2e] border-l border-zinc-200 dark:border-[#1e2d47] h-full p-6 flex flex-col justify-between text-zinc-900 dark:text-white">
             <div>
-              <div className="flex justify-between border-b pb-4">
+              <div className="flex justify-between border-b border-zinc-100 dark:border-[#1e2d47] pb-4">
                 <div>
-                  <p className="text-xs text-zinc-400">Transaction Record</p>
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">Transaction Record</p>
 
                   <p className="font-mono text-sm">{selectedPayment.id}</p>
                 </div>
 
-                <button onClick={() => setSelectedPayment(null)}>
+                <button onClick={() => setSelectedPayment(null)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer">
                   <X size={18} />
                 </button>
               </div>
 
-              <div className="mt-6 bg-zinc-50 p-4 rounded-xl text-center">
-                <h2 className="text-2xl font-bold">
+              <div className="mt-6 bg-zinc-50 dark:bg-[#0c1524] border border-zinc-100 dark:border-[#1e2d47] p-4 rounded-xl text-center">
+                <h2 className="text-2xl font-bold font-mono text-zinc-900 dark:text-white">
                   {formatMoney(
                     selectedPayment.amount,
                     selectedPayment.currency,
                   )}
                 </h2>
 
-                <span>{statusConfig[selectedPayment.status].display}</span>
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1 inline-block">
+                  {statusConfig[selectedPayment.status].display}
+                </span>
               </div>
 
-              <div className="mt-6 flex flex-col gap-5">
+              <div className="mt-6 flex flex-col gap-5 text-sm">
                 <div className="flex gap-3">
-                  <User size={16} />
+                  <User size={16} className="text-[#0F86EE] shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs text-zinc-400">Customer</p>
-                    <p>{selectedPayment.customers?.name}</p>
-                    <p className="text-xs">
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500">Customer</p>
+                    <p className="font-semibold text-zinc-900 dark:text-white">{selectedPayment.customers?.name}</p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
                       {selectedPayment.customers?.email}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
-                  <FileText size={16} />
+                  <FileText size={16} className="text-[#0F86EE] shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs text-zinc-400">Plan</p>
-                    <p>
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500">Plan</p>
+                    <p className="font-semibold text-zinc-900 dark:text-white">
                       {selectedPayment.subscriptions?.plans?.name ?? "One-time"}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
-                  <CreditCard size={16} />
+                  <CreditCard size={16} className="text-[#0F86EE] shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs text-zinc-400">Provider</p>
-                    <p className="capitalize">{selectedPayment.provider}</p>
-                    <p className="font-mono text-xs">
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500">Provider</p>
+                    <p className="capitalize font-semibold text-zinc-900 dark:text-white">{selectedPayment.provider}</p>
+                    <p className="font-mono text-xs text-zinc-500 dark:text-zinc-400">
                       {selectedPayment.provider_reference}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
-                  <Calendar size={16} />
+                  <Calendar size={16} className="text-[#0F86EE] shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs text-zinc-400">Timeline</p>
-                    <p className="text-xs">
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500">Timeline</p>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-300">
                       Created: {formatDateTime(selectedPayment.created_at)}
                     </p>
-                    <p className="text-xs">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-300">
                       Paid: {formatDateTime(selectedPayment.paid_at)}
                     </p>
                   </div>
@@ -518,7 +513,7 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
 
             <button
               onClick={() => window.print()}
-              className="h-11 rounded-lg bg-zinc-900 text-white">
+              className="h-11 rounded-lg bg-[#0F86EE] hover:bg-[#0d7ad9] text-white text-sm font-semibold transition-colors cursor-pointer">
               Print Invoice
             </button>
           </div>

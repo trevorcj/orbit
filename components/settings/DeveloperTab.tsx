@@ -54,14 +54,14 @@ function RevealField({
       readOnly
       label={label}
       value={reveal ? value : masked}
-      className="border-zinc-200 font-mono !text-xs text-zinc-600 bg-zinc-50/50 tracking-wider pr-24">
+      className="border-zinc-200 dark:border-[#1e2d47] font-mono !text-xs text-zinc-600 dark:text-zinc-300 bg-zinc-50/50 dark:bg-[#0c1524] tracking-wider pr-24">
       <div className="flex items-center gap-1.5 pointer-events-auto">
         {badge && (
           <span
             className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border ${
               badge === "secret"
-                ? "text-rose-600 bg-rose-50 border-rose-100"
-                : "text-emerald-600 bg-emerald-50 border-emerald-100"
+                ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 border-rose-100 dark:border-rose-800"
+                : "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-800"
             }`}>
             {badge}
           </span>
@@ -69,13 +69,13 @@ function RevealField({
         <button
           type="button"
           onClick={() => setReveal(!reveal)}
-          className="p-1.5 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer">
+          className="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-[#152238] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors cursor-pointer">
           {reveal ? <EyeOff size={16} /> : <Eye size={16} />}
         </button>
         <button
           type="button"
           onClick={handleCopy}
-          className="p-1.5 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer">
+          className="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-[#152238] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors cursor-pointer">
           {copied ? (
             <Check size={16} className="text-emerald-500" />
           ) : (
@@ -105,15 +105,15 @@ export default function DeveloperTab({
 
   const [generateState, generateAction, generating] = useActionState(
     async (_prev: unknown, formData: FormData) => {
-      const result = await generateNewApiKey(formData);
-      if (result.success && result.apiKey) {
+      const res = await generateNewApiKey(formData);
+      if (res.success && res.apiKey) {
         setGeneratedKey({
-          name: result.apiKey.name,
-          type: result.apiKey.type,
-          key: result.apiKey.key,
+          name: res.apiKey.name,
+          type: res.apiKey.type as "publishable" | "secret",
+          key: res.apiKey.key,
         });
       }
-      return result;
+      return res;
     },
     null,
   );
@@ -160,25 +160,25 @@ export default function DeveloperTab({
   return (
     <div className="flex flex-col gap-6 max-w-4xl">
       {/* ============ API KEYS ============ */}
-      <div className="flex flex-col gap-6 p-8 rounded-xl border border-zinc-200 bg-white">
+      <div className="flex flex-col gap-6 p-8 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-zinc-900">API keys</h2>
-            <p className="text-xs text-zinc-500 mt-0.5">
+            <h2 className="text-base font-bold text-zinc-900 dark:text-white">API keys</h2>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
               Authenticate your application against the Orbit Developer API.
             </p>
           </div>
 
           <a
             href="/docs"
-            className="flex items-center gap-1.5 text-xs font-semibold text-[#0F86EE] hover:underline">
+            className="flex items-center gap-1.5 text-xs font-semibold text-[#0F86EE] dark:text-[#38bdf8] hover:underline">
             <span>View API documentation</span>
             <ExternalLink size={14} />
           </a>
         </div>
 
         {activeKeys.length === 0 && (
-          <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 p-6 text-center text-sm text-zinc-400">
+          <div className="rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-[#0c1524] p-6 text-center text-sm text-zinc-400 dark:text-zinc-500">
             No API keys yet. Generate a publishable key for client components
             and a secret key for your backend.
           </div>
@@ -188,22 +188,22 @@ export default function DeveloperTab({
           {activeKeys.map((key) => (
             <div
               key={key.id}
-              className="w-full rounded-xl border border-zinc-200 bg-white p-5 flex flex-col gap-4">
+              className="w-full rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] p-5 flex flex-col gap-4">
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-zinc-800">
+                  <span className="font-semibold text-zinc-800 dark:text-zinc-200">
                     {key.name}
                   </span>
                   <span
                     className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border ${
                       key.type === "secret"
-                        ? "text-rose-600 bg-rose-50 border-rose-100"
-                        : "text-emerald-600 bg-emerald-50 border-emerald-100"
+                        ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 border-rose-100 dark:border-rose-800"
+                        : "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-800"
                     }`}>
                     {key.type}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-zinc-400">
+                <div className="flex items-center gap-3 text-zinc-400 dark:text-zinc-500">
                   <span>
                     Created{" "}
                     {new Date(key.created_at).toLocaleDateString("en-GB", {
@@ -238,13 +238,13 @@ export default function DeveloperTab({
             {revokedKeys.map((key) => (
               <div
                 key={key.id}
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-5 flex flex-col gap-4">
+                className="w-full rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#0c1524] p-5 flex flex-col gap-4">
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-zinc-800 line-through">
+                    <span className="font-semibold text-zinc-800 dark:text-zinc-200 line-through">
                       {key.name}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase text-zinc-500 bg-zinc-100 border border-zinc-200">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase text-zinc-500 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
                       revoked
                     </span>
                   </div>
@@ -256,8 +256,8 @@ export default function DeveloperTab({
         )}
 
         {/* Generate key form */}
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50/40 p-5">
-          <p className="text-xs font-semibold text-zinc-700 mb-3">
+        <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/40 dark:bg-[#0c1524] p-5">
+          <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
             Generate a new API key
           </p>
 
@@ -271,7 +271,7 @@ export default function DeveloperTab({
                 type="text"
                 name="name"
                 placeholder="e.g. Production backend"
-                className="border-zinc-200 bg-white"
+                className="border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] dark:text-white"
               />
             </div>
             <div className="flex-1 min-w-40">
@@ -282,7 +282,7 @@ export default function DeveloperTab({
                 name="type"
                 defaultValue="secret"
                 placeholder="secret or publishable"
-                className="border-zinc-200 bg-white"
+                className="border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] dark:text-white"
               />
             </div>
             <button
@@ -302,7 +302,7 @@ export default function DeveloperTab({
 
           {generatedKey && (
             <div className="mt-4">
-              <p className="text-[11px] text-amber-600 font-semibold mb-2">
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mb-2">
                 Copy this key now — it will not be shown again.
               </p>
               <RevealField
@@ -314,25 +314,25 @@ export default function DeveloperTab({
           )}
         </div>
 
-        <p className="text-[11px] text-zinc-400">
+        <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
           Keep your secret keys secure. Never expose them in client-side code.
         </p>
       </div>
 
       {/* ============ WEBHOOKS ============ */}
-      <div className="flex flex-col gap-6 p-8 rounded-xl border border-zinc-200 bg-white">
+      <div className="flex flex-col gap-6 p-8 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
         <div>
-          <h2 className="text-base font-bold text-zinc-900">Webhooks</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <h2 className="text-base font-bold text-zinc-900 dark:text-white">Webhooks</h2>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
             Orbit delivers subscription and payment events to your endpoints.
           </p>
         </div>
 
         {webhookEndpoints.length === 0 && (
-          <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 p-6 text-center text-sm text-zinc-400">
+          <div className="rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-[#0c1524] p-6 text-center text-sm text-zinc-400 dark:text-zinc-500">
             No webhook endpoints. Add one to receive events like{" "}
-            <code className="text-xs">payment.succeeded</code> and{" "}
-            <code className="text-xs">subscription.created</code>.
+            <code className="text-xs text-[#0F86EE]">payment.succeeded</code> and{" "}
+            <code className="text-xs text-[#0F86EE]">subscription.created</code>.
           </div>
         )}
 
@@ -340,21 +340,21 @@ export default function DeveloperTab({
           {webhookEndpoints.map((endpoint) => (
             <div
               key={endpoint.id}
-              className={`w-full rounded-xl border bg-white p-5 flex flex-col gap-4 ${
+              className={`w-full rounded-xl border bg-white dark:bg-[#152238] p-5 flex flex-col gap-4 ${
                 endpoint.is_active
-                  ? "border-zinc-200"
-                  : "border-zinc-200 opacity-60"
+                  ? "border-zinc-200 dark:border-[#1e2d47]"
+                  : "border-zinc-200 dark:border-[#1e2d47] opacity-60"
               }`}>
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2 min-w-0">
-                  <code className="text-[11px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded px-2 py-1 truncate max-w-80">
+                  <code className="text-[11px] text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-[#0c1524] border border-zinc-200 dark:border-[#1e2d47] rounded px-2 py-1 truncate max-w-80">
                     {endpoint.url}
                   </code>
                   <span
                     className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border ${
                       endpoint.is_active
-                        ? "text-emerald-600 bg-emerald-50 border-emerald-100"
-                        : "text-zinc-500 bg-zinc-100 border-zinc-200"
+                        ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-800"
+                        : "text-zinc-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
                     }`}>
                     {endpoint.is_active ? "active" : "paused"}
                   </span>
@@ -366,7 +366,7 @@ export default function DeveloperTab({
                     onClick={() =>
                       handleToggle(endpoint.id, endpoint.is_active)
                     }
-                    className="flex items-center gap-1 text-xs font-semibold text-zinc-500 hover:text-zinc-700 cursor-pointer">
+                    className="flex items-center gap-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer">
                     <RefreshCw size={13} />
                     {endpoint.is_active ? "Pause" : "Activate"}
                   </button>
@@ -385,12 +385,12 @@ export default function DeveloperTab({
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-[11px] text-zinc-400 mr-1">Events:</span>
                 {endpoint.events.length === 0 ? (
-                  <span className="text-[11px] text-zinc-500">All events</span>
+                  <span className="text-[11px] text-zinc-500 dark:text-zinc-400">All events</span>
                 ) : (
                   endpoint.events.map((event) => (
                     <span
                       key={event}
-                      className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#0F86EE] bg-blue-50 border border-blue-100">
+                      className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#0F86EE] dark:text-[#38bdf8] bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-800">
                       {event}
                     </span>
                   ))
@@ -401,8 +401,8 @@ export default function DeveloperTab({
         </div>
 
         {/* Add webhook form */}
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50/40 p-5">
-          <p className="text-xs font-semibold text-zinc-700 mb-3">
+        <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/40 dark:bg-[#0c1524] p-5">
+          <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
             Add a webhook endpoint
           </p>
 
@@ -416,7 +416,7 @@ export default function DeveloperTab({
                 type="text"
                 name="url"
                 placeholder="https://yourapp.com/api/orbit/webhook"
-                className="border-zinc-200 bg-white"
+                className="border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] dark:text-white"
               />
             </div>
             <div className="flex-1 min-w-52">
@@ -426,7 +426,7 @@ export default function DeveloperTab({
                 type="text"
                 name="events"
                 placeholder="payment.succeeded, subscription.created"
-                className="border-zinc-200 bg-white"
+                className="border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] dark:text-white"
               />
             </div>
             <button
@@ -445,13 +445,13 @@ export default function DeveloperTab({
             {webhookEvents.map((event) => (
               <code
                 key={event}
-                className="text-[10px] text-zinc-500 bg-zinc-100 rounded px-1.5 py-0.5">
+                className="text-[10px] text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 rounded px-1.5 py-0.5">
                 {event}
               </code>
             ))}
           </div>
 
-          <p className="mt-3 text-[11px] text-zinc-400">
+          <p className="mt-3 text-[11px] text-zinc-400 dark:text-zinc-500">
             Verify deliveries with the{" "}
             <code className="text-[10px]">orbit-signature</code> header:{" "}
             <code className="text-[10px]">
@@ -464,26 +464,26 @@ export default function DeveloperTab({
       </div>
 
       {/* ============ SYSTEM ENDPOINTS (PAYSTACK & CRON) ============ */}
-      <div className="flex flex-col gap-6 p-8 rounded-xl border border-zinc-200 bg-white">
+      <div className="flex flex-col gap-6 p-8 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
         <div>
-          <h2 className="text-base font-bold text-zinc-900">
+          <h2 className="text-base font-bold text-zinc-900 dark:text-white">
             System Infrastructure Endpoints
           </h2>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
             Gateway listeners and recurring billing cron job URLs.
           </p>
         </div>
 
         {/* PAYSTACK WEBHOOK */}
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50/40 p-4 flex flex-col gap-2">
+        <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/40 dark:bg-[#0c1524] p-4 flex flex-col gap-2">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
-              <Webhook size={15} className="text-[#0F86EE]" />
-              <span className="font-semibold text-zinc-900">
+              <Webhook size={15} className="text-[#0F86EE] dark:text-[#38bdf8]" />
+              <span className="font-semibold text-zinc-900 dark:text-white">
                 Paystack Webhook Endpoint
               </span>
             </div>
-            <span className="text-[11px] text-zinc-400">
+            <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
               Listens to charge.success
             </span>
           </div>
@@ -493,7 +493,7 @@ export default function DeveloperTab({
               type="text"
               readOnly
               value={`${appUrl}/api/webhooks/paystack`}
-              className="flex-1 h-9 rounded-lg border border-zinc-200 bg-white px-3 font-mono text-xs text-zinc-700 outline-none"
+              className="flex-1 h-9 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] px-3 font-mono text-xs text-zinc-700 dark:text-zinc-200 outline-none"
             />
             <button
               type="button"
@@ -503,7 +503,7 @@ export default function DeveloperTab({
                   "Paystack Webhook",
                 )
               }
-              className="h-9 px-3 rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 text-xs font-semibold text-zinc-700 flex items-center gap-1 cursor-pointer">
+              className="h-9 px-3 rounded-lg bg-white dark:bg-[#152238] border border-zinc-200 dark:border-[#1e2d47] hover:bg-zinc-50 dark:hover:bg-[#1e2d47] text-xs font-semibold text-zinc-700 dark:text-zinc-200 flex items-center gap-1 cursor-pointer">
               {copiedGeneral === "Paystack Webhook" ? (
                 <Check size={13} className="text-emerald-500" />
               ) : (
@@ -515,15 +515,15 @@ export default function DeveloperTab({
         </div>
 
         {/* AUTO-BILLING CRON */}
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50/40 p-4 flex flex-col gap-2">
+        <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/40 dark:bg-[#0c1524] p-4 flex flex-col gap-2">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
-              <Clock size={15} className="text-indigo-600" />
-              <span className="font-semibold text-zinc-900">
+              <Clock size={15} className="text-indigo-600 dark:text-indigo-400" />
+              <span className="font-semibold text-zinc-900 dark:text-white">
                 Auto-Billing Cron URL
               </span>
             </div>
-            <span className="text-[11px] text-zinc-400">Everyday</span>
+            <span className="text-[11px] text-zinc-400 dark:text-zinc-500">Everyday</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -531,14 +531,14 @@ export default function DeveloperTab({
               type="text"
               readOnly
               value={`${appUrl}/api/cron/renew`}
-              className="flex-1 h-9 rounded-lg border border-zinc-200 bg-white px-3 font-mono text-xs text-zinc-700 outline-none"
+              className="flex-1 h-9 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] px-3 font-mono text-xs text-zinc-700 dark:text-zinc-200 outline-none"
             />
             <button
               type="button"
               onClick={() =>
                 handleCopyText(`${appUrl}/api/cron/renew`, "Cron URL")
               }
-              className="h-9 px-3 rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 text-xs font-semibold text-zinc-700 flex items-center gap-1 cursor-pointer">
+              className="h-9 px-3 rounded-lg bg-white dark:bg-[#152238] border border-zinc-200 dark:border-[#1e2d47] hover:bg-zinc-50 dark:hover:bg-[#1e2d47] text-xs font-semibold text-zinc-700 dark:text-zinc-200 flex items-center gap-1 cursor-pointer">
               {copiedGeneral === "Cron URL" ? (
                 <Check size={13} className="text-emerald-500" />
               ) : (
@@ -551,7 +551,7 @@ export default function DeveloperTab({
       </div>
 
       {organisationId === null && (
-        <p className="text-xs text-zinc-400">
+        <p className="text-xs text-zinc-400 dark:text-zinc-500">
           Run the developer API migration in Supabase to enable API keys and
           webhooks.
         </p>
