@@ -8,7 +8,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, organisation } = await getOrganisation();
+  const { user, profile, organisation } = await getOrganisation();
 
   if (!user) {
     redirect("/login");
@@ -21,9 +21,9 @@ export default async function DashboardLayout({
   return (
     <DashboardLayoutClient
       userProfile={{
-        firstName: "",
-        lastName: "",
-        email: user.email ?? "",
+        firstName: profile?.first_name || "Merchant",
+        lastName: profile?.last_name || "",
+        email: profile?.email || user.email || "",
         avatarUrl: null,
       }}
       organization={{

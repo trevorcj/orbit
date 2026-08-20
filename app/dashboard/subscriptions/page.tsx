@@ -28,11 +28,9 @@ export default async function Page() {
     .from("organisations")
     .select("id")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   if (organisationError || !organisation) {
-    console.error("ORGANISATION FETCH ERROR:", organisationError);
-
     redirect("/onboarding");
   }
 
@@ -48,6 +46,7 @@ export default async function Page() {
       starts_at,
       renews_at,
       created_at,
+      cancel_at_period_end,
 
       customers (
         first_name,
@@ -92,7 +91,8 @@ export default async function Page() {
 
       const customerName =
         `${customer?.first_name ?? ""} ${customer?.last_name ?? ""}`.trim() ||
-        "Unknown Customer";
+        customer?.email ||
+        "Customer";
 
       let status: SubscriptionStatus = "Canceled";
 
@@ -100,40 +100,35 @@ export default async function Page() {
         case "ACTIVE":
           status = "Active";
           break;
-
         case "PAST_DUE":
           status = "Past due";
           break;
-
         case "TRIALING":
           status = "Trialing";
           break;
-
+        case "CANCELLED":
         case "CANCELED":
+        default:
           status = "Canceled";
           break;
       }
 
       return {
         id: subscription.id,
-
         customer: customerName,
-
-        productPlan: `${product?.name ?? "Unknown"} / ${
-          plan?.name ?? "Unknown"
-        }`,
-
+        productPlan: `${product?.name ?? "Product"} / ${plan?.name ?? "Plan"}`,
         amount: `₦${Number(plan?.amount ?? 0).toLocaleString()}`,
-
         billing:
           plan?.billing_interval === "yearly"
             ? "Yearly"
             : plan?.billing_interval === "quarterly"
               ? "Quarterly"
-              : "Monthly",
-
+              : plan?.billing_interval === "demo"
+                ? "Demo (2m)"
+                : plan?.billing_interval === "custom"
+                  ? "Custom"
+                  : "Monthly",
         status,
-
         nextPayment: subscription.renews_at
           ? new Date(subscription.renews_at).toLocaleDateString("en-NG", {
               year: "numeric",

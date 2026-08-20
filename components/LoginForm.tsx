@@ -6,6 +6,7 @@ import Button from "./Button";
 import { useForm } from "react-hook-form";
 import { login } from "@/actions/auth";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export type LoginFormValues = {
   email: string;
@@ -15,7 +16,6 @@ export type LoginFormValues = {
 function LoginForm() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [serverError, setServerError] = useState<string | null>(null);
 
   function togglePasswordVisibility() {
     setShowPassword((prev) => !prev);
@@ -29,38 +29,41 @@ function LoginForm() {
 
   async function onSubmit(data: LoginFormValues) {
     setIsSubmitting(true);
-    setServerError(null);
 
-    const result = await login(data);
+    try {
+      const result = await login(data);
 
-    if (result?.error) {
-      setServerError(result.error);
-      setIsSubmitting(false);
-      console.log("Login failed:", result.error);
+      if (result?.error) {
+        toast.error(result.error);
+        setIsSubmitting(false);
+      } else {
+        toast.success("Logged in successfully! Redirecting...");
+      }
+    } catch {
+      // If redirect throws Next.js NEXT_REDIRECT, it is normal navigation
     }
-
-    console.log(serverError);
   }
 
-  const errorClasses = "text-sm text-red-500 text-left";
+  const errorClasses = "text-xs text-red-500 text-left mt-1 flex items-center gap-1";
 
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)} className="w-full">
-        <div className="flex flex-col gap-3 items-center">
-          <h1 className="text-2xl">Welcome back</h1>
-          <p>Get into your Orbit</p>
+        <div className="flex flex-col gap-2 items-center text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900">Welcome back</h1>
+          <p className="text-sm text-zinc-500">Log in to manage your Orbit subscription workspace</p>
         </div>
 
-        <div className="mt-15 space-y-6">
-          <div className="flex flex-col gap-2 w-full">
+        <div className="mt-8 space-y-5">
+          <div className="flex flex-col w-full">
             <Input
-              placeholder="Email"
+              placeholder="name@company.com"
               isRequired
               required
-              type="text"
-              label="Email"
+              type="email"
+              label="Email address"
               id="email"
+              className="border-zinc-200"
               {...register("email", {
                 pattern: {
                   value: /^\S+@\S+$/i,
@@ -74,7 +77,7 @@ function LoginForm() {
             )}
           </div>
 
-          <div className="flex flex-col gap-2 w-full">
+          <div className="flex flex-col w-full">
             <Input
               placeholder="••••••••"
               isRequired
@@ -82,23 +85,18 @@ function LoginForm() {
               label="Password"
               id="password"
               required
+              className="border-zinc-200"
               {...register("password", {
                 required: "Password is required",
                 minLength: {
-                  value: 8,
-                  message: "Must be at least 8 characters",
-                },
-                pattern: {
-                  value:
-                    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-                  message:
-                    "Must include uppercase, lowercase, number, and special character",
+                  value: 6,
+                  message: "Password must be at least 6 characters",
                 },
               })}>
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
-                className="focus:outline-none cursor-pointer"
+                className="focus:outline-none cursor-pointer text-zinc-400 hover:text-zinc-600"
                 aria-label={showPassword ? "Hide password" : "Show password"}>
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -108,9 +106,11 @@ function LoginForm() {
             )}
           </div>
 
-          <Button className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Logging you in..." : "Login to my account"}
-          </Button>
+          <div className="pt-2">
+            <Button className="w-full h-12" disabled={isSubmitting}>
+              {isSubmitting ? "Logging you in..." : "Log in to my account"}
+            </Button>
+          </div>
         </div>
       </form>
     </>

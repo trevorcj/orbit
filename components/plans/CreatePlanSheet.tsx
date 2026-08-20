@@ -105,7 +105,7 @@ export default function CreatePlanSheet({
 
                     <option value="custom">Custom</option>
 
-                    <option value="demo">DEMO - 2 minutes</option>
+                    <option value="demo">DEMO - 1 minute</option>
                   </select>
 
                   <ChevronDown

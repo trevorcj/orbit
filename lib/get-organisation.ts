@@ -11,9 +11,16 @@ export async function getOrganisation() {
   if (userError || !user) {
     return {
       user: null,
+      profile: null,
       organisation: null,
     };
   }
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("id, email, first_name, last_name")
+    .eq("id", user.id)
+    .maybeSingle();
 
   const { data: organisation, error: organisationError } = await supabase
     .from("organisations")
@@ -33,6 +40,7 @@ export async function getOrganisation() {
 
   return {
     user,
+    profile,
     organisation,
   };
 }

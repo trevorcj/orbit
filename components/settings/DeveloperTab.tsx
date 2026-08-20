@@ -11,6 +11,8 @@ import {
   ExternalLink,
   Plus,
   RefreshCw,
+  Webhook,
+  Clock,
 } from "lucide-react";
 import Input from "@/components/Input";
 import {
@@ -33,7 +35,10 @@ function RevealField({
 }) {
   const [reveal, setReveal] = useState(false);
   const [copied, setCopied] = useState(false);
-  const masked = value.length > 16 ? `${value.slice(0, 12)}••••••••••••${value.slice(-4)}` : value;
+  const masked =
+    value.length > 16
+      ? `${value.slice(0, 12)}••••••••••••${value.slice(-4)}`
+      : value;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(value);
@@ -62,13 +67,15 @@ function RevealField({
           </span>
         )}
         <button
+          type="button"
           onClick={() => setReveal(!reveal)}
-          className="p-1.5 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors">
+          className="p-1.5 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer">
           {reveal ? <EyeOff size={16} /> : <Eye size={16} />}
         </button>
         <button
+          type="button"
           onClick={handleCopy}
-          className="p-1.5 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors">
+          className="p-1.5 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer">
           {copied ? (
             <Check size={16} className="text-emerald-500" />
           ) : (
@@ -94,6 +101,8 @@ export default function DeveloperTab({
     key: string;
   } | null>(null);
 
+  const [copiedGeneral, setCopiedGeneral] = useState<string | null>(null);
+
   const [generateState, generateAction, generating] = useActionState(
     async (_prev: unknown, formData: FormData) => {
       const result = await generateNewApiKey(formData);
@@ -109,7 +118,7 @@ export default function DeveloperTab({
     null,
   );
 
-  const [webhookState, webhookAction, creatingWebhook] = useActionState(
+  const [, webhookAction, creatingWebhook] = useActionState(
     async (_prev: unknown, formData: FormData) => {
       return createWebhookEndpoint(formData);
     },
@@ -134,32 +143,43 @@ export default function DeveloperTab({
     });
   };
 
+  const handleCopyText = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedGeneral(label);
+    setTimeout(() => setCopiedGeneral(null), 2000);
+  };
+
   const activeKeys = apiKeys.filter((key) => !key.revoked_at);
   const revokedKeys = apiKeys.filter((key) => key.revoked_at);
 
+  const appUrl =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : "https://orbit-billing-nomba.vercel.app";
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 max-w-4xl">
       {/* ============ API KEYS ============ */}
-      <div className="flex flex-col gap-6 p-8 rounded-xl border border-zinc-100 bg-white">
+      <div className="flex flex-col gap-6 p-8 rounded-xl border border-zinc-200 bg-white">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-zinc-900">API keys</h2>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Authenticate your application against the Orbit API.
+              Authenticate your application against the Orbit Developer API.
             </p>
           </div>
 
           <a
             href="/docs"
             className="flex items-center gap-1.5 text-xs font-semibold text-[#0F86EE] hover:underline">
-            View API documentation
+            <span>View API documentation</span>
             <ExternalLink size={14} />
           </a>
         </div>
 
         {activeKeys.length === 0 && (
           <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 p-6 text-center text-sm text-zinc-400">
-            No API keys yet. Generate a publishable key for the pricing table and
+            No API keys yet. Generate a publishable key for client components and
             a secret key for your backend.
           </div>
         )}
@@ -168,7 +188,7 @@ export default function DeveloperTab({
           {activeKeys.map((key) => (
             <div
               key={key.id}
-              className="w-full rounded-xl border border-zinc-100 bg-white p-5 flex flex-col gap-4">
+              className="w-full rounded-xl border border-zinc-200 bg-white p-5 flex flex-col gap-4">
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-zinc-800">{key.name}</span>
@@ -191,9 +211,12 @@ export default function DeveloperTab({
                     })}
                   </span>
                   {key.last_used_at && (
-                    <span>Last used {new Date(key.last_used_at).toLocaleDateString()}</span>
+                    <span>
+                      Last used {new Date(key.last_used_at).toLocaleDateString()}
+                    </span>
                   )}
                   <button
+                    type="button"
                     onClick={() => handleRevoke(key.id)}
                     className="flex items-center gap-1 text-xs font-semibold text-rose-500 hover:text-rose-600 cursor-pointer">
                     <Trash2 size={13} />
@@ -212,7 +235,7 @@ export default function DeveloperTab({
             {revokedKeys.map((key) => (
               <div
                 key={key.id}
-                className="w-full rounded-xl border border-zinc-100 bg-zinc-50 p-5 flex flex-col gap-4">
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-5 flex flex-col gap-4">
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-zinc-800 line-through">
@@ -230,7 +253,7 @@ export default function DeveloperTab({
         )}
 
         {/* Generate key form */}
-        <div className="rounded-xl border border-zinc-100 bg-zinc-50/40 p-5">
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50/40 p-5">
           <p className="text-xs font-semibold text-zinc-700 mb-3">
             Generate a new API key
           </p>
@@ -259,6 +282,7 @@ export default function DeveloperTab({
             </div>
             <button
               disabled={generating}
+              type="submit"
               className="flex h-11 items-center gap-2 rounded-lg bg-[#0F86EE] px-4 text-xs font-semibold text-white hover:bg-[#0d7ad9] transition-colors disabled:opacity-60 cursor-pointer">
               <Key size={14} />
               {generating ? "Generating..." : "Generate key"}
@@ -291,11 +315,11 @@ export default function DeveloperTab({
       </div>
 
       {/* ============ WEBHOOKS ============ */}
-      <div className="flex flex-col gap-6 p-8 rounded-xl border border-zinc-100 bg-white">
+      <div className="flex flex-col gap-6 p-8 rounded-xl border border-zinc-200 bg-white">
         <div>
           <h2 className="text-base font-bold text-zinc-900">Webhooks</h2>
           <p className="text-xs text-zinc-500 mt-0.5">
-            Orbit delivers subscription and payment events to your endpoint.
+            Orbit delivers subscription and payment events to your endpoints.
           </p>
         </div>
 
@@ -313,12 +337,12 @@ export default function DeveloperTab({
               key={endpoint.id}
               className={`w-full rounded-xl border bg-white p-5 flex flex-col gap-4 ${
                 endpoint.is_active
-                  ? "border-zinc-100"
-                  : "border-zinc-100 opacity-60"
+                  ? "border-zinc-200"
+                  : "border-zinc-200 opacity-60"
               }`}>
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2 min-w-0">
-                  <code className="text-[11px] text-zinc-700 bg-zinc-50 border border-zinc-100 rounded px-2 py-1 truncate max-w-80">
+                  <code className="text-[11px] text-zinc-700 bg-zinc-50 border border-zinc-200 rounded px-2 py-1 truncate max-w-80">
                     {endpoint.url}
                   </code>
                   <span
@@ -333,12 +357,14 @@ export default function DeveloperTab({
 
                 <div className="flex items-center gap-2">
                   <button
+                    type="button"
                     onClick={() => handleToggle(endpoint.id, endpoint.is_active)}
                     className="flex items-center gap-1 text-xs font-semibold text-zinc-500 hover:text-zinc-700 cursor-pointer">
                     <RefreshCw size={13} />
                     {endpoint.is_active ? "Pause" : "Activate"}
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleDelete(endpoint.id)}
                     className="flex items-center gap-1 text-xs font-semibold text-rose-500 hover:text-rose-600 cursor-pointer">
                     <Trash2 size={13} />
@@ -370,7 +396,7 @@ export default function DeveloperTab({
         </div>
 
         {/* Add webhook form */}
-        <div className="rounded-xl border border-zinc-100 bg-zinc-50/40 p-5">
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50/40 p-5">
           <p className="text-xs font-semibold text-zinc-700 mb-3">
             Add a webhook endpoint
           </p>
@@ -398,22 +424,21 @@ export default function DeveloperTab({
             </div>
             <button
               disabled={creatingWebhook}
+              type="submit"
               className="flex h-11 items-center gap-2 rounded-lg bg-[#0F86EE] px-4 text-xs font-semibold text-white hover:bg-[#0d7ad9] transition-colors disabled:opacity-60 cursor-pointer">
               <Plus size={14} />
               {creatingWebhook ? "Adding..." : "Add endpoint"}
             </button>
           </form>
 
-          {webhookState && !webhookState.success && (
-            <p className="mt-3 text-xs text-rose-500">{webhookState.message}</p>
-          )}
-
           <div className="mt-4 flex flex-wrap gap-1.5">
             <span className="text-[11px] text-zinc-400 mr-1">
               Available events:
             </span>
             {webhookEvents.map((event) => (
-              <code key={event} className="text-[10px] text-zinc-500 bg-zinc-100 rounded px-1.5 py-0.5">
+              <code
+                key={event}
+                className="text-[10px] text-zinc-500 bg-zinc-100 rounded px-1.5 py-0.5">
                 {event}
               </code>
             ))}
@@ -422,9 +447,75 @@ export default function DeveloperTab({
           <p className="mt-3 text-[11px] text-zinc-400">
             Verify deliveries with the{" "}
             <code className="text-[10px]">orbit-signature</code> header:{" "}
-            <code className="text-[10px]">t=timestamp,v1=hmac_sha256(secret, timestamp + &quot;.&quot; + body)</code>
+            <code className="text-[10px]">
+              t=timestamp,v1=hmac_sha256(secret, timestamp + &quot;.&quot; + body)
+            </code>
             . The secret is shown above.
           </p>
+        </div>
+      </div>
+
+      {/* ============ SYSTEM ENDPOINTS (PAYSTACK & CRON) ============ */}
+      <div className="flex flex-col gap-6 p-8 rounded-xl border border-zinc-200 bg-white">
+        <div>
+          <h2 className="text-base font-bold text-zinc-900">System Infrastructure Endpoints</h2>
+          <p className="text-xs text-zinc-500 mt-0.5">
+            Gateway listeners and recurring billing cron job URLs.
+          </p>
+        </div>
+
+        {/* PAYSTACK WEBHOOK */}
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50/40 p-4 flex flex-col gap-2">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <Webhook size={15} className="text-[#0F86EE]" />
+              <span className="font-semibold text-zinc-900">Paystack Webhook Endpoint</span>
+            </div>
+            <span className="text-[11px] text-zinc-400">Listens to charge.success</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              readOnly
+              value={`${appUrl}/api/webhooks/paystack`}
+              className="flex-1 h-9 rounded-lg border border-zinc-200 bg-white px-3 font-mono text-xs text-zinc-700 outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => handleCopyText(`${appUrl}/api/webhooks/paystack`, "Paystack Webhook")}
+              className="h-9 px-3 rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 text-xs font-semibold text-zinc-700 flex items-center gap-1 cursor-pointer">
+              {copiedGeneral === "Paystack Webhook" ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+              <span>Copy</span>
+            </button>
+          </div>
+        </div>
+
+        {/* AUTO-BILLING CRON */}
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50/40 p-4 flex flex-col gap-2">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <Clock size={15} className="text-indigo-600" />
+              <span className="font-semibold text-zinc-900">Auto-Billing Cron URL</span>
+            </div>
+            <span className="text-[11px] text-zinc-400">Every 1-5 mins</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              readOnly
+              value={`${appUrl}/api/cron/renew`}
+              className="flex-1 h-9 rounded-lg border border-zinc-200 bg-white px-3 font-mono text-xs text-zinc-700 outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => handleCopyText(`${appUrl}/api/cron/renew`, "Cron URL")}
+              className="h-9 px-3 rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 text-xs font-semibold text-zinc-700 flex items-center gap-1 cursor-pointer">
+              {copiedGeneral === "Cron URL" ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+              <span>Copy</span>
+            </button>
+          </div>
         </div>
       </div>
 

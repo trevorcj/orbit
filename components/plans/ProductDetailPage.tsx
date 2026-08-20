@@ -2,14 +2,18 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import { Copy, Trash2 } from "lucide-react";
+import { Copy, Trash2, Code2, Edit2 } from "lucide-react";
 import { toast } from "sonner";
 import { Product } from "@/types/product";
 import { Plan } from "@/types/plan";
 import CreatePlanSheet from "./CreatePlanSheet";
+import EmbedPricingModal from "./EmbedPricingModal";
+import EditProductModal from "./EditProductModal";
+import DeleteConfirmModal from "./DeleteConfirmModal";
 import { deleteProduct } from "@/actions/delete-product";
 import { deletePlan } from "@/actions/plans";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 function formatCurrency(amount: number | null, interval: string | null) {
   const formatter = new Intl.NumberFormat("en-NG", {
@@ -28,8 +32,13 @@ export default function ProductDetailPage({
   product: Product;
   plans: Plan[];
 }) {
+  const router = useRouter();
   const [tab, setTab] = useState<"plans" | "settings">("plans");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [embedModalOpen, setEmbedModalOpen] = useState(false);
+  const [editProductOpen, setEditProductOpen] = useState(false);
+  const [deleteProductOpen, setDeleteProductOpen] = useState(false);
+  const [planToDelete, setPlanToDelete] = useState<string | null>(null);
 
   const checkoutUrl = useMemo(() => {
     if (typeof window === "undefined") return `/checkout/${product.slug}`;
@@ -41,6 +50,28 @@ export default function ProductDetailPage({
   const copyCheckout = async () => {
     await navigator.clipboard.writeText(checkoutUrl);
     toast.success("Checkout URL copied");
+  };
+
+  const handleDeleteProduct = async () => {
+    const res = await deleteProduct(product.id);
+    if (res?.success) {
+      toast.success("Product deleted successfully");
+      router.push("/dashboard/products");
+    } else {
+      toast.error("Failed to delete product.");
+    }
+  };
+
+  const handleDeletePlan = async () => {
+    if (!planToDelete) return;
+    const res = await deletePlan(planToDelete);
+    if (res.success) {
+      toast.success("Plan deleted successfully");
+      setPlanToDelete(null);
+      router.refresh();
+    } else {
+      toast.error(res.message || "Failed to delete plan");
+    }
   };
 
   return (
@@ -72,11 +103,20 @@ export default function ProductDetailPage({
             </p>
           </div>
 
-          <button
-            onClick={() => setSheetOpen(true)}
-            className="h-11 rounded-full bg-[#0F86EE] px-8 text-[15px] font-semibold text-white transition hover:bg-[#0d78d6] cursor-pointer w-fit">
-            Create plan
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setEmbedModalOpen(true)}
+              className="h-11 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 px-6 text-[14px] font-semibold text-zinc-700 transition cursor-pointer flex items-center gap-2">
+              <Code2 size={16} />
+              <span>Embed Code</span>
+            </button>
+
+            <button
+              onClick={() => setSheetOpen(true)}
+              className="h-11 rounded-full bg-[#0F86EE] px-8 text-[15px] font-semibold text-white transition hover:bg-[#0d78d6] cursor-pointer w-fit">
+              Create plan
+            </button>
+          </div>
         </div>
 
         {/* Tab Controls */}
@@ -152,14 +192,7 @@ export default function ProductDetailPage({
                           <Copy size={16} />
                         </button>
                         <button
-                          onClick={async () => {
-                            const res = await deletePlan(plan.id);
-                            if (res.success) toast.success("Plan deleted");
-                            else
-                              toast.error(
-                                res.message || "Failed to delete plan",
-                              );
-                          }}
+                          onClick={() => setPlanToDelete(plan.id)}
                           className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 bg-red-50 hover:bg-red-100 transition-colors cursor-pointer"
                           aria-label="Delete plan">
                           <Trash2 size={16} className="text-red-500" />
@@ -196,7 +229,7 @@ export default function ProductDetailPage({
           ) : (
             <div className="mt-6 space-y-6">
               {/* General Settings Section */}
-              <div className="rounded-xl border border-zinc-100 bg-white p-6 ">
+              <div className="rounded-xl border border-zinc-100 bg-white p-6">
                 <div className="mb-6 flex items-center justify-between">
                   <div>
                     <h2 className="text-base font-bold text-zinc-900">
@@ -206,8 +239,11 @@ export default function ProductDetailPage({
                       Manage this product configuration.
                     </p>
                   </div>
-                  <button className="h-9 rounded-lg border border-zinc-200 px-4 text-xs font-semibold text-zinc-700 bg-white hover:bg-zinc-50 cursor-pointer">
-                    Edit
+                  <button
+                    onClick={() => setEditProductOpen(true)}
+                    className="h-9 rounded-lg border border-zinc-200 px-4 text-xs font-semibold text-zinc-700 bg-white hover:bg-zinc-50 cursor-pointer flex items-center gap-1.5 transition-colors">
+                    <Edit2 size={13} />
+                    <span>Edit</span>
                   </button>
                 </div>
 
@@ -250,14 +286,14 @@ export default function ProductDetailPage({
                       onClick={copyCheckout}
                       className="mt-1 inline-flex items-center gap-2 text-sm text-zinc-800 hover:text-blue-600 transition-colors font-mono underline break-all text-left">
                       {shortCheckoutUrl}
-                      <Copy size={14} className="text-zinc-400 flex-shrink-0" />
+                      <Copy size={14} className="text-zinc-400 shrink-0" />
                     </button>
                   </div>
                 </div>
               </div>
 
               {/* Danger Zone Section */}
-              <div className="rounded-xl border border-red-100 bg-white p-6 ">
+              <div className="rounded-xl border border-red-100 bg-white p-6">
                 <div>
                   <h2 className="text-base font-bold text-red-600">
                     Danger zone
@@ -269,10 +305,7 @@ export default function ProductDetailPage({
                 </div>
                 <div className="mt-4 pt-2">
                   <button
-                    onClick={async () => {
-                      await deleteProduct(product.id);
-                      toast.success("Product deleted");
-                    }}
+                    onClick={() => setDeleteProductOpen(true)}
                     className="h-10 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 px-5 text-xs font-semibold text-red-600 transition-colors cursor-pointer">
                     Delete Product
                   </button>
@@ -287,6 +320,35 @@ export default function ProductDetailPage({
         productId={product.id}
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
+      />
+
+      <EmbedPricingModal
+        isOpen={embedModalOpen}
+        onClose={() => setEmbedModalOpen(false)}
+        productSlug={product.slug}
+        productName={product.name}
+      />
+
+      <EditProductModal
+        isOpen={editProductOpen}
+        onClose={() => setEditProductOpen(false)}
+        product={product}
+      />
+
+      <DeleteConfirmModal
+        isOpen={deleteProductOpen}
+        onClose={() => setDeleteProductOpen(false)}
+        onConfirm={handleDeleteProduct}
+        title={`Delete "${product.name}"?`}
+        description="This will permanently delete this product and remove access to all associated checkout endpoints. This action cannot be undone."
+      />
+
+      <DeleteConfirmModal
+        isOpen={!!planToDelete}
+        onClose={() => setPlanToDelete(null)}
+        onConfirm={handleDeletePlan}
+        title="Delete Pricing Plan?"
+        description="Are you sure you want to delete this subscription plan? Existing subscribers will retain access, but new checkouts will be blocked."
       />
     </>
   );

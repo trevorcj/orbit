@@ -1,26 +1,40 @@
 import { NextResponse } from "next/server";
-
-import { lookupAccount } from "@/lib/nomba";
+import { resolvePaystackAccount } from "@/lib/paystack";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    console.log("Account lookup request:", body);
+    const { accountNumber, bankCode } = body;
 
-    const data = await lookupAccount(body.accountNumber, body.bankCode);
-    console.log("Account lookup response data:", data);
+    if (!accountNumber || !bankCode) {
+      return NextResponse.json(
+        { message: "Account number and bank code are required." },
+        { status: 400 },
+      );
+    }
+
+    if (accountNumber.trim().length !== 10) {
+      return NextResponse.json(
+        { message: "Account number must be exactly 10 digits." },
+        { status: 400 },
+      );
+    }
+
+    const data = await resolvePaystackAccount(accountNumber, bankCode);
 
     return NextResponse.json({
-      accountName: data.accountName || data.account_name || "",
+      success: true,
+      accountNumber: data.account_number,
+      accountName: data.account_name,
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Account lookup failed";
-    console.error("Account lookup route error:", message, error);
+      error instanceof Error ? error.message : "Unable to verify bank account";
+    console.error("Paystack account lookup error:", message);
     return NextResponse.json(
       {
+        success: false,
         message,
-        error: error instanceof Error ? error.toString() : String(error),
       },
       { status: 400 },
     );

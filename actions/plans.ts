@@ -81,10 +81,11 @@ export async function createPlan(productId: string, formData: FormData) {
             ? 365
             : null,
 
-    billing_interval_minutes: billingInterval === "demo" ? 2 : null,
+    billing_interval_minutes: billingInterval === "demo" ? 1 : null,
     trial_period_days: Number.isFinite(trialPeriodDays) ? trialPeriodDays : 0,
     features,
     description,
+    is_active: true,
   });
 
   if (error) {
@@ -94,6 +95,52 @@ export async function createPlan(productId: string, formData: FormData) {
   revalidatePath(`/dashboard/products/${product.slug}`);
 
   return { success: true };
+}
+
+export async function updatePlan(
+  planId: string,
+  updates: {
+    name?: string;
+    amount?: number;
+    description?: string;
+    features?: string[];
+    is_active?: boolean;
+    trial_period_days?: number;
+  },
+) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { success: false, message: "Unauthorized" };
+
+  const { data: organisation } = await supabase
+    .from("organisations")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!organisation) return { success: false, message: "Organisation not found" };
+
+  const { error } = await supabase
+    .from("plans")
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", planId)
+    .eq("organisation_id", organisation.id);
+
+  if (error) return { success: false, message: error.message };
+
+  revalidatePath("/dashboard/products");
+  return { success: true };
+}
+
+export async function togglePlanStatus(planId: string, is_active: boolean) {
+  return updatePlan(planId, { is_active });
 }
 
 export async function deletePlan(planId: string) {

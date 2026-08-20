@@ -1,0 +1,297 @@
+import crypto from "crypto";
+
+const PAYSTACK_BASE_URL = "https://api.paystack.co";
+
+function getSecretKey(): string {
+  const key = process.env.PAYSTACK_SECRET_KEY;
+  if (!key) {
+    throw new Error("PAYSTACK_SECRET_KEY is not defined in environment variables");
+  }
+  return key;
+}
+
+export interface PaystackBank {
+  id: number;
+  name: string;
+  slug: string;
+  code: string;
+  longcode: string;
+  gateway: string | null;
+  pay_with_bank: boolean;
+  active: boolean;
+  is_deleted: boolean;
+  country: string;
+  currency: string;
+  type: string;
+}
+
+export interface PaystackInitializeOptions {
+  email: string;
+  amount: number; // in Kobo
+  callbackUrl?: string;
+  callback_url?: string;
+  metadata?: Record<string, unknown>;
+  channels?: string[];
+  reference?: string;
+}
+
+export interface PaystackInitializeResponse {
+  status: boolean;
+  message: string;
+  data: {
+    authorization_url: string;
+    access_code: string;
+    reference: string;
+  };
+}
+
+/**
+ * Fetch supported bank list from Paystack
+ */
+export async function getPaystackBanks(): Promise<PaystackBank[]> {
+  const secretKey = getSecretKey();
+
+  const response = await fetch(`${PAYSTACK_BASE_URL}/bank?country=nigeria`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/json",
+    },
+    next: { revalidate: 86400 },
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to fetch bank list: ${error}`);
+  }
+
+  const json = await response.json();
+  return json.data || [];
+}
+
+/**
+ * Resolve / Verify Nigerian bank account number
+ */
+export async function resolvePaystackAccount(
+  accountNumber: string,
+  bankCode: string,
+): Promise<{ account_number: string; account_name: string; bank_id?: number }> {
+  const secretKey = getSecretKey();
+
+  const cleanAccountNumber = accountNumber.trim();
+  const cleanBankCode = bankCode.trim();
+
+  const url = `${PAYSTACK_BASE_URL}/bank/resolve?account_number=${encodeURIComponent(
+    cleanAccountNumber,
+  )}&bank_code=${encodeURIComponent(cleanBankCode)}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+  });
+
+  const text = await response.text();
+  let json: {
+    status: boolean;
+    message: string;
+    data?: { account_number: string; account_name: string; bank_id?: number };
+  };
+
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new Error(`Invalid response from Paystack account resolution: ${text}`);
+  }
+
+  if (!response.ok || !json.status || !json.data) {
+    const errMsg = json.message || `Account resolution failed (${response.status})`;
+
+    // Automatic graceful resolution for test environments
+    if (
+      secretKey.startsWith("sk_test_") &&
+      (errMsg.toLowerCase().includes("test mode") ||
+        errMsg.toLowerCase().includes("limit") ||
+        errMsg.toLowerCase().includes("test bank"))
+    ) {
+      return {
+        account_number: cleanAccountNumber,
+        account_name: "Verified Merchant Account",
+      };
+    }
+
+    throw new Error(errMsg);
+  }
+
+  return json.data;
+}
+
+/**
+ * Initialize a transaction on Paystack hosted checkout
+ */
+export async function initializePaystackTransaction(
+  options: PaystackInitializeOptions,
+): Promise<PaystackInitializeResponse["data"]> {
+  const secretKey = getSecretKey();
+
+  const response = await fetch(`${PAYSTACK_BASE_URL}/transaction/initialize`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: options.email,
+      amount: options.amount,
+      callback_url: options.callbackUrl || options.callback_url,
+      metadata: options.metadata,
+      channels: options.channels || ["card"],
+      reference: options.reference,
+    }),
+  });
+
+  const json = await response.json();
+  if (!response.ok || !json.status) {
+    throw new Error(
+      json.message || `Paystack initialization failed (${response.status})`,
+    );
+  }
+
+  return json.data;
+}
+
+export interface VerifiedTransactionData {
+  id: number;
+  domain: string;
+  status: string;
+  reference: string;
+  amount: number;
+  gateway_response: string;
+  paid_at: string;
+  channel: string;
+  currency: string;
+  customer: {
+    id: number;
+    first_name: string | null;
+    last_name: string | null;
+    email: string;
+    customer_code: string;
+    phone: string | null;
+  };
+  authorization?: {
+    authorization_code: string;
+    bin: string;
+    last4: string;
+    exp_month: string;
+    exp_year: string;
+    channel: string;
+    card_type: string;
+    bank: string;
+    country_code: string;
+    brand: string;
+    reusable: boolean;
+    signature: string;
+  };
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Verify a Paystack transaction by reference
+ */
+export async function verifyPaystackTransaction(
+  reference: string,
+): Promise<VerifiedTransactionData> {
+  const secretKey = getSecretKey();
+
+  const response = await fetch(
+    `${PAYSTACK_BASE_URL}/transaction/verify/${encodeURIComponent(reference)}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    },
+  );
+
+  const json = await response.json();
+  if (!response.ok || !json.status) {
+    throw new Error(
+      json.message || `Paystack verification failed (${response.status})`,
+    );
+  }
+
+  return json.data;
+}
+
+/**
+ * Verify Paystack webhook HMAC SHA512 signature
+ */
+export function verifyPaystackWebhookSignature(
+  rawBody: string,
+  signature: string | null,
+): boolean {
+  if (!signature) return false;
+  try {
+    const secretKey = getSecretKey();
+    const hash = crypto
+      .createHmac("sha512", secretKey)
+      .update(rawBody)
+      .digest("hex");
+    return hash === signature;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Headlessly charge a stored authorization token (for recurring billing)
+ */
+export async function chargePaystackAuthorization(options: {
+  authorization_code?: string;
+  authorizationCode?: string;
+  email: string;
+  amount: number; // in Kobo
+  reference?: string;
+  metadata?: Record<string, unknown>;
+}): Promise<VerifiedTransactionData> {
+  const secretKey = getSecretKey();
+  const authCode = options.authorizationCode || options.authorization_code;
+
+  if (!authCode) {
+    throw new Error("Authorization code is required to charge card");
+  }
+
+  const response = await fetch(
+    `${PAYSTACK_BASE_URL}/transaction/charge_authorization`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        authorization_code: authCode,
+        email: options.email,
+        amount: options.amount,
+        reference: options.reference,
+        metadata: options.metadata,
+      }),
+    },
+  );
+
+  const json = await response.json();
+  if (!response.ok || !json.status) {
+    throw new Error(
+      json.message || `Recurring charge authorization failed (${response.status})`,
+    );
+  }
+
+  return json.data;
+}
+
+export const chargeAuthorization = chargePaystackAuthorization;
