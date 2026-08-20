@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { createCheckoutOrder } from "@/lib/nomba";
 import { authenticateApiRequest } from "@/lib/developer-api/auth";
 import {
   apiError,
@@ -62,9 +62,8 @@ export async function POST(req: Request) {
   }
 
   /*
-   * Verify the plan belongs to the authenticated organisation
+   * 1. Verify the plan belongs to the authenticated organisation
    */
-
   const { data: plan, error: planError } = await supabaseAdmin
     .from("plans")
     .select(
@@ -103,39 +102,10 @@ export async function POST(req: Request) {
   }
 
   /*
-   * Create the Nomba checkout order
+   * 2. Generate tracking order reference & hosted checkout URL
    */
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
-  const callbackUrl = new URL(
-    `/checkout/${product.slug}/success`,
-    appUrl,
-  );
-
-  if (successUrl) {
-    callbackUrl.searchParams.set("return_url", successUrl);
-  }
-
-  if (cancelUrl) {
-    callbackUrl.searchParams.set("cancel_url", cancelUrl);
-  }
-
-  const checkoutData = await createCheckoutOrder({
-    amount: Number(plan.amount),
-    customerEmail: email,
-    callbackUrl: callbackUrl.toString(),
-    productId: plan.product_id,
-    planId: plan.id,
-  });
-
-  if (!checkoutData.checkoutUrl) {
-    return apiError("Unable to create payment checkout.", 502);
-  }
-
-  /*
-   * Persist the pending payment order
-   */
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://orbit-billing-nomba.vercel.app";
+  const orderReference = `orbit_ord_${crypto.randomUUID()}`;
 
   const [firstName, ...lastNameParts] = customerName
     ? customerName.split(/\s+/)
@@ -144,12 +114,12 @@ export async function POST(req: Request) {
   const { error: paymentOrderError } = await supabaseAdmin
     .from("payment_orders")
     .insert({
-      order_reference: checkoutData.orderReference,
+      order_reference: orderReference,
       plan_id: plan.id,
       product_id: plan.product_id,
       customer_email: email,
       customer_first_name: firstName || "Customer",
-      customer_last_name: lastNameParts.join(" ") || "Merchant",
+      customer_last_name: lastNameParts.join(" ") || "User",
       status: "pending",
     });
 
@@ -158,12 +128,7 @@ export async function POST(req: Request) {
     return apiError("Could not create payment record.", 500);
   }
 
-  /*
-   * Hosted checkout URL (pre-filled with the customer and plan)
-   */
-
   const hostedUrl = new URL(`/checkout/${product.slug}`, appUrl);
-
   hostedUrl.searchParams.set("plan", plan.id);
 
   if (email) {
@@ -184,7 +149,7 @@ export async function POST(req: Request) {
 
   return NextResponse.json(
     {
-      id: `cs_${checkoutData.orderReference}`,
+      id: `cs_${orderReference}`,
       url: hostedUrl.toString(),
     },
     { status: 201 },
