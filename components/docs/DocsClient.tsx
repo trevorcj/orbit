@@ -70,13 +70,14 @@ const navSections: NavSection[] = [
     items: [
       { id: "webhooks-overview", label: "Webhooks Overview" },
       { id: "verifying-signatures", label: "Verifying Signatures" },
-      { id: "event-types", label: "Supported Event Types" },
+      { id: "webhook-example", label: "Full Next.js Webhook Handler" },
     ],
   },
   {
-    title: "Components & SDK",
+    title: "Components & Checkout",
     items: [
-      { id: "pricing-table", label: "Pricing Table Component" },
+      { id: "hosted-checkout", label: "Hosted Checkout Link" },
+      { id: "pricing-table", label: "React Pricing Table (shadcn)" },
       { id: "customer-portal", label: "Customer Billing Portal" },
     ],
   },
@@ -227,7 +228,7 @@ function ParamsTable({
 export default function DocsClient() {
   const { resolvedTheme, setTheme, theme } = useTheme();
   const [activeSection, setActiveSection] = useState("introduction");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [pricingTab, setPricingTab] = useState<"usage" | "source">("usage");
 
   const appUrl =
     typeof window !== "undefined"
@@ -686,52 +687,208 @@ export default function DocsClient() {
               </code>
             </p>
 
-            <CodeSnippet
-              title="Node.js Signature Verification"
-              language="javascript"
-              code={`import crypto from 'crypto';
+            <div id="webhook-example" className="mt-4">
+              <CodeSnippet
+                title="Complete Next.js App Router Webhook Route (/api/webhooks/orbit/route.ts)"
+                language="typescript"
+                code={`import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 
-function verifyOrbitSignature(payload, signatureHeader, secret) {
-  const [tPart, v1Part] = signatureHeader.split(',');
-  const timestamp = tPart.split('=')[1];
-  const signature = v1Part.split('=')[1];
+export async function POST(req: NextRequest) {
+  // 1. Read raw text payload and signature header
+  const payload = await req.text();
+  const signatureHeader = req.headers.get("orbit-signature");
+  const secret = process.env.ORBIT_WEBHOOK_SECRET!; // From Orbit Developer Settings
 
+  if (!signatureHeader) {
+    return NextResponse.json({ error: "Missing signature" }, { status: 400 });
+  }
+
+  // 2. Extract timestamp and signature hash
+  const [tPart, v1Part] = signatureHeader.split(",");
+  const timestamp = tPart?.split("=")[1];
+  const signature = v1Part?.split("=")[1];
+
+  // 3. Compute expected HMAC-SHA256 signature
   const expectedSignature = crypto
-    .createHmac('sha256', secret)
+    .createHmac("sha256", secret)
     .update(\`\${timestamp}.\${payload}\`)
-    .digest('hex');
+    .digest("hex");
 
-  return crypto.timingSafeEqual(
+  const isValid = crypto.timingSafeEqual(
     Buffer.from(signature),
     Buffer.from(expectedSignature)
   );
+
+  if (!isValid) {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+
+  // 4. Signature verified! Safely process the event:
+  const event = JSON.parse(payload);
+  if (event.type === "payment.succeeded") {
+    console.log("Customer renewed:", event.data.customer_email);
+    // TODO: Update your database user record
+  }
+
+  return NextResponse.json({ received: true });
 }`}
-            />
+              />
+            </div>
           </section>
 
-          {/* ================= PRICING TABLE ================= */}
-          <section id="pricing-table" className="scroll-mt-24 mb-12 pt-8 border-t border-zinc-200 dark:border-[#1e2d47]">
-            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3">
-              React Pricing Table Component
+          {/* ================= HOSTED CHECKOUT & PRICING TABLE ================= */}
+          <section id="hosted-checkout" className="scroll-mt-24 mb-12 pt-8 border-t border-zinc-200 dark:border-[#1e2d47]">
+            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">
+              Hosted Checkout & Components
             </h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
-              Drop the pre-built pricing table directly into any Next.js or React application:
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
+              You can integrate Orbit checkout into your application in two ways:
             </p>
 
-            <CodeSnippet
-              title="Embed Pricing Table"
-              language="tsx"
-              code={`import { OrbitPricingTable } from '@/components/OrbitPricingTable';
+            {/* OPTION 1: HOSTED LINK */}
+            <div className="mb-8 p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+              <div className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white mb-2">
+                <ExternalLink size={16} className="text-[#0F86EE]" />
+                <span>Option 1: Direct Hosted Checkout URL (Zero Code)</span>
+              </div>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3 leading-relaxed">
+                Simply link your users or CTA buttons directly to your product&apos;s hosted checkout URL:
+              </p>
+              <code className="block p-3 rounded-lg bg-zinc-100 dark:bg-[#0c1524] text-xs font-mono text-[#0F86EE] dark:text-[#38bdf8] select-all">
+                {`${appUrl}/checkout/:product_slug`}
+              </code>
+            </div>
+
+            {/* OPTION 2: REACT PRICING TABLE COMPONENT */}
+            <div id="pricing-table" className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
+                  <Code2 size={16} className="text-emerald-500" />
+                  <span>Option 2: Drop-in React Pricing Table Component (shadcn style)</span>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex items-center rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#0c1524] p-0.5">
+                  <button
+                    onClick={() => setPricingTab("usage")}
+                    className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                      pricingTab === "usage"
+                        ? "bg-white dark:bg-[#152238] text-zinc-900 dark:text-white shadow-xs font-semibold"
+                        : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
+                    }`}>
+                    Usage
+                  </button>
+                  <button
+                    onClick={() => setPricingTab("source")}
+                    className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                      pricingTab === "source"
+                        ? "bg-white dark:bg-[#152238] text-zinc-900 dark:text-white shadow-xs font-semibold"
+                        : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
+                    }`}>
+                    Component Source Code
+                  </button>
+                </div>
+              </div>
+
+              {pricingTab === "usage" ? (
+                <div>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3 leading-relaxed">
+                    Copy the component into your project&apos;s <code className="font-mono bg-zinc-100 dark:bg-[#152238] px-1 py-0.5 rounded">components/OrbitPricingTable.tsx</code> and drop it into any page:
+                  </p>
+
+                  <CodeSnippet
+                    title="app/pricing/page.tsx"
+                    language="tsx"
+                    code={`import OrbitPricingTable from '@/components/OrbitPricingTable';
 
 export default function PricingPage() {
   return (
-    <OrbitPricingTable
-      productId="prod_9410294"
-      publishableKey="pk_live_your_key"
-    />
+    <div className="py-12 px-4">
+      <OrbitPricingTable
+        productId="your_product_slug_or_id"
+        publishableKey="pk_live_YOUR_PUBLISHABLE_KEY"
+        secretKey="sk_live_YOUR_SECRET_KEY"
+      />
+    </div>
   );
 }`}
-            />
+                  />
+                </div>
+              ) : (
+                <div>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3 leading-relaxed">
+                    Create <code className="font-mono bg-zinc-100 dark:bg-[#152238] px-1 py-0.5 rounded">components/OrbitPricingTable.tsx</code> in your project and paste this code:
+                  </p>
+
+                  <CodeSnippet
+                    title="components/OrbitPricingTable.tsx"
+                    language="tsx"
+                    code={`"use client";
+
+import { useEffect, useState } from "react";
+import { Loader2, Check, ArrowRight } from "lucide-react";
+
+export default function OrbitPricingTable({
+  productId,
+  publishableKey,
+  secretKey,
+  apiBaseUrl = "${appUrl}",
+}: {
+  productId: string;
+  publishableKey: string;
+  secretKey: string;
+  apiBaseUrl?: string;
+}) {
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(\`\${apiBaseUrl}/api/v1/products/\${productId}\`, {
+      headers: { Authorization: \`Bearer \${publishableKey}\` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setProduct(data);
+        setLoading(false);
+      });
+  }, [productId, publishableKey, apiBaseUrl]);
+
+  const handleCheckout = async (planId: string) => {
+    const res = await fetch(\`\${apiBaseUrl}/api/v1/checkout/sessions\`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: \`Bearer \${secretKey}\`,
+      },
+      body: JSON.stringify({ plan_id: planId }),
+    });
+    const session = await res.json();
+    window.location.href = session.url;
+  };
+
+  if (loading) return <div className="p-8 text-center"><Loader2 className="animate-spin inline" /></div>;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      {product?.plans?.map((plan: any) => (
+        <div key={plan.id} className="p-6 rounded-2xl border bg-white shadow-xs">
+          <h3 className="font-bold text-lg">{plan.name}</h3>
+          <p className="text-2xl font-bold mt-2">₦{plan.amount?.toLocaleString()} <span className="text-xs font-normal text-zinc-500">/{plan.interval}</span></p>
+          <button
+            onClick={() => handleCheckout(plan.id)}
+            className="w-full mt-6 py-2.5 rounded-xl bg-[#0F86EE] text-white font-semibold text-sm">
+            Subscribe
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}`}
+                  />
+                </div>
+              )}
+            </div>
           </section>
         </main>
 
@@ -752,6 +909,7 @@ export default function PricingPage() {
               { id: "check-subscription", label: "Check Subscription" },
               { id: "cancel-subscription", label: "Cancel Subscription" },
               { id: "webhooks-overview", label: "Webhooks" },
+              { id: "hosted-checkout", label: "Hosted Checkout" },
               { id: "pricing-table", label: "Pricing Component" },
             ].map((link) => {
               const isActive = activeSection === link.id;
