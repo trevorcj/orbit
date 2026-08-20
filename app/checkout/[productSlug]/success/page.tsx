@@ -8,6 +8,8 @@ interface SuccessPageProps {
     reference?: string;
     orderReference?: string;
     orderId?: string;
+    return_url?: string;
+    cancel_url?: string;
   }>;
 }
 
@@ -149,6 +151,14 @@ export default async function CheckoutSuccessPage({
       </div>
 
       <div className="text-xs text-zinc-400">Your subscription is active.</div>
+
+      {params.return_url && (
+        <a
+          href={params.return_url}
+          className="h-11 px-6 rounded-xl bg-[#0F86EE] text-white font-semibold flex items-center justify-center text-sm hover:bg-[#0d7ad9] transition-colors">
+          Return to app
+        </a>
+      )}
     </div>
   );
 }

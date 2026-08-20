@@ -17,6 +17,10 @@ export async function initiateSubscriptionPayment(formData: FormData) {
 
   const lastName = String(formData.get("lastName") || "").trim();
 
+  const returnUrl = String(formData.get("returnUrl") || "").trim();
+
+  const cancelUrl = String(formData.get("cancelUrl") || "").trim();
+
   if (!planId || !productId || !email || !firstName || !lastName) {
     throw new Error("Please complete all required details.");
   }
@@ -80,14 +84,22 @@ export async function initiateSubscriptionPayment(formData: FormData) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-  const callbackUrl = `${appUrl}/checkout/${product.slug}/success`;
+  const callbackUrl = new URL(`/checkout/${product.slug}/success`, appUrl);
+
+  if (returnUrl) {
+    callbackUrl.searchParams.set("return_url", returnUrl);
+  }
+
+  if (cancelUrl) {
+    callbackUrl.searchParams.set("cancel_url", cancelUrl);
+  }
 
   const checkoutData = await createCheckoutOrder({
     amount: Number(plan.amount),
 
     customerEmail: email,
 
-    callbackUrl,
+    callbackUrl: callbackUrl.toString(),
 
     productId: plan.product_id,
 

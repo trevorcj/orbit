@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { dispatchOrbitEvent } from "@/lib/developer-api/webhooks";
 
 interface FulfillPaymentInput {
   orderReference: string;
@@ -272,6 +273,33 @@ export async function fulfillPayment({
     .from("payment_orders")
     .update({ status: "completed" })
     .eq("order_reference", orderReference);
+
+  /*
+   * 11. Dispatch Orbit webhook events
+   */
+  await dispatchOrbitEvent({
+    organisationId: plan.organisation_id,
+    type: "subscription.created",
+    data: {
+      id: subscription.id,
+      customer: { id: customer.id, email },
+      plan: { id: plan.id },
+    },
+  });
+
+  await dispatchOrbitEvent({
+    organisationId: plan.organisation_id,
+    type: "payment.succeeded",
+    data: {
+      id: payment.id,
+      subscription_id: subscription.id,
+      customer_id: customer.id,
+      amount: Math.round(Number(transaction.amount)),
+      currency: "NGN",
+      provider: "nomba",
+      reference: orderReference,
+    },
+  });
 
   return {
     success: true,

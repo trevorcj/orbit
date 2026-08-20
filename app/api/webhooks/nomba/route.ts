@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { fulfillPayment } from "@/lib/payments/fulfill-payment";
+import { dispatchOrbitEvent } from "@/lib/developer-api/webhooks";
 
 export async function POST(req: Request) {
   console.log("🔥 NOMBA WEBHOOK RECEIVED");
@@ -122,13 +123,53 @@ export async function POST(req: Request) {
     }
 
     /*
-     * 6. Only handle successful payments
+     * 6. Handle payment outcomes
      */
 
     const status = transaction.status ?? data.status;
 
-    if (status !== "SUCCESS" && status !== "SUCCESSFUL") {
+    const isSuccess = status === "SUCCESS" || status === "SUCCESSFUL";
+
+    if (!isSuccess) {
       console.log("Ignoring webhook status:", status);
+
+      /*
+       * Notify merchants of failed payments when possible
+       */
+      const orderReference =
+        transaction.orderReference ??
+        data.orderReference ??
+        payload.orderReference;
+
+      if (orderReference) {
+        const { data: paymentOrder } = await supabaseAdmin
+          .from("payment_orders")
+          .select("plan_id, product_id")
+          .eq("order_reference", orderReference)
+          .single();
+
+        if (paymentOrder) {
+          const { data: plan } = await supabaseAdmin
+            .from("plans")
+            .select("organisation_id, amount")
+            .eq("id", paymentOrder.plan_id)
+            .single();
+
+          if (plan) {
+            await dispatchOrbitEvent({
+              organisationId: plan.organisation_id,
+              type: "payment.failed",
+              data: {
+                reference: orderReference,
+                plan_id: paymentOrder.plan_id,
+                amount: Number(plan.amount),
+                currency: "NGN",
+                provider: "nomba",
+              },
+            });
+          }
+        }
+      }
 
       return NextResponse.json({
         received: true,

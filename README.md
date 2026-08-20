@@ -467,6 +467,40 @@ Implement:
 
 Allow developers to integrate Orbit directly.
 
-Features:
+The public developer API lets a merchant's application consume Orbit's
+billing infrastructure with a few HTTP calls. Orbit owns money, billing and
+subscription state; the merchant's product owns permissions and experience.
 
-- 
+**Base URL:** `{NEXT_PUBLIC_APP_URL}/api/v1`
+
+**Authentication:** `Authorization: Bearer <api_key>`
+
+- Publishable keys (`pk_live_...`) — read plans and products (pricing table).
+- Secret keys (`sk_live_...`) — everything else.
+
+**Endpoints:**
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| `POST` | `/v1/checkout/sessions` | Create a hosted checkout session. |
+| `GET`  | `/v1/plans` | List the organisation's active plans. |
+| `GET`  | `/v1/products/:product_id` | Get a product with its plans. |
+| `GET`  | `/v1/customers/:customer_id` | Get a customer. |
+| `GET`  | `/v1/customers/:customer_id/subscription` | Get a customer's current subscription. |
+| `GET`  | `/v1/subscriptions/:subscription_id` | Get a complete subscription. |
+| `POST` | `/v1/subscriptions/:subscription_id/cancel` | Cancel a subscription (at period end or immediately). |
+
+**Webhooks** (`orbit-signature: t=<ts>,v1=<hmac_sha256>`):
+
+- `payment.succeeded`, `payment.failed`
+- `subscription.created`, `subscription.renewed`, `subscription.cancelled`, `subscription.updated`
+
+**Pricing table component:** drop `<OrbitPricingTable productId="..." />`
+into any React app to render the product's plans and start checkout.
+
+**Setup:** run `supabase/migrations/20260820_developer_api.sql` in the Supabase
+SQL editor to create the `api_keys`, `webhook_endpoints` and
+`outgoing_webhook_events` tables. Manage keys and webhooks from the
+dashboard at `/dashboard/settings` (Developer tab).
+
+See the live docs at `/docs`. 

@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { chargeTokenizedCard } from "@/lib/nomba";
+import { dispatchOrbitEvent } from "@/lib/developer-api/webhooks";
 
 export async function renewSubscription(subscriptionId: string) {
   const supabase = supabaseAdmin;
@@ -43,6 +44,42 @@ email
     return {
       success: false,
       message: "Subscription is not active",
+    };
+  }
+
+  /*
+   * Cancel at period end: keep access until the billing period ends,
+   * then terminate the subscription without charging again.
+   */
+
+  if (subscription.cancel_at_period_end) {
+    const { error: expiryError } = await supabase
+      .from("subscriptions")
+      .update({
+        status: "CANCELLED",
+        cancelled_at: new Date().toISOString(),
+        ends_at: subscription.renews_at,
+      })
+      .eq("id", subscription.id);
+
+    if (expiryError) {
+      console.error("Cancel-at-period-end expiry failed:", expiryError);
+    }
+
+    await dispatchOrbitEvent({
+      organisationId: subscription.organisation_id,
+      type: "subscription.cancelled",
+      data: {
+        id: subscription.id,
+        status: "cancelled",
+        cancel_at_period_end: true,
+        current_period_end: subscription.renews_at,
+      },
+    });
+
+    return {
+      success: false,
+      message: "Subscription cancelled at period end",
     };
   }
 
@@ -173,6 +210,36 @@ email
       throw new Error("Could not update subscription");
     }
 
+    await dispatchOrbitEvent({
+      organisationId: subscription.organisation_id,
+      type: "subscription.renewed",
+      data: {
+        id: subscription.id,
+        status: "active",
+        renewal_count: (subscription.renewal_count ?? 0) + 1,
+        current_period_end: nextRenewal.toISOString(),
+        plan: {
+          id: subscription.plans.id,
+          amount: amount,
+          currency: "NGN",
+          interval: subscription.plans.billing_interval,
+        },
+      },
+    });
+
+    await dispatchOrbitEvent({
+      organisationId: subscription.organisation_id,
+      type: "payment.succeeded",
+      data: {
+        subscription_id: subscription.id,
+        customer_id: subscription.customer_id,
+        amount,
+        currency: "NGN",
+        provider: "nomba",
+        reference: merchantTxRef,
+      },
+    });
+
     return {
       success: true,
 
@@ -190,6 +257,29 @@ email
         last_failed_payment_at: new Date().toISOString(),
       })
       .eq("id", subscription.id);
+
+    await dispatchOrbitEvent({
+      organisationId: subscription.organisation_id,
+      type: "payment.failed",
+      data: {
+        subscription_id: subscription.id,
+        customer_id: subscription.customer_id,
+        amount: Number(subscription.plans.amount),
+        currency: "NGN",
+        provider: "nomba",
+        reference: merchantTxRef,
+      },
+    });
+
+    await dispatchOrbitEvent({
+      organisationId: subscription.organisation_id,
+      type: "subscription.updated",
+      data: {
+        id: subscription.id,
+        status: "past_due",
+        failed_payment_attempts: (subscription.failed_payment_attempts ?? 0) + 1,
+      },
+    });
 
     throw error;
   }

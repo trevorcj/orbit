@@ -12,6 +12,16 @@ interface CheckoutClientProps {
 
   plans: Plan[];
 
+  preselectedPlanId?: string | null;
+
+  initialEmail?: string;
+
+  initialName?: string;
+
+  returnUrl?: string;
+
+  cancelUrl?: string;
+
   organisation: {
     id: string;
     name: string | null;
@@ -22,10 +32,15 @@ interface CheckoutClientProps {
 export default function CheckoutClient({
   product,
   plans,
+  preselectedPlanId,
+  initialEmail,
+  initialName,
+  returnUrl,
+  cancelUrl,
   organisation,
 }: CheckoutClientProps) {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(
-    plans?.[0] ?? null,
+    plans?.find((plan) => plan.id === preselectedPlanId) ?? plans?.[0] ?? null,
   );
 
   const [loading, setLoading] = useState(false);
@@ -137,6 +152,14 @@ export default function CheckoutClient({
 
           <input type="hidden" name="productId" value={product.id} />
 
+          {returnUrl && (
+            <input type="hidden" name="returnUrl" value={returnUrl} />
+          )}
+
+          {cancelUrl && (
+            <input type="hidden" name="cancelUrl" value={cancelUrl} />
+          )}
+
           <div>
             <h2 className="font-semibold text-lg mb-5">Contact information</h2>
 
@@ -145,6 +168,7 @@ export default function CheckoutClient({
                 name="email"
                 type="email"
                 required
+                defaultValue={initialEmail}
                 placeholder="Email address"
                 className="h-12 w-full border rounded-lg px-4"
               />
@@ -153,6 +177,7 @@ export default function CheckoutClient({
                 <input
                   name="firstName"
                   required
+                  defaultValue={initialName?.split(" ")[0]}
                   placeholder="First name"
                   className="h-12 border rounded-lg px-4"
                 />
@@ -160,6 +185,7 @@ export default function CheckoutClient({
                 <input
                   name="lastName"
                   required
+                  defaultValue={initialName?.split(" ").slice(1).join(" ")}
                   placeholder="Last name"
                   className="h-12 border rounded-lg px-4"
                 />
