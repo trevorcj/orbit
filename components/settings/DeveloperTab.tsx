@@ -179,8 +179,8 @@ export default function DeveloperTab({
 
         {activeKeys.length === 0 && (
           <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 p-6 text-center text-sm text-zinc-400">
-            No API keys yet. Generate a publishable key for client components and
-            a secret key for your backend.
+            No API keys yet. Generate a publishable key for client components
+            and a secret key for your backend.
           </div>
         )}
 
@@ -191,7 +191,9 @@ export default function DeveloperTab({
               className="w-full rounded-xl border border-zinc-200 bg-white p-5 flex flex-col gap-4">
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-zinc-800">{key.name}</span>
+                  <span className="font-semibold text-zinc-800">
+                    {key.name}
+                  </span>
                   <span
                     className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border ${
                       key.type === "secret"
@@ -212,7 +214,8 @@ export default function DeveloperTab({
                   </span>
                   {key.last_used_at && (
                     <span>
-                      Last used {new Date(key.last_used_at).toLocaleDateString()}
+                      Last used{" "}
+                      {new Date(key.last_used_at).toLocaleDateString()}
                     </span>
                   )}
                   <button
@@ -258,7 +261,9 @@ export default function DeveloperTab({
             Generate a new API key
           </p>
 
-          <form action={generateAction} className="flex flex-wrap items-end gap-3">
+          <form
+            action={generateAction}
+            className="flex flex-wrap items-end gap-3">
             <div className="flex-1 min-w-40">
               <Input
                 label="Key name"
@@ -358,7 +363,9 @@ export default function DeveloperTab({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => handleToggle(endpoint.id, endpoint.is_active)}
+                    onClick={() =>
+                      handleToggle(endpoint.id, endpoint.is_active)
+                    }
                     className="flex items-center gap-1 text-xs font-semibold text-zinc-500 hover:text-zinc-700 cursor-pointer">
                     <RefreshCw size={13} />
                     {endpoint.is_active ? "Pause" : "Activate"}
@@ -378,9 +385,7 @@ export default function DeveloperTab({
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-[11px] text-zinc-400 mr-1">Events:</span>
                 {endpoint.events.length === 0 ? (
-                  <span className="text-[11px] text-zinc-500">
-                    All events
-                  </span>
+                  <span className="text-[11px] text-zinc-500">All events</span>
                 ) : (
                   endpoint.events.map((event) => (
                     <span
@@ -401,7 +406,9 @@ export default function DeveloperTab({
             Add a webhook endpoint
           </p>
 
-          <form action={webhookAction} className="flex flex-wrap items-end gap-3">
+          <form
+            action={webhookAction}
+            className="flex flex-wrap items-end gap-3">
             <div className="flex-1 min-w-52">
               <Input
                 label="Endpoint URL"
@@ -448,7 +455,8 @@ export default function DeveloperTab({
             Verify deliveries with the{" "}
             <code className="text-[10px]">orbit-signature</code> header:{" "}
             <code className="text-[10px]">
-              t=timestamp,v1=hmac_sha256(secret, timestamp + &quot;.&quot; + body)
+              t=timestamp,v1=hmac_sha256(secret, timestamp + &quot;.&quot; +
+              body)
             </code>
             . The secret is shown above.
           </p>
@@ -458,7 +466,9 @@ export default function DeveloperTab({
       {/* ============ SYSTEM ENDPOINTS (PAYSTACK & CRON) ============ */}
       <div className="flex flex-col gap-6 p-8 rounded-xl border border-zinc-200 bg-white">
         <div>
-          <h2 className="text-base font-bold text-zinc-900">System Infrastructure Endpoints</h2>
+          <h2 className="text-base font-bold text-zinc-900">
+            System Infrastructure Endpoints
+          </h2>
           <p className="text-xs text-zinc-500 mt-0.5">
             Gateway listeners and recurring billing cron job URLs.
           </p>
@@ -469,9 +479,13 @@ export default function DeveloperTab({
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
               <Webhook size={15} className="text-[#0F86EE]" />
-              <span className="font-semibold text-zinc-900">Paystack Webhook Endpoint</span>
+              <span className="font-semibold text-zinc-900">
+                Paystack Webhook Endpoint
+              </span>
             </div>
-            <span className="text-[11px] text-zinc-400">Listens to charge.success</span>
+            <span className="text-[11px] text-zinc-400">
+              Listens to charge.success
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -483,9 +497,18 @@ export default function DeveloperTab({
             />
             <button
               type="button"
-              onClick={() => handleCopyText(`${appUrl}/api/webhooks/paystack`, "Paystack Webhook")}
+              onClick={() =>
+                handleCopyText(
+                  `${appUrl}/api/webhooks/paystack`,
+                  "Paystack Webhook",
+                )
+              }
               className="h-9 px-3 rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 text-xs font-semibold text-zinc-700 flex items-center gap-1 cursor-pointer">
-              {copiedGeneral === "Paystack Webhook" ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+              {copiedGeneral === "Paystack Webhook" ? (
+                <Check size={13} className="text-emerald-500" />
+              ) : (
+                <Copy size={13} />
+              )}
               <span>Copy</span>
             </button>
           </div>
@@ -496,9 +519,11 @@ export default function DeveloperTab({
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
               <Clock size={15} className="text-indigo-600" />
-              <span className="font-semibold text-zinc-900">Auto-Billing Cron URL</span>
+              <span className="font-semibold text-zinc-900">
+                Auto-Billing Cron URL
+              </span>
             </div>
-            <span className="text-[11px] text-zinc-400">Every 1-5 mins</span>
+            <span className="text-[11px] text-zinc-400">Everyday</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -510,9 +535,15 @@ export default function DeveloperTab({
             />
             <button
               type="button"
-              onClick={() => handleCopyText(`${appUrl}/api/cron/renew`, "Cron URL")}
+              onClick={() =>
+                handleCopyText(`${appUrl}/api/cron/renew`, "Cron URL")
+              }
               className="h-9 px-3 rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 text-xs font-semibold text-zinc-700 flex items-center gap-1 cursor-pointer">
-              {copiedGeneral === "Cron URL" ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+              {copiedGeneral === "Cron URL" ? (
+                <Check size={13} className="text-emerald-500" />
+              ) : (
+                <Copy size={13} />
+              )}
               <span>Copy</span>
             </button>
           </div>
