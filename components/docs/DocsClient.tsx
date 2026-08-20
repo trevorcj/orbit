@@ -25,6 +25,11 @@ import {
   ArrowRight,
   Sparkles,
   GitBranch,
+  AlertTriangle,
+  HelpCircle,
+  Clock,
+  ArrowDownRight,
+  DollarSign,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
@@ -35,50 +40,52 @@ interface NavSection {
 
 const navSections: NavSection[] = [
   {
-    title: "Overview",
+    title: "Getting Started",
     items: [
-      { id: "introduction", label: "Introduction" },
-      { id: "architecture", label: "Architecture & Flow" },
-      { id: "authentication", label: "Authentication" },
-      { id: "errors", label: "Errors & Status Codes" },
-    ],
-  },
-  {
-    title: "Core Guides",
-    items: [
+      { id: "welcome", label: "Welcome to Orbit" },
+      { id: "mental-model", label: "How Orbit Works (Mental Model)" },
+      { id: "api-keys", label: "API Keys & Authentication" },
       { id: "quickstart", label: "5-Minute Quickstart" },
-      { id: "managing-subscriptions", label: "Managing Subscriptions" },
-      { id: "handling-renewals", label: "Renewals & Dunning" },
-      { id: "payouts-guide", label: "Payouts & Settlements" },
+      { id: "postman-testing", label: "Testing with Postman / cURL" },
     ],
   },
   {
-    title: "API Reference",
+    title: "Endpoints Reference",
     items: [
-      { id: "api-root", label: "API Discovery (/v1)" },
-      { id: "checkout-sessions", label: "Create Checkout Session" },
-      { id: "list-plans", label: "List Active Plans" },
-      { id: "get-product", label: "Get Product & Plans" },
-      { id: "get-customer", label: "Get Customer" },
-      { id: "check-subscription", label: "Check Subscription", badge: "Popular" },
-      { id: "get-subscription", label: "Get Subscription by ID" },
-      { id: "cancel-subscription", label: "Cancel Subscription" },
+      { id: "api-root", label: "GET /api/v1 (Discovery)" },
+      { id: "check-subscription", label: "GET .../subscription (Verify Access)", badge: "Most Used" },
+      { id: "checkout-sessions", label: "POST /api/v1/checkout/sessions" },
+      { id: "list-plans", label: "GET /api/v1/plans" },
+      { id: "get-product", label: "GET /api/v1/products/:id" },
+      { id: "get-customer", label: "GET /api/v1/customers/:id" },
+      { id: "get-subscription", label: "GET /api/v1/subscriptions/:id" },
+      { id: "cancel-subscription", label: "POST .../cancel" },
     ],
   },
   {
-    title: "Webhooks",
+    title: "Webhooks (Deep Dive)",
     items: [
-      { id: "webhooks-overview", label: "Webhooks Overview" },
-      { id: "verifying-signatures", label: "Verifying Signatures" },
-      { id: "webhook-example", label: "Full Next.js Webhook Handler" },
+      { id: "webhooks-why", label: "What is a Webhook & Why Use It?" },
+      { id: "webhooks-flow", label: "Step-by-Step Delivery Flow" },
+      { id: "signature-explained", label: "Signature & Header Line-by-Line" },
+      { id: "webhook-code", label: "Complete Next.js & Express Code" },
+      { id: "webhook-events", label: "Event Types & Payloads" },
     ],
   },
   {
-    title: "Components & Checkout",
+    title: "Frontend Integration",
     items: [
-      { id: "hosted-checkout", label: "Hosted Checkout Link" },
-      { id: "pricing-table", label: "React Pricing Table (shadcn)" },
+      { id: "hosted-checkout", label: "Option 1: Hosted Checkout Link" },
+      { id: "custom-checkout", label: "Option 2: Custom In-App Checkout" },
+      { id: "react-component", label: "Option 3: React Pricing Component" },
       { id: "customer-portal", label: "Customer Billing Portal" },
+    ],
+  },
+  {
+    title: "Errors & Status Codes",
+    items: [
+      { id: "error-handling", label: "Standard Error Responses" },
+      { id: "status-codes", label: "HTTP Status Code Reference" },
     ],
   },
 ];
@@ -145,90 +152,32 @@ function MethodBadge({ method }: { method: "GET" | "POST" | "DELETE" | "PUT" }) 
   );
 }
 
-function EndpointCard({
-  method,
-  path,
-  description,
-  id,
+function Callout({
+  type = "info",
+  title,
   children,
 }: {
-  method: "GET" | "POST" | "DELETE" | "PUT";
-  path: string;
-  description: string;
-  id: string;
-  children?: React.ReactNode;
+  type?: "info" | "warning" | "success";
+  title?: string;
+  children: React.ReactNode;
 }) {
-  return (
-    <div
-      id={id}
-      className="scroll-mt-24 mb-10 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] overflow-hidden shadow-xs">
-      <div className="px-5 py-3.5 border-b border-zinc-100 dark:border-[#1e2d47] flex items-center justify-between bg-zinc-50/50 dark:bg-[#0c1524]">
-        <div className="flex items-center gap-3">
-          <MethodBadge method={method} />
-          <code className="text-sm font-mono font-bold text-zinc-900 dark:text-white">
-            {path}
-          </code>
-        </div>
-      </div>
-      <div className="p-5">
-        <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4">
-          {description}
-        </p>
-        {children}
-      </div>
-    </div>
-  );
-}
+  const styles = {
+    info: "border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-200",
+    warning: "border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200",
+    success: "border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-200",
+  };
 
-function ParamsTable({
-  parameters,
-}: {
-  parameters: {
-    name: string;
-    type: string;
-    required?: boolean;
-    description: string;
-  }[];
-}) {
   return (
-    <div className="my-4 overflow-x-auto rounded-lg border border-zinc-200 dark:border-[#1e2d47]">
-      <table className="w-full text-left text-xs border-collapse">
-        <thead>
-          <tr className="border-b border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/80 dark:bg-[#0c1524] text-zinc-700 dark:text-zinc-300">
-            <th className="py-2.5 px-4 font-semibold">Parameter</th>
-            <th className="py-2.5 px-4 font-semibold">Type</th>
-            <th className="py-2.5 px-4 font-semibold">Description</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-100 dark:divide-[#1e2d47] bg-white dark:bg-[#111c2e]">
-          {parameters.map((p) => (
-            <tr key={p.name} className="hover:bg-zinc-50/50 dark:hover:bg-[#152238]">
-              <td className="py-2.5 px-4 font-mono font-semibold text-[#0F86EE] dark:text-[#38bdf8]">
-                {p.name}
-                {p.required && (
-                  <span className="ml-1 text-[10px] text-rose-500 font-sans font-bold">
-                    required
-                  </span>
-                )}
-              </td>
-              <td className="py-2.5 px-4 font-mono text-zinc-500 dark:text-zinc-400">
-                {p.type}
-              </td>
-              <td className="py-2.5 px-4 text-zinc-600 dark:text-zinc-300">
-                {p.description}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className={`my-4 p-4 rounded-xl border ${styles[type]} text-xs leading-relaxed`}>
+      {title && <p className="font-bold text-sm mb-1">{title}</p>}
+      {children}
     </div>
   );
 }
 
 export default function DocsClient() {
-  const { resolvedTheme, setTheme, theme } = useTheme();
-  const [activeSection, setActiveSection] = useState("introduction");
-  const [pricingTab, setPricingTab] = useState<"usage" | "source">("usage");
+  const { resolvedTheme, setTheme } = useTheme();
+  const [activeSection, setActiveSection] = useState("welcome");
 
   const appUrl =
     typeof window !== "undefined"
@@ -266,7 +215,6 @@ export default function DocsClient() {
       {/* ================= TOP NAVBAR ================= */}
       <header className="sticky top-0 z-40 w-full border-b border-zinc-200 dark:border-[#1e2d47] bg-white/90 dark:bg-[#0B1320]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          {/* Logo & Version */}
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2.5">
               <Image
@@ -292,8 +240,8 @@ export default function DocsClient() {
 
             <nav className="hidden md:flex items-center gap-5 text-sm font-medium">
               <a
-                href="#introduction"
-                onClick={() => scrollToSection("introduction")}
+                href="#welcome"
+                onClick={() => scrollToSection("welcome")}
                 className="text-[#0F86EE] dark:text-[#38bdf8] font-semibold">
                 Documentation
               </a>
@@ -304,15 +252,14 @@ export default function DocsClient() {
                 API Reference
               </a>
               <a
-                href="#webhooks-overview"
-                onClick={() => scrollToSection("webhooks-overview")}
+                href="#webhooks-why"
+                onClick={() => scrollToSection("webhooks-why")}
                 className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
                 Webhooks
               </a>
             </nav>
           </div>
 
-          {/* Right Tools: Dashboard link, Theme Switcher */}
           <div className="flex items-center gap-3">
             <Link
               href="/dashboard"
@@ -323,7 +270,6 @@ export default function DocsClient() {
 
             <div className="h-4 w-px bg-zinc-200 dark:bg-[#1e2d47]" />
 
-            {/* Theme toggle */}
             <div className="flex items-center rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#111c2e] p-0.5">
               <button
                 type="button"
@@ -389,132 +335,249 @@ export default function DocsClient() {
 
         {/* ================= CENTER MAIN CONTENT ================= */}
         <main className="flex-1 min-w-0 py-8 max-w-3xl">
-          {/* INTRODUCTION */}
-          <section id="introduction" className="scroll-mt-24 mb-12">
+          {/* WELCOME */}
+          <section id="welcome" className="scroll-mt-24 mb-12">
             <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
-              Orbit Developer API
+              Welcome to Orbit Developer API
             </h1>
             <p className="mt-3 text-base text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              Orbit is a multi-tenant subscription infrastructure platform. Orbit
-              manages money, recurring Paystack card authorisations, automated
-              daily renewals, and customer billing lifecycles. Your application
-              simply queries Orbit to verify active subscriptions and unlock features.
+              Orbit is subscription billing and payment infrastructure for software companies.
+              Orbit acts as your entire recurring billing engine: we create checkout pages, charge customer cards via Paystack, save authorization tokens, automatically re-charge cards every month, and handle retries when cards fail.
+            </p>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              Your software simply asks Orbit: <em className="text-zinc-800 dark:text-zinc-200 font-medium">&quot;Is Alex Johnson subscribed right now?&quot;</em> If yes, your app lets Alex use your premium features.
+            </p>
+          </section>
+
+          {/* MENTAL MODEL */}
+          <section id="mental-model" className="scroll-mt-24 mb-12">
+            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3">
+              How Orbit Works (The Mental Model)
+            </h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+              Building recurring billing from scratch is notoriously hard: you have to store card tokens securely, calculate renewal dates, run cron jobs at midnight, send dunning recovery emails, and update database states.
+            </p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+              Here is how the responsibility is divided between <strong>Orbit</strong> and <strong>Your App</strong>:
             </p>
 
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#111c2e]">
-                <div className="flex items-center gap-2 text-xs font-bold text-zinc-900 dark:text-white mb-1">
-                  <ShieldCheck size={16} className="text-emerald-500" />
-                  <span>Hosted Checkouts & Tokenization</span>
-                </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Customers enter card details on Orbit&apos;s hosted payment page.
-                  Card tokens are saved securely on Paystack for headless renewal.
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
+              <div className="p-5 rounded-xl border border-blue-200 dark:border-[#1e2d47] bg-blue-50/40 dark:bg-[#111c2e]">
+                <p className="font-bold text-sm text-[#0F86EE] dark:text-[#38bdf8] mb-2">
+                  What Orbit Does:
                 </p>
+                <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-2 list-disc pl-4">
+                  <li>Provides a hosted Paystack checkout page.</li>
+                  <li>Saves customer card authorization tokens.</li>
+                  <li>Runs daily automatic renewals at midnight.</li>
+                  <li>Retries failed cards automatically (3-attempt dunning).</li>
+                  <li>Delivers Webhooks to your server when money moves.</li>
+                  <li>Settles 95% net revenue into your Nigerian bank account.</li>
+                </ul>
               </div>
 
-              <div className="p-4 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#111c2e]">
-                <div className="flex items-center gap-2 text-xs font-bold text-zinc-900 dark:text-white mb-1">
-                  <Zap size={16} className="text-[#0F86EE] dark:text-[#38bdf8]" />
-                  <span>Real-Time Subscription Queries</span>
-                </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Look up a customer&apos;s active subscription by their UUID or
-                  email address directly from your backend or mobile app.
+              <div className="p-5 rounded-xl border border-emerald-200 dark:border-[#1e2d47] bg-emerald-50/40 dark:bg-[#111c2e]">
+                <p className="font-bold text-sm text-emerald-600 dark:text-emerald-400 mb-2">
+                  What Your App Does:
                 </p>
+                <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-2 list-disc pl-4">
+                  <li>Sends the customer to the Orbit checkout link.</li>
+                  <li>Queries Orbit API to check if the user is active.</li>
+                  <li>Listens to Webhooks to update user privileges in your DB.</li>
+                  <li>Focuses 100% on building your software product!</li>
+                </ul>
               </div>
             </div>
           </section>
 
-          {/* ARCHITECTURE */}
-          <section id="architecture" className="scroll-mt-24 mb-12">
+          {/* API KEYS & AUTHENTICATION */}
+          <section id="api-keys" className="scroll-mt-24 mb-12">
             <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3">
-              Architecture & Flow
+              API Keys & Authentication
             </h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
-              Orbit handles the entire payment and renewal engine so your team can
-              focus solely on building user features:
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+              Orbit provides two types of API keys for each organization:
+            </p>
+
+            <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-[#1e2d47] my-4">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-zinc-50 dark:bg-[#0c1524] border-b border-zinc-200 dark:border-[#1e2d47] text-zinc-700 dark:text-zinc-300">
+                    <th className="py-3 px-4 font-semibold">Key Type</th>
+                    <th className="py-3 px-4 font-semibold">Prefix</th>
+                    <th className="py-3 px-4 font-semibold">Permissions & Safety</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 dark:divide-[#1e2d47] bg-white dark:bg-[#111c2e]">
+                  <tr>
+                    <td className="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400">Publishable Key</td>
+                    <td className="py-3 px-4 font-mono text-zinc-600 dark:text-zinc-400">pk_live_...</td>
+                    <td className="py-3 px-4 text-zinc-600 dark:text-zinc-300">
+                      <strong>Safe for client-side / browsers.</strong> Read-only access to list products and plans. Cannot charge cards or read customer emails.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="py-3 px-4 font-bold text-rose-600 dark:text-rose-400">Secret Key</td>
+                    <td className="py-3 px-4 font-mono text-zinc-600 dark:text-zinc-400">sk_live_...</td>
+                    <td className="py-3 px-4 text-zinc-600 dark:text-zinc-300">
+                      <strong>Must stay on your server.</strong> Full write access: create checkout sessions, check customer subscription statuses, cancel subscriptions.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
+              Pass your API key in the standard HTTP <code className="font-mono bg-zinc-100 dark:bg-[#152238] px-1 py-0.5 rounded">Authorization</code> header:
             </p>
 
             <CodeSnippet
-              title="Integration Architecture"
-              language="text"
-              code={`1. CUSTOMER SIGNUP & CHECKOUT:
-   Customer chooses Plan → Redirected to Orbit Hosted Checkout (/checkout/:slug)
-   → Customer pays ₦ via Paystack → Authorization token stored → Subscription created (ACTIVE)
-
-2. AUTOMATED RECURRING ENGINE:
-   Daily Cron (/api/cron/renew) scans renewals_at <= now
-   → Headlessly charges saved Paystack card token
-   → Success: extend next renewal date | Failure: triggers 3-attempt Dunning recovery
-
-3. YOUR APPLICATION FEATURE GATING:
-   Client/Backend calls GET /api/v1/customers/:email/subscription
-   → Orbit returns { has_active_subscription: true, plan: "Pro Tier" }
-   → Your app unlocks the feature!`}
-            />
-          </section>
-
-          {/* AUTHENTICATION */}
-          <section id="authentication" className="scroll-mt-24 mb-12">
-            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3">
-              Authentication
-            </h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
-              All API requests require an API Key passed in the standard HTTP{" "}
-              <code className="text-xs font-mono font-semibold bg-zinc-100 dark:bg-[#152238] px-1.5 py-0.5 rounded">
-                Authorization
-              </code>{" "}
-              header as a Bearer token:
-            </p>
-
-            <CodeSnippet
-              title="Authorization Header"
+              title="HTTP Header"
               language="http"
-              code={`Authorization: Bearer sk_live_your_secret_api_key_here`}
+              code={`Authorization: Bearer sk_live_your_secret_key_here`}
             />
-
-            <div className="mt-4 p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 text-xs text-amber-800 dark:text-amber-300">
-              <strong>Key Security:</strong> Generate your API keys in the{" "}
-              <Link
-                href="/dashboard/settings"
-                className="underline font-semibold hover:text-amber-900">
-                Dashboard &gt; Settings &gt; Developer tab
-              </Link>
-              . Keep secret keys (<code className="font-mono">sk_live_...</code>) on
-              your backend server. Never expose secret keys in client-side bundles.
-            </div>
           </section>
 
           {/* 5-MINUTE QUICKSTART */}
           <section id="quickstart" className="scroll-mt-24 mb-12">
             <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3">
-              5-Minute Quickstart
+              5-Minute Quickstart (Verify Subscription)
             </h2>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
-              Check if a user is currently allowed to access premium features in
-              your software using a single cURL command:
+              Whenever a logged-in user visits a paid feature in your web or mobile app, send a single request from your backend to Orbit:
             </p>
 
             <CodeSnippet
-              title="Query subscription status via terminal"
+              title="Backend Check (cURL or Node.js)"
               language="bash"
-              code={`curl -X GET "${appUrl}/api/v1/customers/alex@example.com/subscription" \\
-  -H "Authorization: Bearer sk_live_YOUR_KEY"`}
+              code={`curl -X GET "${appUrl}/api/v1/customers/idawari005@gmail.com/subscription" \\
+  -H "Authorization: Bearer sk_live_YOUR_SECRET_KEY"`}
             />
 
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
-              Example 200 OK JSON Response:
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 font-semibold">
+              Example Successful Response (200 OK):
             </p>
 
             <CodeSnippet
-              title="JSON Response"
+              title="200 OK Response"
               language="json"
               code={`{
   "customer": {
-    "id": "c85d1c24-5d93-41bb-98f9-a9a304f5e043",
-    "name": "Alex Johnson",
-    "email": "alex@example.com"
+    "id": "8fa24018-c5a4-4f05-89f4-180db63d2319",
+    "name": "Idawari Justus",
+    "email": "idawari005@gmail.com"
+  },
+  "has_active_subscription": true,
+  "subscription": {
+    "id": "41e8c9b2-38d5-45a1-9a7c-bc709320e101",
+    "status": "ACTIVE",
+    "plan_name": "Monthly Pro",
+    "amount": 15000,
+    "currency": "NGN",
+    "billing_interval": "monthly",
+    "renews_at": "2026-09-20T12:00:00.000Z"
+  }
+}`}
+            />
+
+            <Callout type="success" title="How to use this response in your code:">
+              If <code className="font-mono font-bold">has_active_subscription === true</code>, unlock your feature! If <code className="font-mono font-bold">false</code> or if the status is <code className="font-mono">&quot;PAST_DUE&quot;</code>, prompt the user to update their payment method or subscribe.
+            </Callout>
+          </section>
+
+          {/* POSTMAN TESTING */}
+          <section id="postman-testing" className="scroll-mt-24 mb-12">
+            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3">
+              Testing with Postman / REST Clients
+            </h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+              You can test every endpoint directly inside <strong>Postman</strong>, <strong>Insomnia</strong>, or <strong>VS Code REST Client</strong>:
+            </p>
+
+            <ol className="text-xs text-zinc-600 dark:text-zinc-400 space-y-2 list-decimal pl-5">
+              <li>Set HTTP Method to <strong>GET</strong> or <strong>POST</strong>.</li>
+              <li>Set URL to <code className="font-mono text-[#0F86EE]">{appUrl}/api/v1/customers/YOUR_EMAIL/subscription</code></li>
+              <li>Under the <strong>Headers</strong> tab, add key: <code className="font-mono font-semibold">Authorization</code> with value <code className="font-mono font-semibold">Bearer sk_live_YOUR_KEY</code></li>
+              <li>Click <strong>Send</strong>. Orbit will return live JSON data!</li>
+            </ol>
+          </section>
+
+          {/* ================= API REFERENCE ================= */}
+          <div className="pt-8 border-t border-zinc-200 dark:border-[#1e2d47] mb-8">
+            <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white mb-2">
+              Endpoints Reference
+            </h2>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Base URL: <code className="text-xs font-mono font-semibold text-[#0F86EE]">{appUrl}/api/v1</code>
+            </p>
+          </div>
+
+          {/* ENDPOINT: GET /api/v1 */}
+          <div id="api-root" className="scroll-mt-24 mb-10 p-6 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+            <div className="flex items-center gap-3 mb-2">
+              <MethodBadge method="GET" />
+              <code className="text-sm font-mono font-bold text-zinc-900 dark:text-white">
+                /api/v1
+              </code>
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-300 mb-4">
+              Endpoint discovery index. Use this to verify that your API key is valid and check connected service health.
+            </p>
+            <CodeSnippet
+              title="Request"
+              language="bash"
+              code={`curl -X GET "${appUrl}/api/v1" \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY"`}
+            />
+            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mt-3 mb-1">Response (200 OK):</p>
+            <CodeSnippet
+              title="Response"
+              language="json"
+              code={`{
+  "name": "Orbit Developer API",
+  "version": "v1",
+  "status": "operational",
+  "organisation": {
+    "id": "org_9481029",
+    "name": "Bolda Inc"
+  }
+}`}
+            />
+          </div>
+
+          {/* ENDPOINT: GET .../subscription */}
+          <div id="check-subscription" className="scroll-mt-24 mb-10 p-6 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+            <div className="flex items-center gap-3 mb-2">
+              <MethodBadge method="GET" />
+              <code className="text-sm font-mono font-bold text-zinc-900 dark:text-white">
+                /api/v1/customers/:id_or_email/subscription
+              </code>
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-300 mb-4">
+              <strong>The most important endpoint.</strong> Checks if a customer currently has an active subscription. You can pass either the customer&apos;s Orbit UUID or their email address directly.
+            </p>
+
+            <div className="text-xs text-zinc-700 dark:text-zinc-300 font-semibold mb-2">Path Parameters:</div>
+            <div className="p-3 rounded-lg bg-zinc-50 dark:bg-[#0c1524] text-xs font-mono mb-4 text-zinc-700 dark:text-zinc-300">
+              <span className="text-[#0F86EE] font-bold">id_or_email</span> (string, required) — e.g. <code className="text-zinc-900 dark:text-white">&quot;idawari005@gmail.com&quot;</code> or <code className="text-zinc-900 dark:text-white">&quot;8fa24018-c5a4-4f05-89f4-180db63d2319&quot;</code>
+            </div>
+
+            <CodeSnippet
+              title="Request"
+              language="bash"
+              code={`curl -X GET "${appUrl}/api/v1/customers/idawari005@gmail.com/subscription" \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY"`}
+            />
+
+            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mt-3 mb-1">When user has an active plan (200 OK):</p>
+            <CodeSnippet
+              title="Response (Active)"
+              language="json"
+              code={`{
+  "customer": {
+    "id": "8fa24018-c5a4-4f05-89f4-180db63d2319",
+    "name": "Idawari Justus",
+    "email": "idawari005@gmail.com"
   },
   "has_active_subscription": true,
   "subscription": {
@@ -528,68 +591,37 @@ export default function DocsClient() {
   }
 }`}
             />
-          </section>
 
-          {/* ================= API REFERENCE ================= */}
-          <div className="pt-8 border-t border-zinc-200 dark:border-[#1e2d47] mb-8">
-            <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white mb-2">
-              API Reference
-            </h2>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Base URL: <code className="text-xs font-mono font-semibold text-[#0F86EE]">{appUrl}/api/v1</code>
-            </p>
+            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mt-3 mb-1">When user has no active plan (200 OK):</p>
+            <CodeSnippet
+              title="Response (Inactive)"
+              language="json"
+              code={`{
+  "customer": {
+    "id": "8fa24018-c5a4-4f05-89f4-180db63d2319",
+    "name": "Idawari Justus",
+    "email": "idawari005@gmail.com"
+  },
+  "has_active_subscription": false,
+  "subscription": null
+}`}
+            />
           </div>
 
-          {/* ENDPOINT 1: API ROOT */}
-          <EndpointCard
-            id="api-root"
-            method="GET"
-            path="/api/v1"
-            description="Root API status and endpoint discovery index. Useful for testing API key validity.">
-            <CodeSnippet
-              title="Sample Request"
-              language="bash"
-              code={`curl -X GET "${appUrl}/api/v1" \\
-  -H "Authorization: Bearer sk_live_YOUR_KEY"`}
-            />
-          </EndpointCard>
+          {/* ENDPOINT: POST /api/v1/checkout/sessions */}
+          <div id="checkout-sessions" className="scroll-mt-24 mb-10 p-6 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+            <div className="flex items-center gap-3 mb-2">
+              <MethodBadge method="POST" />
+              <code className="text-sm font-mono font-bold text-zinc-900 dark:text-white">
+                /api/v1/checkout/sessions
+              </code>
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-300 mb-4">
+              Generates a hosted checkout URL for a specific plan and customer. Redirect your customer to the returned <code className="font-mono text-[#0F86EE]">url</code>.
+            </p>
 
-          {/* ENDPOINT 2: CHECKOUT SESSIONS */}
-          <EndpointCard
-            id="checkout-sessions"
-            method="POST"
-            path="/api/v1/checkout/sessions"
-            description="Create a hosted checkout session URL for a customer programmatically.">
-            <ParamsTable
-              parameters={[
-                {
-                  name: "plan_id",
-                  type: "string",
-                  required: true,
-                  description: "The UUID of the plan to subscribe the customer to.",
-                },
-                {
-                  name: "customer_email",
-                  type: "string",
-                  required: true,
-                  description: "Email address of the customer paying.",
-                },
-                {
-                  name: "customer_name",
-                  type: "string",
-                  required: false,
-                  description: "Full name of the customer.",
-                },
-                {
-                  name: "success_url",
-                  type: "string",
-                  required: false,
-                  description: "Where to redirect the customer after successful payment.",
-                },
-              ]}
-            />
             <CodeSnippet
-              title="Sample Request"
+              title="Request"
               language="bash"
               code={`curl -X POST "${appUrl}/api/v1/checkout/sessions" \\
   -H "Authorization: Bearer sk_live_YOUR_KEY" \\
@@ -598,246 +630,248 @@ export default function DocsClient() {
     "plan_id": "plan_9103984",
     "customer_email": "jane@company.com",
     "customer_name": "Jane Doe",
-    "success_url": "https://yourapp.com/welcome"
+    "success_url": "https://yourapp.com/dashboard?subscribed=true"
   }'`}
             />
-          </EndpointCard>
 
-          {/* ENDPOINT 3: LIST PLANS */}
-          <EndpointCard
-            id="list-plans"
-            method="GET"
-            path="/api/v1/plans"
-            description="List all active pricing tiers and intervals for your organization. (Accepts publishable or secret keys)">
+            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mt-3 mb-1">Response (200 OK):</p>
             <CodeSnippet
-              title="Sample Request"
+              title="Response"
+              language="json"
+              code={`{
+  "id": "cs_9f83a8b27c10d4e5f6",
+  "url": "${appUrl}/checkout/bolder-saas?session=cs_9f83a8b27c10d4e5f6"
+}`}
+            />
+          </div>
+
+          {/* ENDPOINT: GET /api/v1/plans */}
+          <div id="list-plans" className="scroll-mt-24 mb-10 p-6 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+            <div className="flex items-center gap-3 mb-2">
+              <MethodBadge method="GET" />
+              <code className="text-sm font-mono font-bold text-zinc-900 dark:text-white">
+                /api/v1/plans
+              </code>
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-300 mb-4">
+              Returns all active plans created under your organization. (Accepts <code className="font-mono">pk_live_...</code> or <code className="font-mono">sk_live_...</code>).
+            </p>
+            <CodeSnippet
+              title="Request"
               language="bash"
               code={`curl -X GET "${appUrl}/api/v1/plans" \\
   -H "Authorization: Bearer pk_live_YOUR_KEY"`}
             />
-          </EndpointCard>
+          </div>
 
-          {/* ENDPOINT 4: CHECK SUBSCRIPTION */}
-          <EndpointCard
-            id="check-subscription"
-            method="GET"
-            path="/api/v1/customers/:id_or_email/subscription"
-            description="Get the live active subscription for a customer by their UUID or direct email address.">
-            <ParamsTable
-              parameters={[
-                {
-                  name: "id_or_email",
-                  type: "string (path)",
-                  required: true,
-                  description: "Either the customer's UUID or their email address (e.g. user@gmail.com).",
-                },
-              ]}
-            />
+          {/* ENDPOINT: POST .../cancel */}
+          <div id="cancel-subscription" className="scroll-mt-24 mb-10 p-6 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+            <div className="flex items-center gap-3 mb-2">
+              <MethodBadge method="POST" />
+              <code className="text-sm font-mono font-bold text-zinc-900 dark:text-white">
+                /api/v1/subscriptions/:subscription_id/cancel
+              </code>
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-300 mb-4">
+              Cancels an active subscription. By default (<code className="font-mono">cancel_at_period_end: true</code>), access remains active until the current paid period ends.
+            </p>
             <CodeSnippet
-              title="Sample Request"
-              language="bash"
-              code={`curl -X GET "${appUrl}/api/v1/customers/alex@example.com/subscription" \\
-  -H "Authorization: Bearer sk_live_YOUR_KEY"`}
-            />
-          </EndpointCard>
-
-          {/* ENDPOINT 5: CANCEL SUBSCRIPTION */}
-          <EndpointCard
-            id="cancel-subscription"
-            method="POST"
-            path="/api/v1/subscriptions/:subscription_id/cancel"
-            description="Cancel a subscription immediately or schedule cancellation at period end.">
-            <ParamsTable
-              parameters={[
-                {
-                  name: "cancel_at_period_end",
-                  type: "boolean",
-                  required: false,
-                  description: "If true, access remains active until renews_at. Default is true.",
-                },
-              ]}
-            />
-            <CodeSnippet
-              title="Sample Request"
+              title="Request"
               language="bash"
               code={`curl -X POST "${appUrl}/api/v1/subscriptions/sub_48912/cancel" \\
   -H "Authorization: Bearer sk_live_YOUR_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{ "cancel_at_period_end": true }'`}
             />
-          </EndpointCard>
+          </div>
 
-          {/* ================= WEBHOOKS ================= */}
-          <section id="webhooks-overview" className="scroll-mt-24 mb-12 pt-8 border-t border-zinc-200 dark:border-[#1e2d47]">
-            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3">
-              Webhooks & Event Verification
+          {/* ================= WEBHOOKS DEEP DIVE ================= */}
+          <section id="webhooks-why" className="scroll-mt-24 mb-12 pt-8 border-t border-zinc-200 dark:border-[#1e2d47]">
+            <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white mb-3">
+              Webhooks (Deep Dive for Beginners)
             </h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
-              Orbit delivers real-time HTTP POST notifications to your webhook URL whenever
-              a payment succeeds, a renewal charges, or a subscription is canceled.
-            </p>
 
-            <h3 id="verifying-signatures" className="text-lg font-bold text-zinc-900 dark:text-white mt-6 mb-2">
-              Verifying Webhook Signatures
+            <div className="p-5 rounded-xl border border-blue-200 dark:border-[#1e2d47] bg-blue-50/50 dark:bg-[#111c2e] my-4 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
+              <p className="font-bold text-sm text-[#0F86EE] dark:text-[#38bdf8] mb-1">
+                What is a Webhook and why do you need it?
+              </p>
+              When a customer&apos;s subscription renews at 2:00 AM while they are asleep, Paystack charges their card automatically. Your database needs to know that this payment succeeded so you can keep their account open.
+              <br /><br />
+              Instead of your server polling Orbit every minute asking <em>&quot;Did anyone pay?&quot;</em>, <strong>Orbit sends an HTTP POST request directly to your server</strong> whenever an event happens. That notification is called a <strong>Webhook</strong>.
+            </div>
+
+            <h3 id="webhooks-flow" className="text-xl font-bold text-zinc-900 dark:text-white mt-8 mb-2">
+              The Security Problem: Why We Verify Signatures
             </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
-              Each delivery includes an <code className="font-mono text-[#0F86EE]">orbit-signature</code> header:
-              <code className="block mt-1 font-mono p-2 rounded bg-zinc-100 dark:bg-[#152238] text-[11px]">
-                t=1756184000,v1=a849f7b1...hmac_sha256
-              </code>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3 leading-relaxed">
+              Because your webhook endpoint (e.g. <code className="font-mono">https://yourapp.com/api/webhooks/orbit</code>) is a public URL on the internet, anyone could send fake data trying to get free access.
+              <br /><br />
+              To guarantee that every webhook genuinely came from Orbit and was not modified in transit, Orbit signs each payload using <strong>HMAC-SHA256</strong>.
             </p>
 
-            <div id="webhook-example" className="mt-4">
-              <CodeSnippet
-                title="Complete Next.js App Router Webhook Route (/api/webhooks/orbit/route.ts)"
-                language="typescript"
-                code={`import { NextRequest, NextResponse } from "next/server";
+            <h3 id="signature-explained" className="text-xl font-bold text-zinc-900 dark:text-white mt-8 mb-2">
+              Where does the Header and Secret come from?
+            </h3>
+
+            <div className="space-y-4 text-xs text-zinc-600 dark:text-zinc-400">
+              <div className="p-4 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524]">
+                <p className="font-bold text-zinc-900 dark:text-white mb-1">1. The Signing Secret (<code className="text-[#0F86EE]">whsec_...</code>)</p>
+                When you add your webhook URL in <strong>Dashboard &gt; Settings &gt; Developer tab</strong>, Orbit generates a secret key (e.g. <code className="font-mono">whsec_9a8b7c...</code>). You save this in your server&apos;s <code className="font-mono">.env</code> file as <code className="font-mono">ORBIT_WEBHOOK_SECRET</code>.
+              </div>
+
+              <div className="p-4 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524]">
+                <p className="font-bold text-zinc-900 dark:text-white mb-1">2. The <code className="text-[#0F86EE]">orbit-signature</code> Header</p>
+                Orbit sends this header with every POST request:
+                <code className="block mt-2 font-mono p-2.5 rounded bg-zinc-100 dark:bg-[#152238] text-zinc-800 dark:text-zinc-200">
+                  orbit-signature: t=1756184000,v1=a849f7b1e42c98d6...
+                </code>
+                <ul className="mt-2 space-y-1 list-disc pl-4">
+                  <li><strong className="font-mono">t</strong> = The exact timestamp (Unix seconds) when Orbit sent the webhook. (Prevents replay attacks).</li>
+                  <li><strong className="font-mono">v1</strong> = The cryptographic hash calculated by Orbit: <code className="font-mono">HMAC_SHA256(secret, timestamp + &quot;.&quot; + payload)</code>.</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* FULL WEBHOOK CODE */}
+            <h3 id="webhook-code" className="text-xl font-bold text-zinc-900 dark:text-white mt-8 mb-2">
+              Complete, Copy-Pasteable Webhook Handler (Next.js App Router)
+            </h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
+              Create this file at <code className="font-mono bg-zinc-100 dark:bg-[#152238] px-1 py-0.5 rounded">app/api/webhooks/orbit/route.ts</code> in your project:
+            </p>
+
+            <CodeSnippet
+              title="app/api/webhooks/orbit/route.ts"
+              language="typescript"
+              code={`import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
-  // 1. Read raw text payload and signature header
+  // 1. Read the raw request body as text (DO NOT parse as JSON yet!)
   const payload = await req.text();
-  const signatureHeader = req.headers.get("orbit-signature");
-  const secret = process.env.ORBIT_WEBHOOK_SECRET!; // From Orbit Developer Settings
 
-  if (!signatureHeader) {
-    return NextResponse.json({ error: "Missing signature" }, { status: 400 });
+  // 2. Extract the signature header sent by Orbit
+  const signatureHeader = req.headers.get("orbit-signature");
+  const secret = process.env.ORBIT_WEBHOOK_SECRET;
+
+  if (!signatureHeader || !secret) {
+    return NextResponse.json({ error: "Missing signature or secret" }, { status: 400 });
   }
 
-  // 2. Extract timestamp and signature hash
+  // 3. Deconstruct the header: "t=1756184000,v1=a849f7b..."
   const [tPart, v1Part] = signatureHeader.split(",");
   const timestamp = tPart?.split("=")[1];
   const signature = v1Part?.split("=")[1];
 
-  // 3. Compute expected HMAC-SHA256 signature
+  if (!timestamp || !signature) {
+    return NextResponse.json({ error: "Malformed signature header" }, { status: 400 });
+  }
+
+  // 4. Calculate YOUR expected signature using your secret key
   const expectedSignature = crypto
     .createHmac("sha256", secret)
     .update(\`\${timestamp}.\${payload}\`)
     .digest("hex");
 
+  // 5. Compare Orbit's signature against your calculated signature safely
   const isValid = crypto.timingSafeEqual(
     Buffer.from(signature),
     Buffer.from(expectedSignature)
   );
 
   if (!isValid) {
-    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    return NextResponse.json({ error: "Invalid signature. Request rejected." }, { status: 401 });
   }
 
-  // 4. Signature verified! Safely process the event:
+  // 6. ✅ SIGNATURE VERIFIED! Now safely parse the payload and update your database:
   const event = JSON.parse(payload);
-  if (event.type === "payment.succeeded") {
-    console.log("Customer renewed:", event.data.customer_email);
-    // TODO: Update your database user record
+
+  switch (event.type) {
+    case "payment.succeeded":
+      console.log(\`✅ Payment of ₦\${event.data.amount} succeeded for \${event.data.customer_email}\`);
+      // TODO: Set user.is_subscribed = true in your DB!
+      break;
+
+    case "subscription.cancelled":
+      console.log(\`⚠️ Subscription cancelled for \${event.data.customer_email}\`);
+      // TODO: Update subscription status in your DB
+      break;
+
+    case "payment.failed":
+      console.log(\`❌ Renewal payment failed for \${event.data.customer_email}\`);
+      break;
   }
 
+  // 7. Acknowledge receipt to Orbit with 200 OK
   return NextResponse.json({ received: true });
 }`}
-              />
-            </div>
+            />
           </section>
 
-          {/* ================= HOSTED CHECKOUT & PRICING TABLE ================= */}
+          {/* ================= FRONTEND INTEGRATION ================= */}
           <section id="hosted-checkout" className="scroll-mt-24 mb-12 pt-8 border-t border-zinc-200 dark:border-[#1e2d47]">
-            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">
-              Hosted Checkout & Components
+            <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white mb-3">
+              Frontend Integration: How Customers Subscribe
             </h2>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
-              You can integrate Orbit checkout into your application in two ways:
+              You do <strong>not</strong> need to install any complex npm package. You can connect your website or web app to Orbit using one of these three simple methods:
             </p>
 
-            {/* OPTION 1: HOSTED LINK */}
-            <div className="mb-8 p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+            {/* OPTION 1 */}
+            <div className="mb-6 p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
               <div className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white mb-2">
                 <ExternalLink size={16} className="text-[#0F86EE]" />
-                <span>Option 1: Direct Hosted Checkout URL (Zero Code)</span>
+                <span>Method 1: Direct Hosted Checkout Link (Easiest — Zero Code)</span>
               </div>
               <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3 leading-relaxed">
-                Simply link your users or CTA buttons directly to your product&apos;s hosted checkout URL:
+                When you create a Product in the Orbit Dashboard (e.g. &quot;Bolder SaaS&quot; with slug <code className="font-mono text-zinc-800 dark:text-zinc-200">bolder-saas</code>), Orbit automatically hosts a checkout page for it.
+                <br /><br />
+                Just link your website&apos;s &quot;Subscribe&quot; buttons directly to:
               </p>
               <code className="block p-3 rounded-lg bg-zinc-100 dark:bg-[#0c1524] text-xs font-mono text-[#0F86EE] dark:text-[#38bdf8] select-all">
-                {`${appUrl}/checkout/:product_slug`}
+                {`${appUrl}/checkout/YOUR_PRODUCT_SLUG`}
               </code>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
+                Customers choose their plan (Monthly or Yearly), pay with Paystack, and Orbit redirects them back to your website!
+              </p>
             </div>
 
-            {/* OPTION 2: REACT PRICING TABLE COMPONENT */}
-            <div id="pricing-table" className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
-                  <Code2 size={16} className="text-emerald-500" />
-                  <span>Option 2: Drop-in React Pricing Table Component (shadcn style)</span>
-                </div>
-
-                {/* Tabs */}
-                <div className="flex items-center rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#0c1524] p-0.5">
-                  <button
-                    onClick={() => setPricingTab("usage")}
-                    className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                      pricingTab === "usage"
-                        ? "bg-white dark:bg-[#152238] text-zinc-900 dark:text-white shadow-xs font-semibold"
-                        : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
-                    }`}>
-                    Usage
-                  </button>
-                  <button
-                    onClick={() => setPricingTab("source")}
-                    className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                      pricingTab === "source"
-                        ? "bg-white dark:bg-[#152238] text-zinc-900 dark:text-white shadow-xs font-semibold"
-                        : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
-                    }`}>
-                    Component Source Code
-                  </button>
-                </div>
+            {/* OPTION 2 */}
+            <div id="custom-checkout" className="mb-6 p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+              <div className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white mb-2">
+                <Zap size={16} className="text-amber-500" />
+                <span>Method 2: Programmatic Checkout Session (Custom In-App UI)</span>
               </div>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3 leading-relaxed">
+                If you already have your own pricing UI, when the user clicks &quot;Upgrade&quot;, your backend calls <code className="font-mono text-[#0F86EE]">POST /api/v1/checkout/sessions</code> with the <code className="font-mono">plan_id</code> and customer email, and you redirect the user to the returned URL.
+              </p>
+            </div>
 
-              {pricingTab === "usage" ? (
-                <div>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3 leading-relaxed">
-                    Copy the component into your project&apos;s <code className="font-mono bg-zinc-100 dark:bg-[#152238] px-1 py-0.5 rounded">components/OrbitPricingTable.tsx</code> and drop it into any page:
-                  </p>
+            {/* OPTION 3 */}
+            <div id="react-component" className="mb-6 p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+              <div className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white mb-2">
+                <Code2 size={16} className="text-emerald-500" />
+                <span>Method 3: React Pricing Component (shadcn-style Copy & Paste)</span>
+              </div>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3 leading-relaxed">
+                If you want a pre-built React pricing grid that automatically fetches your product&apos;s plans, you can copy the following file into your project at <code className="font-mono bg-zinc-100 dark:bg-[#152238] px-1 py-0.5 rounded">components/OrbitPricingTable.tsx</code>:
+              </p>
 
-                  <CodeSnippet
-                    title="app/pricing/page.tsx"
-                    language="tsx"
-                    code={`import OrbitPricingTable from '@/components/OrbitPricingTable';
-
-export default function PricingPage() {
-  return (
-    <div className="py-12 px-4">
-      <OrbitPricingTable
-        productId="your_product_slug_or_id"
-        publishableKey="pk_live_YOUR_PUBLISHABLE_KEY"
-        secretKey="sk_live_YOUR_SECRET_KEY"
-      />
-    </div>
-  );
-}`}
-                  />
-                </div>
-              ) : (
-                <div>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3 leading-relaxed">
-                    Create <code className="font-mono bg-zinc-100 dark:bg-[#152238] px-1 py-0.5 rounded">components/OrbitPricingTable.tsx</code> in your project and paste this code:
-                  </p>
-
-                  <CodeSnippet
-                    title="components/OrbitPricingTable.tsx"
-                    language="tsx"
-                    code={`"use client";
+              <CodeSnippet
+                title="components/OrbitPricingTable.tsx"
+                language="tsx"
+                code={`"use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Check, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
 
 export default function OrbitPricingTable({
   productId,
   publishableKey,
-  secretKey,
   apiBaseUrl = "${appUrl}",
 }: {
   productId: string;
   publishableKey: string;
-  secretKey: string;
   apiBaseUrl?: string;
 }) {
   const [product, setProduct] = useState<any>(null);
@@ -854,40 +888,81 @@ export default function OrbitPricingTable({
       });
   }, [productId, publishableKey, apiBaseUrl]);
 
-  const handleCheckout = async (planId: string) => {
-    const res = await fetch(\`\${apiBaseUrl}/api/v1/checkout/sessions\`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: \`Bearer \${secretKey}\`,
-      },
-      body: JSON.stringify({ plan_id: planId }),
-    });
-    const session = await res.json();
-    window.location.href = session.url;
-  };
-
   if (loading) return <div className="p-8 text-center"><Loader2 className="animate-spin inline" /></div>;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
       {product?.plans?.map((plan: any) => (
-        <div key={plan.id} className="p-6 rounded-2xl border bg-white shadow-xs">
+        <div key={plan.id} className="p-6 rounded-2xl border bg-white dark:bg-[#111c2e] shadow-xs">
           <h3 className="font-bold text-lg">{plan.name}</h3>
           <p className="text-2xl font-bold mt-2">₦{plan.amount?.toLocaleString()} <span className="text-xs font-normal text-zinc-500">/{plan.interval}</span></p>
-          <button
-            onClick={() => handleCheckout(plan.id)}
-            className="w-full mt-6 py-2.5 rounded-xl bg-[#0F86EE] text-white font-semibold text-sm">
-            Subscribe
-          </button>
+          <a
+            href={\`\${apiBaseUrl}/checkout/\${product.slug}?plan=\${plan.id}\`}
+            className="w-full mt-6 py-2.5 rounded-xl bg-[#0F86EE] hover:bg-[#0d7ad9] text-white font-semibold text-sm flex items-center justify-center gap-1.5 transition-colors">
+            <span>Subscribe</span>
+            <ArrowRight size={14} />
+          </a>
         </div>
       ))}
     </div>
   );
 }`}
-                  />
-                </div>
-              )}
+              />
+            </div>
+          </section>
+
+          {/* ================= ERRORS & STATUS CODES ================= */}
+          <section id="error-handling" className="scroll-mt-24 mb-12 pt-8 border-t border-zinc-200 dark:border-[#1e2d47]">
+            <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white mb-3">
+              Errors & Status Codes
+            </h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+              Orbit uses standard HTTP status codes. When an error occurs, Orbit returns a JSON payload with a clear, readable message:
+            </p>
+
+            <CodeSnippet
+              title="Standard Error Response Format"
+              language="json"
+              code={`{
+  "error": {
+    "code": "unauthorized",
+    "message": "Invalid API key provided. Check your Authorization header."
+  }
+}`}
+            />
+
+            <div id="status-codes" className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-[#1e2d47] my-6">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-zinc-50 dark:bg-[#0c1524] border-b border-zinc-200 dark:border-[#1e2d47] text-zinc-700 dark:text-zinc-300">
+                    <th className="py-3 px-4 font-semibold">Code</th>
+                    <th className="py-3 px-4 font-semibold">Meaning</th>
+                    <th className="py-3 px-4 font-semibold">What to do</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 dark:divide-[#1e2d47] bg-white dark:bg-[#111c2e]">
+                  <tr>
+                    <td className="py-3 px-4 font-mono font-bold text-emerald-600">200 OK</td>
+                    <td className="py-3 px-4">Success</td>
+                    <td className="py-3 px-4 text-zinc-600 dark:text-zinc-300">The request succeeded.</td>
+                  </tr>
+                  <tr>
+                    <td className="py-3 px-4 font-mono font-bold text-amber-600">400 Bad Request</td>
+                    <td className="py-3 px-4">Missing Parameters</td>
+                    <td className="py-3 px-4 text-zinc-600 dark:text-zinc-300">Check required JSON body fields (e.g. <code className="font-mono">plan_id</code>, <code className="font-mono">customer_email</code>).</td>
+                  </tr>
+                  <tr>
+                    <td className="py-3 px-4 font-mono font-bold text-rose-600">401 Unauthorized</td>
+                    <td className="py-3 px-4">Invalid API Key</td>
+                    <td className="py-3 px-4 text-zinc-600 dark:text-zinc-300">Ensure header is <code className="font-mono">Authorization: Bearer sk_live_...</code>.</td>
+                  </tr>
+                  <tr>
+                    <td className="py-3 px-4 font-mono font-bold text-rose-600">404 Not Found</td>
+                    <td className="py-3 px-4">Resource not found</td>
+                    <td className="py-3 px-4 text-zinc-600 dark:text-zinc-300">The requested customer, plan, or product does not exist in your organization.</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </section>
         </main>
@@ -899,18 +974,18 @@ export default function OrbitPricingTable({
           </p>
           <div className="flex flex-col text-xs space-y-2 border-l border-zinc-200 dark:border-[#1e2d47]">
             {[
-              { id: "introduction", label: "Introduction" },
-              { id: "architecture", label: "Architecture" },
-              { id: "authentication", label: "Authentication" },
-              { id: "quickstart", label: "5-Min Quickstart" },
-              { id: "api-root", label: "API Discovery" },
-              { id: "checkout-sessions", label: "Checkout Sessions" },
-              { id: "list-plans", label: "List Plans" },
+              { id: "welcome", label: "Welcome to Orbit" },
+              { id: "mental-model", label: "Mental Model" },
+              { id: "api-keys", label: "API Keys" },
+              { id: "quickstart", label: "Quickstart (Verify)" },
+              { id: "postman-testing", label: "Postman Testing" },
+              { id: "api-root", label: "GET /api/v1" },
               { id: "check-subscription", label: "Check Subscription" },
-              { id: "cancel-subscription", label: "Cancel Subscription" },
-              { id: "webhooks-overview", label: "Webhooks" },
-              { id: "hosted-checkout", label: "Hosted Checkout" },
-              { id: "pricing-table", label: "Pricing Component" },
+              { id: "checkout-sessions", label: "Checkout Sessions" },
+              { id: "webhooks-why", label: "Webhooks Guide" },
+              { id: "webhook-code", label: "Webhook Handler Code" },
+              { id: "hosted-checkout", label: "Frontend Integration" },
+              { id: "error-handling", label: "Errors & Status Codes" },
             ].map((link) => {
               const isActive = activeSection === link.id;
               return (
