@@ -10,10 +10,6 @@ The goal of Orbit is to provide businesses with the infrastructure needed to lau
 
 [https://orbit-billing-nomba.vercel.app/](https://orbit-billing-nomba.vercel.app/)
 
-### Figma Design
-
-[Orbit Billing Design](https://www.figma.com/design/Z61MYyuK3CMmnAbl1X22L0/Orbit-Billing?node-id=0-1&t=WCjD06PrFjmRdRWA-1)
-
 <img src="./public/preview4.png" alt="Orbit">
 <img src="./public/preview5.png" alt="Orbit">
 <img src="./public/preview1.png" alt="Orbit">
@@ -139,30 +135,7 @@ Card token stored
 Future renewals handled automatically
 ```
 
-### 5. Nomba Payment Integration
-
-Orbit integrates with Nomba for payment processing.
-
-**Implemented:**
-
-- OAuth authentication
-- Checkout order creation
-- Transaction verification
-- Tokenized card payments
-- Payment tracking
-
-**Nomba APIs used:**
-
-```
-POST /v1/auth/token/issue
-POST /v1/checkout/order
-GET  /v1/transactions/accounts/single
-POST /v1/checkout/tokenized-card-payment
-GET /v1/transfers/banks
-GET /v1/transactions/accounts/single
-```
-
-### 6. Recurring Subscription Engine
+### 5. Recurring Subscription Engine
 
 Orbit includes an automated subscription renewal system.
 
@@ -183,7 +156,7 @@ Update subscription
 Generate next renewal date
 ```
 
-### 7. Subscription State Management
+### 6. Subscription State Management
 
 Subscriptions move through different states:
 
@@ -207,7 +180,7 @@ Renewal date reached
    Payment fails    ──► PAST_DUE ──► Retry payment
 ```
 
-### 8. Automated Renewal Cron
+### 7. Automated Renewal Cron
 
 Orbit uses a scheduled cron process to handle recurring payments.
 
@@ -234,7 +207,7 @@ The cron runs automatically based on the configured schedule.
 }
 ```
 
-### 9. Webhook Processing
+### 8. Webhook Processing
 
 Orbit receives payment events through Nomba webhooks.
 
@@ -276,7 +249,7 @@ Payment Update
 Subscription Update
 ```
 
-### 10. Customer Management
+### 9. Customer Management
 
 Merchants can view all customers who have interacted with their products.
 
@@ -297,7 +270,7 @@ Active subscription
 ₦50,000 spent
 ```
 
-### 11. Payments Dashboard
+### 10. Payments Dashboard
 
 Orbit provides payment tracking.
 
@@ -317,7 +290,7 @@ Merchants can view:
 - `PENDING`
 - `REVERSED`
 
-### 12. Merchant Analytics Dashboard
+### 11. Merchant Analytics Dashboard
 
 The dashboard provides real-time subscription insights.
 
@@ -339,7 +312,7 @@ Yearly Plan:
 - **Active Subscribers** — Number of currently active subscriptions.
 - **Top Products** — Ranks products based on generated revenue.
 
-### 13. Customer Self-Service Portal
+### 12. Customer Self-Service Portal
 
 Orbit includes a customer portal where customers can manage their subscriptions.
 
@@ -496,63 +469,4 @@ Allow developers to integrate Orbit directly.
 
 Features:
 
-- API keys
-- SDKs
-- Webhook management
-- Subscription APIs
-
-### More Payment Providers
-
-Expand beyond Nomba:
-
-- Paystack
-- Flutterwave
-- Stripe
-
-### Customer Communication
-
-Add:
-
-- Email notifications
-- SMS notifications
-- Payment reminders
-- Renewal alerts
-
-### Advanced Analytics
-
-Future analytics:
-
-- Revenue forecasting
-- Customer lifetime value
-- Churn analytics
-- Retention reports
-
-## Team Achievement
-
-### Members
-
-- Chimamanda Justus: Developer
-- Fibi Justus: Project Manager
-
-We built Orbit as a complete subscription infrastructure platform that enables businesses to launch recurring payment products faster.
-
-During the hackathon, we successfully implemented:
-
-- Multi-tenant architecture
-- Merchant dashboard
-- Product and plan management
-- Hosted checkout
-- Nomba payment integration
-- Tokenized recurring payments
-- Subscription renewal engine
-- Automated cron processing
-- Webhook handling
-- Customer management
-- Payment tracking
-- Self-service customer portal
-
-We transformed a complex billing workflow into a simple infrastructure layer that businesses can use immediately.
-
-## License
-
-This project was created for the Nomba Hackathon.
+- 
