@@ -1,506 +1,175 @@
 # Orbit
 
-Orbit is a multi-tenant subscription infrastructure platform that helps businesses create products, configure pricing plans, collect recurring payments, and manage customer subscriptions through a hosted checkout and billing system powered by Nomba.
+**Orbit** is a multi-tenant subscription billing and revenue infrastructure platform designed for modern software companies and digital merchants. It enables businesses to define products, configure pricing tiers, process recurring card payments, automate billing and dunning cycles, and manage settlements via Paystack.
 
-The goal of Orbit is to provide businesses with the infrastructure needed to launch subscription-based products without building their own billing engine, payment workflows, renewal systems, or customer management dashboards.
+---
 
-## Links
+## Live Links
 
-### Live Application
-
-[https://orbit-billing-nomba.vercel.app/](https://orbit-billing-nomba.vercel.app/)
+- **Live Application:** [https://orbit-billing-nomba.vercel.app](https://orbit-billing-nomba.vercel.app)
+- **Interactive API Documentation:** [https://orbit-billing-nomba.vercel.app/docs](https://orbit-billing-nomba.vercel.app/docs)
 
 <img src="./public/preview4.png" alt="Orbit">
 <img src="./public/preview5.png" alt="Orbit">
 <img src="./public/preview1.png" alt="Orbit">
 <img src="./public/preview11.png" alt="Orbit">
 
-## Product Overview
+---
 
-Modern businesses rely on recurring revenue models, but building subscription infrastructure requires handling:
+## Architectural Highlights
 
-- Customer management
-- Product and pricing configuration
-- Payment processing
-- Recurring billing
-- Payment retries
-- Subscription lifecycle management
-- Webhooks
-- Customer self-service
-- Merchant analytics
+- **Multi-Tenant Isolation:** Complete logical tenant segregation enforced at the database level via `organisation_id` boundaries.
+- **Paystack Recurring Engine:** Tokenizes customer payment methods during initial checkout and headlessly charges authorizations on renewal intervals.
+- **Automated Settlement & Payouts:** Integrated with Paystack Transfers API, supporting automated scheduled payouts, real-time NUBAN resolution, and a transparent 5% platform fee structure.
+- **Developer-First REST API:** Public REST API v1 (`/api/v1`) with dual identifier lookups (UUID or customer email), developer webhooks (`orbit-signature` HMAC verification), and drop-in pricing table components.
+- **Self-Service Customer Portal:** Tokenized billing portal (`/portal/:token`) allowing end-users to view invoice history, update card payment methods, and manage subscription cancellations without merchant intervention.
+- **Paystack Dark Theme:** Sleek, high-contrast dark mode interface powered by Tailwind CSS v4 and a zero-flash `ThemeProvider`.
 
-Orbit solves this by providing a complete subscription management layer.
-
-Businesses can create products, attach pricing plans, generate checkout links, collect payments, and automatically manage recurring subscriptions.
+---
 
 ## Core Features
 
 ### 1. Multi-Tenant Merchant Dashboard
-
-Orbit supports multiple businesses using the same platform while keeping each organisation's data isolated.
-
-Each organisation has access to:
-
-- Products
-- Plans
-- Customers
-- Payments
-- Subscriptions
-- Analytics
-
-Every query is scoped by:
-
-```
-organisation_id
-```
-
-This ensures merchants can only access their own billing data.
-
-### 2. Product Management
-
-Businesses can create and manage products.
-
-Each product contains:
-
-- Product name
-- Description
-- Brand colour
-- Checkout slug
-- Active/inactive status
-
-**Example:**
-
-```
-Product
-├── SaaS Starter
-├── Fitness Membership
-└── Premium Community Access
-```
-
-Merchants can:
-
-- Create products
-- View products
-- Copy checkout links
-- Delete products
-- Manage pricing plans attached to products
-
-### 3. Pricing Plans
-
-Each product can have multiple pricing plans.
-
-Supported billing intervals:
-
-- Monthly
-- Yearly
-- Custom intervals
-- Demo/test intervals
-
-**Example:**
-
-```
-Product: Fitness Membership
-Plans:
-  Starter     — ₦5,000/month
-  Premium     — ₦15,000/month
-  Enterprise  — ₦150,000/year
-```
-
-Plans determine:
-
-- Amount
-- Billing frequency
-- Renewal schedule
-- Subscription behaviour
-
-### 4. Hosted Checkout System
-
-Orbit provides a hosted checkout page where customers can subscribe.
-
-**Checkout flow:**
-
-```
-Customer opens checkout link
-        ↓
-Customer enters details
-        ↓
-Payment processed through Nomba
-        ↓
-Transaction verified
-        ↓
-Subscription created
-        ↓
-Card token stored
-        ↓
-Future renewals handled automatically
-```
-
-### 5. Recurring Subscription Engine
-
-Orbit includes an automated subscription renewal system.
-
-When a subscription reaches its renewal date:
-
-```
-Cron Job
-   ↓
-Find subscriptions where:
-   renews_at <= current_time
-   ↓
-Charge saved card token
-   ↓
-Create payment record
-   ↓
-Update subscription
-   ↓
-Generate next renewal date
-```
-
-### 6. Subscription State Management
-
-Subscriptions move through different states:
-
-```
-ACTIVE
-PAST_DUE
-CANCELED
-TRIALING
-```
-
-**Example lifecycle:**
-
-```
-Customer subscribes
-        ↓
-     ACTIVE
-        ↓
-Renewal date reached
-        ↓
-   Payment succeeds ──► Renewal date extended
-   Payment fails    ──► PAST_DUE ──► Retry payment
-```
-
-### 7. Automated Renewal Cron
-
-Orbit uses a scheduled cron process to handle recurring payments.
-
-**Cron location:**
-
-```
-/app/api/cron/renew-subscriptions/route.ts
-```
-
-**Purpose:**
-
-- Check upcoming renewals
-- Charge saved cards
-- Update subscription status
-- Record payment history
-
-The cron runs automatically based on the configured schedule.
-
-**Example:**
-
-```json
-{
-  "schedule": "* * * * *"
-}
-```
-
-### 8. Webhook Processing
-
-Orbit receives payment events through Nomba webhooks.
-
-**Webhook endpoint:**
-
-```
-/api/webhooks/nomba
-```
-
-**Responsibilities:**
-
-- Receive payment events
-- Validate webhook signatures
-- Update payment status
-- Activate subscriptions
-- Handle failed payments
-
-**Webhook security:**
-
-Nomba signs webhook payloads using:
-
-```
-HMAC-SHA256
-```
-
-The signature is verified before processing events.
-
-**Flow:**
-
-```
-Nomba
-  ↓
-Webhook Request
-  ↓
-Signature Verification
-  ↓
-Payment Update
-  ↓
-Subscription Update
-```
-
-### 9. Customer Management
-
-Merchants can view all customers who have interacted with their products.
-
-**Customer information:**
-
-- Name
-- Email
-- Subscription status
-- Total spending
-- Join date
-
-**Example:**
-
-```
-John Doe
-john@example.com
-Active subscription
-₦50,000 spent
-```
-
-### 10. Payments Dashboard
-
-Orbit provides payment tracking.
-
-Merchants can view:
-
-- Payment amount
-- Customer
-- Payment provider
-- Payment status
-- Transaction reference
-- Payment date
-
-**Supported statuses:**
-
-- `SUCCESS`
-- `FAILED`
-- `PENDING`
-- `REVERSED`
-
-### 11. Merchant Analytics Dashboard
-
-The dashboard provides real-time subscription insights.
-
-**Metrics:**
-
-- **Gross Revenue** — Total successful payments collected.
-- **Monthly Recurring Revenue (MRR)** — Normalized recurring subscription revenue.
-
-**Calculation:**
-
-```
-Monthly Plan:
-  MRR = plan amount
-
-Yearly Plan:
-  MRR = yearly amount / 12
-```
-
-- **Active Subscribers** — Number of currently active subscriptions.
-- **Top Products** — Ranks products based on generated revenue.
-
-### 12. Customer Self-Service Portal
-
-Orbit includes a customer portal where customers can manage their subscriptions.
-
-https://orbit-billing-nomba.vercel.app/portal/{token}
-
-Customers can:
-
-- View subscription details
-- View billing information
-- Access payment history
-- Manage their subscription lifecycle
-
-**Portal flow:**
-
-```
-Customer
-   ↓
-Portal Link
-   ↓
-Authentication
-   ↓
-Subscription Dashboard
-   ↓
-Manage Billing
-```
-
-## Database Architecture
-
-Orbit uses Supabase PostgreSQL.
-
-**Main tables:**
-
-- `users`
-- `organisations`
-- `products`
-- `plans`
-- `customers`
-- `subscriptions`
-- `payments`
-
-**Relationship:**
-
-```
-Organisation
-    └── Products
-            └── Plans
-
-Customers
-    └── Subscriptions
-            └── Payments
-```
+Orbit isolates all business intelligence, customers, plans, and transaction histories by tenant:
+- **Gross Volume & MRR:** Real-time recurring revenue metrics calculated across active subscriptions.
+- **Interactive Revenue Charts:** Dynamic Recharts area visualizations plotting daily payment volume.
+- **Organization Management:** Custom branding, logo uploads, and slug generation.
+
+### 2. Products & Pricing Tiers
+Create modular products with flexible billing cadences:
+- **Billing Intervals:** Monthly, Yearly, Custom Intervals, and 1-Day Demo testing cycles.
+- **Hosted Checkout Links:** Unique checkout pages generated automatically (`/checkout/:productSlug`).
+- **Embeddable Pricing Tables:** Drop-in React components for developer applications.
+
+### 3. Recurring Billing & Dunning Engine
+- **Headless Tokenization:** Securely captures Paystack `authorization_code` tokens upon first checkout.
+- **Automated Cron Renewal (`/api/cron/renew`):** Daily background scheduler identifying due subscriptions, executing charges, and calculating renewal milestones.
+- **Smart Dunning Policy:** 3-attempt automated recovery cycle with customer email notifications before marking delinquent accounts `PAST_DUE`.
+
+### 4. Payouts & Settlement Infrastructure
+- **Real-Time NUBAN Lookup:** Verifies Nigerian bank accounts against Paystack's bank directories.
+- **Transparent 5% Fee Architecture:** 95% net settlement automatically calculated and dispatched to merchant accounts.
+- **Withdrawal Safeguards:** Built-in 7-day rate-limiting cooldowns and minimum withdrawal thresholds.
+- **Payout Ledger:** Detailed audit log tracking gross amounts, platform cuts, net deposits, and Paystack transfer codes.
+
+### 5. Developer API Platform (`/api/v1`)
+Integrate Orbit subscription billing directly into external web and mobile applications:
+- **Authentication:** `Authorization: Bearer <sk_live_...>` or `Bearer <pk_live_...>`
+- **Dual Lookups:** Query customer records and active subscriptions by UUID or direct email.
+
+#### API Endpoints Reference
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1` | Root index listing available API endpoints and version status. |
+| `POST` | `/api/v1/checkout/sessions` | Create a hosted checkout session reference for custom apps. |
+| `GET` | `/api/v1/plans` | List active pricing tiers for the authenticated organisation. |
+| `GET` | `/api/v1/products/:id` | Retrieve a product and its associated pricing plans. |
+| `GET` | `/api/v1/customers/:id_or_email` | Retrieve customer profile by UUID or email address. |
+| `GET` | `/api/v1/customers/:id_or_email/subscription` | Fetch live subscription status for an end-user. |
+| `GET` | `/api/v1/subscriptions/:id` | Fetch detailed subscription object. |
+| `POST` | `/api/v1/subscriptions/:id/cancel` | Cancel a subscription (immediately or at period end). |
+
+#### Developer Webhook Events
+Dispatches signed event payloads to merchant URLs with `orbit-signature: t=<timestamp>,v1=<hmac_sha256>`:
+- `payment.succeeded` / `payment.failed`
+- `subscription.created` / `subscription.renewed` / `subscription.cancelled` / `subscription.updated`
+
+---
 
 ## Tech Stack
 
-**Frontend**
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend Framework** | Next.js (App Router), React 19, TypeScript |
+| **Styling & Icons** | Tailwind CSS v4, Lucide Icons, Sonner |
+| **Data Visualization** | Recharts Area Charts |
+| **Backend & APIs** | Next.js Route Handlers, Server Actions |
+| **Database & Auth** | Supabase PostgreSQL, Supabase Row-Level Security (RLS), Supabase Auth |
+| **Payment Gateway** | Paystack Payment Gateway & Transfers API |
+| **Email Delivery** | Resend API |
+| **Deployment** | Vercel (Edge & Serverless Infrastructure) |
 
-- Next.js App Router
-- React
-- Tailwind CSS
-- Lucide Icons
+---
 
-**Backend**
-
-- Next.js Server Actions
-- Next.js Route Handlers
-
-**Database**
-
-- Supabase PostgreSQL
-
-**Authentication**
-
-- Supabase Auth
-
-**Payments**
-
-- Nomba Payment API
-
-**Deployment**
-
-- Vercel / Cloud hosting
-
-## Project Structure
+## Database Architecture
 
 ```
-src
-├── app
-│   ├── dashboard
-│   │   ├── products
-│   │   ├── subscriptions
-│   │   ├── customers
-│   │   ├── payments
-│   │   └── settings
-│   ├── checkout
-│   ├── portal
-│   └── api
-│       ├── cron
-│       │   └── renew-subscriptions
-│       └── webhooks
-│           └── nomba
-│
-├── components
-│
-├── actions
-│
-├── lib
-│   ├── nomba.ts
-│   ├── supabase
-│   └── subscription-engine
-│
-└── types
+                       ┌──────────────────────┐
+                       │    organisations     │
+                       └──────────┬───────────┘
+                                  │
+         ┌────────────────────────┼────────────────────────┐
+         │ 1:N                    │ 1:N                    │ 1:N
+         ▼                        ▼                        ▼
+┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
+│    products     │      │    customers    │      │     payouts     │
+└────────┬────────┘      └────────┬────────┘      └─────────────────┘
+         │ 1:N                    │ 1:N
+         ▼                        ▼
+┌─────────────────┐      ┌─────────────────┐
+│      plans      │◄─────┤  subscriptions  │
+└─────────────────┘ 1:N  └────────┬────────┘
+                                  │ 1:N
+                                  ▼
+                         ┌─────────────────┐
+                         │    payments     │
+                         └─────────────────┘
 ```
 
-## Security
+---
 
-Orbit implements:
+## Environment Configuration
 
-- Organisation-level data isolation
-- Supabase authentication
-- Secure server-side database access
-- Webhook signature verification
-- Protected merchant routes
+Create a `.env.local` file with the following environment variables:
 
-## Screenshots
+```env
+# App URL
+NEXT_PUBLIC_APP_URL=https://orbit-billing-nomba.vercel.app
 
-- Dashboard
-- Products
-- Checkout
-- Subscription Management
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi...
 
-## Future Development Plans
+# Paystack API Keys
+PAYSTACK_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=pk_test_...
 
-### Advanced Subscription Management
+# Email & Infrastructure
+RESEND_API_KEY=re_...
+CRON_SECRET=your_secure_cron_secret
+```
 
-Future improvements:
+---
 
-- Subscription pause/resume
-- Upgrade and downgrade plans
-- Proration calculations
-- Subscription cancellation workflows
+## Getting Started
 
-### Payment Recovery System
+### 1. Clone the repository
+```bash
+git clone https://github.com/trevorcj/orbit.git
+cd orbit
+```
 
-Implement:
+### 2. Install dependencies
+```bash
+npm install
+```
 
-- Automatic retry schedules
-- Failed payment emails
-- Dunning workflows
-- Customer notifications
+### 3. Run Database Migrations
+Execute the SQL migration scripts in `supabase/migrations/` in your **Supabase Dashboard &gt; SQL Editor**:
+- `20260820_developer_api.sql`
+- `20260820_payouts_schema.sql`
 
-### Developer API Platform
+### 4. Start Local Development Server
+```bash
+npm run dev
+```
 
-Allow developers to integrate Orbit directly.
+Navigate to `http://localhost:3000` in your browser.
 
-The public developer API lets a merchant's application consume Orbit's
-billing infrastructure with a few HTTP calls. Orbit owns money, billing and
-subscription state; the merchant's product owns permissions and experience.
+---
 
-**Base URL:** `{NEXT_PUBLIC_APP_URL}/api/v1`
+## License
 
-**Authentication:** `Authorization: Bearer <api_key>`
-
-- Publishable keys (`pk_live_...`) — read plans and products (pricing table).
-- Secret keys (`sk_live_...`) — everything else.
-
-**Endpoints:**
-
-| Method | Endpoint | Description |
-| ------ | -------- | ----------- |
-| `POST` | `/v1/checkout/sessions` | Create a hosted checkout session. |
-| `GET`  | `/v1/plans` | List the organisation's active plans. |
-| `GET`  | `/v1/products/:product_id` | Get a product with its plans. |
-| `GET`  | `/v1/customers/:customer_id` | Get a customer. |
-| `GET`  | `/v1/customers/:customer_id/subscription` | Get a customer's current subscription. |
-| `GET`  | `/v1/subscriptions/:subscription_id` | Get a complete subscription. |
-| `POST` | `/v1/subscriptions/:subscription_id/cancel` | Cancel a subscription (at period end or immediately). |
-
-**Webhooks** (`orbit-signature: t=<ts>,v1=<hmac_sha256>`):
-
-- `payment.succeeded`, `payment.failed`
-- `subscription.created`, `subscription.renewed`, `subscription.cancelled`, `subscription.updated`
-
-**Pricing table component:** drop `<OrbitPricingTable productId="..." />`
-into any React app to render the product's plans and start checkout.
-
-**Setup:** run `supabase/migrations/20260820_developer_api.sql` in the Supabase
-SQL editor to create the `api_keys`, `webhook_endpoints` and
-`outgoing_webhook_events` tables. Manage keys and webhooks from the
-dashboard at `/dashboard/settings` (Developer tab).
-
-See the live docs at `/docs`. 
+This project is proprietary software developed by Trevor C. Justus. All rights reserved.
