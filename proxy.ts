@@ -11,6 +11,7 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/api") ||
     path.startsWith("/checkout") ||
     path.startsWith("/portal") ||
+    path.startsWith("/docs") ||
     path.includes(".")
   ) {
     return response;
@@ -25,7 +26,8 @@ export async function proxy(request: NextRequest) {
     console.error("Auth error:", error);
   }
 
-  const publicRoutes = ["/login", "/signup", "/docs"];
+  const authRoutes = ["/login", "/signup"];
+  const publicRoutes = ["/login", "/signup", "/docs", "/"];
 
   if (!user) {
     if (!publicRoutes.includes(path)) {
@@ -35,7 +37,8 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  if (publicRoutes.includes(path)) {
+  // If user is already logged in, redirect away from login/signup auth pages to dashboard
+  if (authRoutes.includes(path)) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
