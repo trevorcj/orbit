@@ -222,7 +222,7 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
       </div>
 
       {/* Data Table */}
-      <div className="w-full overflow-x-auto bg-white rounded-xl border border-zinc-200 shadow-xs">
+      <div className="w-full overflow-x-auto bg-white rounded-xl border border-zinc-200 shadow-xs min-h-[360px]">
         <table className="w-full border-collapse text-left text-sm text-zinc-600">
           <thead>
             <tr className="border-b border-zinc-100 bg-zinc-50/50 text-zinc-500 font-medium text-xs">
@@ -241,12 +241,7 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
                 key={customer.id}
                 className="hover:bg-zinc-50/70 transition-colors group">
                 <td className="py-4 px-6 font-semibold text-zinc-900">
-                  <div className="flex flex-col">
-                    <span>{customer.name}</span>
-                    <span className="text-[11px] font-mono text-zinc-400 font-normal">
-                      {customer.id}
-                    </span>
-                  </div>
+                  {customer.name}
                 </td>
                 <td className="py-4 px-6 text-zinc-500">{customer.email}</td>
                 <td className="py-4 px-6 text-zinc-700 font-medium">
@@ -264,71 +259,73 @@ export default function CustomersPage({ customers }: CustomersPageProps) {
                   </span>
                 </td>
                 <td className="py-4 px-6 text-zinc-500 text-xs">{customer.joined}</td>
-                <td className="py-4 px-4 text-center relative" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    onClick={() =>
-                      setActiveMenuId(
-                        activeMenuId === customer.id ? null : customer.id,
-                      )
-                    }
-                    className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer">
-                    <MoreVertical size={16} />
-                  </button>
+                <td className="py-4 px-4 text-center">
+                  <div className="relative inline-block text-left" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() =>
+                        setActiveMenuId(
+                          activeMenuId === customer.id ? null : customer.id,
+                        )
+                      }
+                      className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer">
+                      <MoreVertical size={16} />
+                    </button>
 
-                  {activeMenuId === customer.id && (
-                    <div className="absolute right-4 top-12 w-56 rounded-xl border border-zinc-200 bg-white shadow-xl py-1.5 z-50 text-left">
-                      <div className="px-3 py-1.5 border-b border-zinc-100 text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
-                        Customer Actions
-                      </div>
+                    {activeMenuId === customer.id && (
+                      <div className="absolute right-0 top-8 w-56 rounded-xl border border-zinc-200 bg-white shadow-2xl py-1.5 z-50 text-left">
+                        <div className="px-3 py-1.5 border-b border-zinc-100 text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
+                          Customer Actions
+                        </div>
 
-                      <button
-                        onClick={() => {
-                          copyToClipboard(customer.id, "Customer ID");
-                          setActiveMenuId(null);
-                        }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
-                        {copiedId === customer.id ? (
-                          <Check size={14} className="text-emerald-600" />
-                        ) : (
-                          <Copy size={14} className="text-zinc-400" />
+                        <button
+                          onClick={() => {
+                            copyToClipboard(customer.id, "Customer ID");
+                            setActiveMenuId(null);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors cursor-pointer">
+                          {copiedId === customer.id ? (
+                            <Check size={14} className="text-emerald-600" />
+                          ) : (
+                            <Copy size={14} className="text-zinc-400" />
+                          )}
+                          <span>Copy Customer ID</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            copyToClipboard(customer.email, "Customer Email");
+                            setActiveMenuId(null);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors cursor-pointer">
+                          <Mail size={14} className="text-zinc-400" />
+                          <span>Copy Email Address</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            const apiEndpoint = `/api/v1/customers/${customer.id}/subscription`;
+                            copyToClipboard(apiEndpoint, "API Endpoint");
+                            setActiveMenuId(null);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors cursor-pointer">
+                          <Code2 size={14} className="text-zinc-400" />
+                          <span>Copy API Query Route</span>
+                        </button>
+
+                        {customer.portalToken && (
+                          <a
+                            href={`/portal/${customer.portalToken}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setActiveMenuId(null)}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#0F86EE] hover:bg-blue-50/50 transition-colors border-t border-zinc-100">
+                            <ExternalLink size={14} />
+                            <span>View Customer Portal</span>
+                          </a>
                         )}
-                        <span>Copy Customer ID</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          copyToClipboard(customer.email, "Customer Email");
-                          setActiveMenuId(null);
-                        }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
-                        <Mail size={14} className="text-zinc-400" />
-                        <span>Copy Email Address</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          const apiEndpoint = `/api/v1/customers/${customer.id}/subscription`;
-                          copyToClipboard(apiEndpoint, "API Endpoint");
-                          setActiveMenuId(null);
-                        }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
-                        <Code2 size={14} className="text-zinc-400" />
-                        <span>Copy API Query Route</span>
-                      </button>
-
-                      {customer.portalToken && (
-                        <a
-                          href={`/portal/${customer.portalToken}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={() => setActiveMenuId(null)}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#0F86EE] hover:bg-blue-50/50 transition-colors border-t border-zinc-100">
-                          <ExternalLink size={14} />
-                          <span>View Customer Portal</span>
-                        </a>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
