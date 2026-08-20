@@ -19,6 +19,7 @@ interface RouteContext {
 /**
  * GET /v1/customers/:customer_id
  * Returns the customer's Orbit information.
+ * Supports querying by either customer UUID or customer email.
  */
 export async function GET(req: Request, { params }: RouteContext) {
   const context = await authenticateApiRequest(req);
@@ -31,13 +32,16 @@ export async function GET(req: Request, { params }: RouteContext) {
     return apiForbidden();
   }
 
-  const { customerId } = await params;
+  const { customerId: rawIdentifier } = await params;
 
-  if (!customerId) {
-    return apiError("customer_id is required.");
+  if (!rawIdentifier) {
+    return apiError("customer_id or email is required.");
   }
 
-  const { data: customer, error } = await supabaseAdmin
+  const identifier = decodeURIComponent(rawIdentifier).trim().toLowerCase();
+  const isEmail = identifier.includes("@");
+
+  let customerQuery = supabaseAdmin
     .from("customers")
     .select(
       `
@@ -49,9 +53,15 @@ export async function GET(req: Request, { params }: RouteContext) {
         created_at
       `,
     )
-    .eq("id", customerId)
-    .eq("organisation_id", context.organisationId)
-    .single();
+    .eq("organisation_id", context.organisationId);
+
+  if (isEmail) {
+    customerQuery = customerQuery.eq("email", identifier);
+  } else {
+    customerQuery = customerQuery.eq("id", identifier);
+  }
+
+  const { data: customer, error } = await customerQuery.maybeSingle();
 
   if (error || !customer) {
     return apiNotFound("Customer");

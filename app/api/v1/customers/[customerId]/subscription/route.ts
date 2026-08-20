@@ -24,11 +24,7 @@ interface RouteContext {
 /**
  * GET /v1/customers/:customer_id/subscription
  * Returns the customer's current subscription with plan details.
- * This is the key endpoint merchants use to gate feature access:
- *   active    -> give access
- *   past_due  -> restrict access
- *   cancelled -> remove access when period ends
- *   expired   -> remove access
+ * Accepts either the customer UUID or the customer's email address.
  */
 export async function GET(req: Request, { params }: RouteContext) {
   const context = await authenticateApiRequest(req);
@@ -41,18 +37,27 @@ export async function GET(req: Request, { params }: RouteContext) {
     return apiForbidden();
   }
 
-  const { customerId } = await params;
+  const { customerId: rawIdentifier } = await params;
 
-  if (!customerId) {
-    return apiError("customer_id is required.");
+  if (!rawIdentifier) {
+    return apiError("customer_id or email is required.");
   }
 
-  const { data: customer, error: customerError } = await supabaseAdmin
+  const identifier = decodeURIComponent(rawIdentifier).trim().toLowerCase();
+  const isEmail = identifier.includes("@");
+
+  let customerQuery = supabaseAdmin
     .from("customers")
-    .select("id")
-    .eq("id", customerId)
-    .eq("organisation_id", context.organisationId)
-    .single();
+    .select("id, email")
+    .eq("organisation_id", context.organisationId);
+
+  if (isEmail) {
+    customerQuery = customerQuery.eq("email", identifier);
+  } else {
+    customerQuery = customerQuery.eq("id", identifier);
+  }
+
+  const { data: customer, error: customerError } = await customerQuery.maybeSingle();
 
   if (customerError || !customer) {
     return apiNotFound("Customer");
@@ -80,7 +85,7 @@ export async function GET(req: Request, { params }: RouteContext) {
         )
       `,
     )
-    .eq("customer_id", customerId)
+    .eq("customer_id", customer.id)
     .eq("organisation_id", context.organisationId)
     .order("created_at", { ascending: false })
     .limit(1)
