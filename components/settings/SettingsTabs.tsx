@@ -6,10 +6,15 @@ import OrganizationTab from "./OrganizationTab";
 import PayoutsTab from "./PayoutsTab";
 import ProfileTab from "./ProfileTab";
 import DeveloperTab from "./DeveloperTab";
+import type { DeveloperData } from "@/actions/developer";
 
 type TabId = "organization" | "billing" | "profile" | "developer";
 
-export default function SettingsTabs() {
+export default function SettingsTabs({
+  developerData,
+}: {
+  developerData: DeveloperData;
+}) {
   const [activeTab, setActiveTab] = useState<TabId>("organization");
 
   const tabs = [
@@ -58,7 +63,9 @@ export default function SettingsTabs() {
         {activeTab === "organization" && <OrganizationTab />}
         {activeTab === "billing" && <PayoutsTab />}
         {activeTab === "profile" && <ProfileTab />}
-        {activeTab === "developer" && <DeveloperTab />}
+        {activeTab === "developer" && (
+          <DeveloperTab developerData={developerData} />
+        )}
       </div>
     </div>
   );

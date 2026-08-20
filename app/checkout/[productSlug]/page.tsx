@@ -10,10 +10,23 @@ interface PageProps {
   params: Promise<{
     productSlug: string;
   }>;
+
+  searchParams: Promise<{
+    plan?: string;
+    email?: string;
+    name?: string;
+    return_url?: string;
+    cancel_url?: string;
+  }>;
 }
 
-export default async function HostedCheckoutPage({ params }: PageProps) {
+export default async function HostedCheckoutPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { productSlug } = await params;
+
+  const query = await searchParams;
 
   const supabase = await createClient();
 
@@ -66,6 +79,14 @@ export default async function HostedCheckoutPage({ params }: PageProps) {
   }
 
   /*
+   * Preselect the plan requested via the API checkout session
+   */
+
+  const preselectedPlanId = query.plan
+    ? plans.find((plan) => plan.id === query.plan)?.id
+    : null;
+
+  /*
    * Fetch organisation branding
    */
 
@@ -91,6 +112,11 @@ export default async function HostedCheckoutPage({ params }: PageProps) {
     <CheckoutClient
       product={product as Product}
       plans={plans as Plan[]}
+      preselectedPlanId={preselectedPlanId}
+      initialEmail={query.email}
+      initialName={query.name}
+      returnUrl={query.return_url}
+      cancelUrl={query.cancel_url}
       organisation={{
         id: organisation.id,
 

@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { getAccessToken } from "../nomba";
+import { dispatchOrbitEvent } from "../developer-api/webhooks";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,6 +18,7 @@ interface RenewalSubscription {
   card_token: string | null;
   provider_customer_id: string | null;
   renews_at: string | null;
+  cancel_at_period_end: boolean;
 }
 
 interface RenewalPlan {
@@ -36,7 +38,7 @@ export async function processBackgroundRenewals(): Promise<{
     const { data: expiringRows } = await supabaseAdmin
       .from("subscriptions")
       .select(
-        "id, organisation_id, customer_id, product_id, plan_id, card_token, provider_customer_id, renews_at",
+        "id, organisation_id, customer_id, product_id, plan_id, card_token, provider_customer_id, renews_at, cancel_at_period_end",
       )
       .eq("status", "ACTIVE")
       .lte("renews_at", currentTimestamp);
@@ -54,6 +56,34 @@ export async function processBackgroundRenewals(): Promise<{
       if (!sub.card_token) {
         console.warn(
           `ORBIT ENGINE: Skipping subscription row ${sub.id} due to absent recurring token mapping.`,
+        );
+        continue;
+      }
+
+      // Cancel-at-period-end: expire without charging again
+      if (sub.cancel_at_period_end) {
+        await supabaseAdmin
+          .from("subscriptions")
+          .update({
+            status: "CANCELLED",
+            cancelled_at: new Date().toISOString(),
+            ends_at: sub.renews_at,
+          })
+          .eq("id", sub.id);
+
+        await dispatchOrbitEvent({
+          organisationId: sub.organisation_id,
+          type: "subscription.cancelled",
+          data: {
+            id: sub.id,
+            status: "cancelled",
+            cancel_at_period_end: true,
+            current_period_end: sub.renews_at,
+          },
+        });
+
+        console.log(
+          `ORBIT ENGINE: Subscription ${sub.id} expired at period end without renewal charge.`,
         );
         continue;
       }
@@ -131,19 +161,44 @@ export async function processBackgroundRenewals(): Promise<{
             paid_at: new Date().toISOString(),
           },
         ]);
+
+        // C. Notify the merchant application
+        await dispatchOrbitEvent({
+          organisationId: sub.organisation_id,
+          type: "subscription.renewed",
+          data: {
+            id: sub.id,
+            status: "active",
+            current_period_end: forwardRenewalHorizon.toISOString(),
+            plan: { id: plan.id, amount: Number(plan.amount) },
+          },
+        });
+
+        await dispatchOrbitEvent({
+          organisationId: sub.organisation_id,
+          type: "payment.succeeded",
+          data: {
+            subscription_id: sub.id,
+            customer_id: sub.customer_id,
+            amount: Math.round(parseFloat(plan.amount.toString())),
+            currency: "NGN",
+            provider: "nomba",
+            reference: billingAttemptReference,
+          },
+        });
       } else {
         // Failure/Decline Route Block: Demote status to prevent unpaid access leakage
         console.error(
           `ORBIT RECURRING RUN CRITICAL: Subscription tokenized capture failed or was declined on sub ${sub.id}`,
         );
 
-        // C. Switch state to PAST_DUE on payment collection decline errors
+        // D. Switch state to PAST_DUE on payment collection decline errors
         await supabaseAdmin
           .from("subscriptions")
           .update({ status: "PAST_DUE" })
           .eq("id", sub.id);
 
-        // D. Commit a failed tracking line inside your payments rows
+        // E. Commit a failed tracking line inside your payments rows
         await supabaseAdmin.from("payments").insert([
           {
             organisation_id: sub.organisation_id,
@@ -157,6 +212,29 @@ export async function processBackgroundRenewals(): Promise<{
             paid_at: new Date().toISOString(),
           },
         ]);
+
+        // F. Notify the merchant application
+        await dispatchOrbitEvent({
+          organisationId: sub.organisation_id,
+          type: "payment.failed",
+          data: {
+            subscription_id: sub.id,
+            customer_id: sub.customer_id,
+            amount: Math.round(parseFloat(plan.amount.toString())),
+            currency: "NGN",
+            provider: "nomba",
+            reference: billingAttemptReference,
+          },
+        });
+
+        await dispatchOrbitEvent({
+          organisationId: sub.organisation_id,
+          type: "subscription.updated",
+          data: {
+            id: sub.id,
+            status: "past_due",
+          },
+        });
       }
     }
 
