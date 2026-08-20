@@ -3,20 +3,55 @@ import { processBackgroundRenewals } from "@/lib/cron/renew";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(): Promise<NextResponse> {
+function checkAuth(req: Request): boolean {
+  const secret = process.env.BILLING_CRON_SECRET;
+  if (!secret) return true; // Allowed if no secret configured
+
+  const authHeader = req.headers.get("authorization");
+  const url = new URL(req.url);
+  const rawQuerySecret = url.searchParams.get("secret");
+
+  // Check Bearer header (supports "Bearer <secret>" and "<secret>")
+  if (authHeader) {
+    const cleanHeader = authHeader.replace(/^Bearer\s+/i, "").trim();
+    if (cleanHeader === secret || cleanHeader.replace(/ /g, "+") === secret) {
+      return true;
+    }
+  }
+
+  // Check query parameter (handles URL + to space decoding)
+  if (rawQuerySecret) {
+    const normalizedQuery = rawQuerySecret.replace(/ /g, "+");
+    if (
+      rawQuerySecret === secret ||
+      normalizedQuery === secret ||
+      decodeURIComponent(rawQuerySecret) === secret
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export async function GET(req: Request): Promise<NextResponse> {
+  if (!checkAuth(req)) {
+    console.warn("⚠️ Unauthorized cron request attempt");
+    return NextResponse.json({ error: "Unauthorized cron request" }, { status: 401 });
+  }
+
   try {
     const outputMetrics = await processBackgroundRenewals();
     return NextResponse.json({
       status: "success",
-      message:
-        "Orbit background recurring subscription scanner executed successfully.",
+      message: "Orbit background recurring subscription scanner executed successfully.",
       metrics: outputMetrics,
+      timestamp: new Date().toISOString(),
     });
   } catch (error: unknown) {
     const errorString =
-      error instanceof Error
-        ? error.message
-        : "Internal system runtime exception";
+      error instanceof Error ? error.message : "Internal system runtime exception";
+    console.error("Cron renewal execution fault:", errorString);
     return NextResponse.json(
       {
         status: "error",
@@ -26,4 +61,8 @@ export async function GET(): Promise<NextResponse> {
       { status: 500 },
     );
   }
+}
+
+export async function POST(req: Request): Promise<NextResponse> {
+  return GET(req);
 }

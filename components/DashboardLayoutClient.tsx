@@ -241,7 +241,8 @@ ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
               );
             })()}
             <Link
-              href="#"
+              href="mailto: trevorcjustus@gmail.com"
+              target="_blank"
               className="flex items-center gap-3 px-2 py-2 rounded text-sm font-semibold text-zinc-500 hover:text-zinc-900 transition-colors"
               onClick={() => setMobileOpen(false)}>
               <HelpCircle size={18} />
@@ -255,21 +256,21 @@ ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
                 <Image
                   src={userProfile?.avatarUrl}
                   alt={userFullName}
-                  className="w-9 h-9 rounded-full object-cover shadow-sm"
+                  className="w-9 h-9 rounded-full object-cover shadow-xs"
                   width={36}
                   height={36}
                 />
               ) : (
-                <div className="w-9 h-9 rounded-full bg-zinc-900 text-white font-bold flex items-center justify-center text-sm shadow-sm">
-                  {getInitials(userProfile.firstName)}
+                <div className="w-9 h-9 rounded-full bg-[#0F86EE] text-white font-bold flex items-center justify-center text-xs shadow-xs shrink-0">
+                  {`${userProfile.firstName?.[0] || ""}${userProfile.lastName?.[0] || ""}`.toUpperCase() || "U"}
                 </div>
               )}
 
-              <div className="flex flex-col text-left">
-                <span className="text-sm font-bold text-zinc-800 leading-none truncate max-w-30">
-                  {userFullName}
+              <div className="flex flex-col text-left overflow-hidden">
+                <span className="text-xs font-bold text-zinc-900 leading-none truncate max-w-30">
+                  {userFullName.trim() || "Merchant"}
                 </span>
-                <span className="text-xs text-zinc-500 mt-0.5 truncate max-w-30">
+                <span className="text-[11px] text-zinc-400 mt-1 truncate max-w-30">
                   {userProfile.email}
                 </span>
               </div>

@@ -1,29 +1,42 @@
 import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { chargeTokenizedCard } from "@/lib/nomba";
+import { chargePaystackAuthorization } from "@/lib/paystack";
+import {
+  sendEmail,
+  generateRenewalReceiptEmail,
+  generatePaymentFailedEmail,
+} from "@/lib/email";
 
 export async function renewSubscription(subscriptionId: string) {
   const supabase = supabaseAdmin;
 
   /*
-   * 1. Fetch subscription context
+   * 1. Fetch subscription context with customer, plan, and product
    */
-
   const { data: subscription, error } = await supabase
     .from("subscriptions")
     .select(
       `
       *,
-      customers!inner(
-id,
-email
-),
+      customers!inner (
+        id,
+        email,
+        first_name,
+        last_name,
+        portal_token
+      ),
       plans!inner (
         id,
+        name,
         amount,
+        currency,
         billing_interval,
         billing_interval_days,
-        billing_interval_minutes
+        billing_interval_minutes,
+        product_id,
+        products!plans_product_id_fkey (
+          name
+        )
       )
       `,
     )
@@ -35,110 +48,142 @@ email
     throw new Error("Subscription not found");
   }
 
-  /*
-   * Do not renew cancelled subscriptions
-   */
+  const customer = subscription.customers as unknown as {
+    id: string;
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+    portal_token: string;
+  };
 
-  if (subscription.status !== "ACTIVE") {
+  const plan = subscription.plans as unknown as {
+    id: string;
+    name: string;
+    amount: number;
+    currency: string;
+    billing_interval: string;
+    billing_interval_days: number | null;
+    billing_interval_minutes: number | null;
+    products?: { name: string };
+  };
+
+  const productName = plan.products?.name || "Subscription";
+  const now = new Date();
+
+  /*
+   * 2. Check if cancelled at period end
+   */
+  if (subscription.status === "CANCELLED") {
     return {
       success: false,
-      message: "Subscription is not active",
+      message: "Subscription is cancelled",
     };
   }
 
-  /*
-   * 2. Validate saved payment method
-   */
+  if (subscription.cancel_at_period_end) {
+    const periodEnd = subscription.ends_at
+      ? new Date(subscription.ends_at)
+      : subscription.renews_at
+        ? new Date(subscription.renews_at)
+        : now;
 
+    if (now >= periodEnd) {
+      await supabase
+        .from("subscriptions")
+        .update({
+          status: "CANCELLED",
+          ends_at: periodEnd.toISOString(),
+          updated_at: now.toISOString(),
+        })
+        .eq("id", subscription.id);
+
+      return {
+        success: false,
+        message: "Subscription reached period end and is now cancelled.",
+      };
+    }
+  }
+
+  /*
+   * 3. Validate saved payment method (Paystack authorization code)
+   */
   if (!subscription.card_token) {
     await supabase
       .from("subscriptions")
       .update({
         failed_payment_attempts:
           (subscription.failed_payment_attempts ?? 0) + 1,
-
-        last_failed_payment_at: new Date().toISOString(),
+        last_failed_payment_at: now.toISOString(),
       })
       .eq("id", subscription.id);
 
-    throw new Error("No saved card token");
+    throw new Error("No saved Paystack payment card authorization on file");
   }
 
   const merchantTxRef = `renew_${subscription.id}_${crypto.randomUUID()}`;
-
-  const amount = Number(subscription.plans.amount);
+  const amount = Number(plan.amount);
 
   /*
-   * 3. Charge saved card
+   * 4. Charge saved card via Paystack headless authorization charge
    */
-
   try {
-    const result = await chargeTokenizedCard({
+    const result = await chargePaystackAuthorization({
+      authorizationCode: subscription.card_token,
+      email: customer.email,
       amount,
-
-      cardId: subscription.card_token,
-
-      customerId: subscription.customer_id,
-
-      merchantTxRef,
+      reference: merchantTxRef,
+      metadata: {
+        subscriptionId: subscription.id,
+        planId: plan.id,
+        customerId: customer.id,
+      },
     });
 
-    console.log("Nomba renewal response:", JSON.stringify(result, null, 2));
+    console.log("Paystack renewal response:", JSON.stringify(result, null, 2));
+
+    if (result.status !== "success" && result.status !== "SUCCESS") {
+      throw new Error(result.gateway_response || "Recurring charge declined");
+    }
 
     /*
-     * 4. Create renewal payment record
+     * 5. Record successful renewal payment
      */
-
-    const now = new Date();
-
     const { error: paymentError } = await supabase.from("payments").insert({
       organisation_id: subscription.organisation_id,
-
       subscription_id: subscription.id,
-
-      customer_id: subscription.customer_id,
-
+      customer_id: customer.id,
       amount,
-
-      currency: "NGN",
-
+      currency: plan.currency || "NGN",
       status: "success",
-
-      provider: "nomba",
-
+      provider: "paystack",
       provider_reference: merchantTxRef,
-
       paid_at: now.toISOString(),
     });
 
     if (paymentError) {
       console.error("Renewal payment record failed:", paymentError);
-
-      throw new Error("Could not record renewal payment");
     }
 
     /*
-     * 5. Calculate next renewal date
+     * 6. Calculate next renewal date
      */
-
     const nextRenewal = new Date(now);
 
-    switch (subscription.plans.billing_interval) {
+    switch (plan.billing_interval) {
       case "yearly":
-        nextRenewal.setDate(nextRenewal.getDate() + 365);
+        nextRenewal.setFullYear(nextRenewal.getFullYear() + 1);
         break;
 
       case "custom":
         nextRenewal.setDate(
-          nextRenewal.getDate() +
-            Number(subscription.plans.billing_interval_days ?? 30),
+          nextRenewal.getDate() + Number(plan.billing_interval_days ?? 30),
         );
         break;
 
       case "demo":
         nextRenewal.setMinutes(
           nextRenewal.getMinutes() +
-            Number(subscription.plans.billing_interval_minutes ?? 2),
+            Number(plan.billing_interval_minutes ?? 2),
         );
         break;
 
@@ -149,47 +194,92 @@ email
     }
 
     /*
-     * 6. Update subscription state machine
+     * 7. Advance subscription state machine
      */
-
-    const { error: subscriptionUpdateError } = await supabase
+    await supabase
       .from("subscriptions")
       .update({
+        status: "ACTIVE", // Transitions TRIALING or PAST_DUE to ACTIVE upon successful charge
         renews_at: nextRenewal.toISOString(),
-
         renewal_count: (subscription.renewal_count ?? 0) + 1,
-
         last_payment_at: now.toISOString(),
-
         failed_payment_attempts: 0,
-
         last_failed_payment_at: null,
       })
       .eq("id", subscription.id);
 
-    if (subscriptionUpdateError) {
-      console.error("Subscription update failed:", subscriptionUpdateError);
+    /*
+     * 8. Send renewal receipt email to customer
+     */
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const portalUrl = `${appUrl}/portal/${customer.portal_token}`;
 
-      throw new Error("Could not update subscription");
-    }
+    sendEmail({
+      to: customer.email,
+      subject: `Renewal Receipt: ${productName} (${plan.name})`,
+      html: generateRenewalReceiptEmail({
+        customerName: `${customer.first_name || ""} ${customer.last_name || ""}`.trim(),
+        productName,
+        planName: plan.name,
+        amount,
+        currency: plan.currency || "NGN",
+        nextBillingDate: nextRenewal.toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        }),
+        reference: merchantTxRef,
+        portalUrl,
+      }),
+    }).catch((e) => console.error("Email send error:", e));
 
     return {
       success: true,
-
       subscriptionId,
-
       paymentReference: merchantTxRef,
     };
   } catch (error) {
+    const attempts = (subscription.failed_payment_attempts ?? 0) + 1;
+    const isPastDue = attempts >= 3;
+
+    // Log failed attempt & record failed transaction in payments
+    await supabase.from("payments").insert({
+      organisation_id: subscription.organisation_id,
+      subscription_id: subscription.id,
+      customer_id: customer.id,
+      amount,
+      currency: plan.currency || "NGN",
+      status: "failed",
+      provider: "paystack",
+      provider_reference: merchantTxRef,
+      paid_at: now.toISOString(),
+    });
+
     await supabase
       .from("subscriptions")
       .update({
-        failed_payment_attempts:
-          (subscription.failed_payment_attempts ?? 0) + 1,
-
-        last_failed_payment_at: new Date().toISOString(),
+        status: isPastDue ? "PAST_DUE" : subscription.status,
+        failed_payment_attempts: attempts,
+        last_failed_payment_at: now.toISOString(),
       })
       .eq("id", subscription.id);
+
+    // Send payment failed notice
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const portalUrl = `${appUrl}/portal/${customer.portal_token}`;
+
+    sendEmail({
+      to: customer.email,
+      subject: `⚠️ Payment Failed: ${productName} (${plan.name})`,
+      html: generatePaymentFailedEmail({
+        customerName: `${customer.first_name || ""} ${customer.last_name || ""}`.trim(),
+        productName,
+        planName: plan.name,
+        amount,
+        currency: plan.currency || "NGN",
+        portalUrl,
+      }),
+    }).catch((e) => console.error("Email send error:", e));
 
     throw error;
   }

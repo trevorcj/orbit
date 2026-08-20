@@ -1,58 +1,80 @@
 import { createClient } from "@/lib/supabase/server";
-import { ArrowUpRight, TrendingUp } from "lucide-react";
+import {
+  ArrowUpRight,
+  TrendingUp,
+  Users,
+  Clock,
+  Plus,
+  ExternalLink,
+} from "lucide-react";
+import Link from "next/link";
+import RevenueChart from "@/components/dashboard/RevenueChart";
 
 export const revalidate = 0;
 
 export default async function MerchantDashboardPage() {
   const supabase = await createClient();
 
-  // 1. DYNAMIC FETCH: Pull authenticated merchant context layers
+  // 1. Authenticated User Context
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) return null;
 
-  // Isolate active organization mapping matching the signed-in workspace owner
+  // 2. Fetch Organization
   const { data: org } = await supabase
     .from("organisations")
-    .select("id")
+    .select("id, name, slug")
     .eq("user_id", user.id)
     .maybeSingle();
 
   const orgId = org?.id;
 
-  // 2. DATA EXTRACTION: Query metrics restricted strictly to the current organization boundary
+  // 3. Query All Related Data within Organization Boundary
   const { data: subsData } = orgId
     ? await supabase
         .from("subscriptions")
-        .select("id, status, plan_id")
+        .select(
+          "id, status, plan_id, starts_at, renews_at, cancel_at_period_end, created_at",
+        )
         .eq("organisation_id", orgId)
     : { data: null };
 
   const { data: payData } = orgId
     ? await supabase
         .from("payments")
-        .select("amount, status, created_at")
+        .select("id, amount, status, paid_at, created_at")
         .eq("organisation_id", orgId)
+        .order("paid_at", { ascending: true })
     : { data: null };
 
   const { data: plansData } = orgId
     ? await supabase
         .from("plans")
-        .select("id, name, amount, billing_interval, product_id")
+        .select("id, name, amount, billing_interval, product_id, is_active")
+        .eq("organisation_id", orgId)
+    : { data: null };
+
+  const { data: productsData } = orgId
+    ? await supabase
+        .from("products")
+        .select("id, name, slug")
+        .eq("organisation_id", orgId)
     : { data: null };
 
   const subscriptions = subsData || [];
   const payments = payData || [];
   const plans = plansData || [];
+  const products = productsData || [];
 
-  // 3. REVENUE COMPILATION: Calculate analytical variables from real database rows
+  // 4. Analytics Calculations
   const successfulPayments = payments.filter(
     (p) => p.status === "success" || p.status === "SUCCESS",
   );
+
   const grossRevenue = successfulPayments.reduce(
-    (acc, p) => acc + Number(p.amount),
+    (acc, p) => acc + Number(p.amount || 0),
     0,
   );
 
@@ -60,7 +82,15 @@ export default async function MerchantDashboardPage() {
     (s) => s.status.toUpperCase() === "ACTIVE",
   );
 
-  // Calculate Monthly Recurring Revenue (MRR) dynamically across plan intervals
+  const trialingSubs = subscriptions.filter(
+    (s) => s.status.toUpperCase() === "TRIALING",
+  );
+
+  const pastDueSubs = subscriptions.filter(
+    (s) => s.status.toUpperCase() === "PAST_DUE",
+  );
+
+  // Monthly Recurring Revenue (MRR)
   const mrr = activeSubs.reduce((acc, sub) => {
     const plan = plans.find((p) => p.id === sub.plan_id);
     if (!plan) return acc;
@@ -71,179 +101,256 @@ export default async function MerchantDashboardPage() {
     return acc + amountValue;
   }, 0);
 
-  // 4. TOP PRODUCTS TIERS CALCULATION: Dynamically sum gross volume per active plan product
-  const productPerformanceMap: Record<
+  // 5. Daily Revenue Breakdown for Past 30 Days
+  const now = new Date();
+  const dailyDataMap: Record<
     string,
-    { name: string; amount: number; interval: string }
+    { amount: number; count: number; label: string }
   > = {};
 
-  plans.forEach((plan) => {
-    const planPayments = successfulPayments; // Match references to this tier if applicable
-    const planTotal = planPayments.reduce(
-      (acc, p) => acc + Number(p.amount),
-      0,
-    );
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(now.getDate() - i);
+    const dateKey = d.toISOString().split("T")[0];
+    const label = d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+    dailyDataMap[dateKey] = { amount: 0, count: 0, label };
+  }
 
-    if (planTotal > 0) {
-      productPerformanceMap[plan.id] = {
-        name: plan.name || "Billing Tier",
-        amount: planTotal,
-        interval: plan.billing_interval || "monthly",
-      };
+  successfulPayments.forEach((p) => {
+    const dateKey = (p.paid_at || p.created_at || "").split("T")[0];
+    if (dailyDataMap[dateKey]) {
+      dailyDataMap[dateKey].amount += Number(p.amount || 0);
+      dailyDataMap[dateKey].count += 1;
     }
   });
 
-  const activeTopProducts = Object.values(productPerformanceMap).sort(
-    (a, b) => b.amount - a.amount,
-  );
+  const chartSeries = Object.entries(dailyDataMap).map(([date, val]) => ({
+    date,
+    label: val.label,
+    amount: val.amount,
+    count: val.count,
+  }));
+
+  // 6. Top Products & Plan Performance
+  const planPerformance = plans
+    .map((plan) => {
+      const planSubCount = subscriptions.filter(
+        (s) => s.plan_id === plan.id,
+      ).length;
+      const planPayments = successfulPayments.filter((p) => {
+        const sub = subscriptions.find(
+          (s) =>
+            s.id ===
+            (p as unknown as { subscription_id?: string }).subscription_id,
+        );
+        return sub?.plan_id === plan.id;
+      });
+
+      const totalPlanRevenue = planPayments.reduce(
+        (acc, p) => acc + Number(p.amount || 0),
+        0,
+      );
+      const prod = products.find((pr) => pr.id === plan.product_id);
+
+      return {
+        id: plan.id,
+        name: plan.name,
+        productName: prod?.name || "Product",
+        amount: Number(plan.amount),
+        interval: plan.billing_interval || "monthly",
+        subscribers: planSubCount,
+        revenue: totalPlanRevenue,
+        slug: prod?.slug,
+      };
+    })
+    .sort((a, b) => b.subscribers - a.subscribers || b.revenue - a.revenue);
 
   return (
-    <div className="flex flex-col gap-8 animate-in fade-in duration-300">
-      {/* Upper Context Header Section */}
-      <div className="flex justify-between items-center border-b border-zinc-200/40 pb-4">
+    <div className="flex flex-col gap-8 antialiased max-w-full">
+      {/* Header Section */}
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-zinc-950">
-            Workspace Insights
-          </h2>
-          <p className="text-xs text-zinc-400 font-medium mt-0.5">
-            Real-time ledger indicators monitoring
+          <h1 className="text-xl font-bold tracking-tight text-zinc-900">
+            Dashboard
+          </h1>
+          <p className="text-sm text-zinc-500 mt-0.5">
+            Real-time recurring billing metrics for{" "}
+            {org?.name || "your workspace"}
           </p>
         </div>
-        <div className="text-xs font-semibold px-3 py-1.5 bg-white border border-zinc-200 rounded-xl shadow-sm text-zinc-500 select-none">
-          Live Sync active
+
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/products"
+            className="h-11 rounded-full text-[15px] bg-[#0F86EE] hover:bg-[#0d7ad9] px-8 font-semibold text-white transition-colors cursor-pointer flex items-center gap-2">
+            <Plus size={16} />
+            <span>Create product</span>
+          </Link>
         </div>
       </div>
 
-      {/* CORE EXECUTIVE REVENUE CARD GRIDS ROWS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Gross Revenue Tracking Display Card */}
-        <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 flex flex-col justify-between h-36 shadow-sm">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+      {/* KPI METRIC CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Gross Revenue Card */}
+        <div className="rounded-lg border border-zinc-200 bg-white p-6 flex flex-col justify-between hover:border-zinc-300 transition-colors">
+          <div>
+            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
               Gross Revenue
             </span>
-            <h3 className="text-2xl font-black text-zinc-950 tracking-tight">
-              NGN{" "}
+            <div className="text-2xl font-bold text-zinc-900 tracking-tight mt-2">
+              ₦
               {grossRevenue.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
+                minimumFractionDigits: 0,
                 maximumFractionDigits: 2,
               })}
-            </h3>
+            </div>
           </div>
-          <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg w-max border border-emerald-100">
-            <ArrowUpRight size={14} /> +0.0%{" "}
-            <span className="text-zinc-400 font-semibold ml-0.5">
-              real-time track
+          <div className="mt-4 pt-4 border-t border-zinc-100 flex items-center justify-between">
+            <span className="rounded-full bg-emerald-50 text-emerald-700 px-2.5 py-0.5 text-xs font-semibold">
+              Live Settled
             </span>
+            <span className="text-xs text-zinc-400">Total Volume</span>
           </div>
         </div>
 
-        {/* MRR Earning Volume Card */}
-        <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 flex flex-col justify-between h-36 shadow-sm">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
-              MRR Volume
+        {/* MRR Volume Card */}
+        <div className="rounded-lg border border-zinc-200 bg-white p-6 flex flex-col justify-between hover:border-zinc-300 transition-colors">
+          <div>
+            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+              Monthly Recurring
             </span>
-            <h3 className="text-2xl font-black text-zinc-950 tracking-tight">
-              NGN{" "}
-              {mrr.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
+            <div className="text-2xl font-bold text-zinc-900 tracking-tight mt-2">
+              ₦
+              {Math.round(mrr).toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
               })}
-            </h3>
+            </div>
           </div>
-          <div className="flex items-center gap-1 text-xs font-bold text-[#0F86EE] bg-[#0F86EE]/5 px-2 py-0.5 rounded-lg w-max border border-[#0F86EE]/10">
-            <TrendingUp size={14} /> Active{" "}
-            <span className="text-zinc-400 font-semibold ml-0.5">
-              normalized scale
+          <div className="mt-4 pt-4 border-t border-zinc-100 flex items-center justify-between">
+            <span className="rounded-full bg-blue-50 text-[#0F86EE] px-2.5 py-0.5 text-xs font-semibold">
+              MRR Run-rate
             </span>
+            <span className="text-xs text-zinc-400">Recurring</span>
           </div>
         </div>
 
-        {/* Active Subscribers Accounts Counter Card */}
-        <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 flex flex-col justify-between h-36 shadow-sm">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+        {/* Active Subscribers Card */}
+        <div className="rounded-lg border border-zinc-200 bg-white p-6 flex flex-col justify-between hover:border-zinc-300 transition-colors">
+          <div>
+            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
               Active Subscribers
             </span>
-            <h3 className="text-3xl font-black text-zinc-950 tracking-tight">
+            <div className="text-2xl font-bold text-zinc-900 tracking-tight mt-2">
               {activeSubs.length}
-            </h3>
+            </div>
           </div>
-          <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg w-max border border-emerald-100">
-            <ArrowUpRight size={14} /> Live{" "}
-            <span className="text-zinc-400 font-semibold ml-0.5">
-              account growth
+          <div className="mt-4 pt-4 border-t border-zinc-100 flex items-center justify-between">
+            <span className="rounded-full border border-zinc-200 px-2.5 py-0.5 text-xs text-zinc-600 font-medium">
+              {subscriptions.length} total
             </span>
+            <span className="text-xs text-zinc-400">Customer base</span>
+          </div>
+        </div>
+
+        {/* Trials & Retention Card */}
+        <div className="rounded-lg border border-zinc-200 bg-white p-6 flex flex-col justify-between hover:border-zinc-300 transition-colors">
+          <div>
+            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+              Trials & Retention
+            </span>
+            <div className="text-2xl font-bold text-zinc-900 tracking-tight mt-2">
+              {trialingSubs.length}{" "}
+              <span className="text-sm font-normal text-zinc-400">
+                trialing
+              </span>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-zinc-100 flex items-center justify-between">
+            <span className="rounded-full bg-zinc-100 text-zinc-600 px-2.5 py-0.5 text-xs font-medium">
+              {pastDueSubs.length} past due
+            </span>
+            <span className="text-xs text-zinc-400">Retention</span>
           </div>
         </div>
       </div>
 
       {/* LOWER REVENUE CHARTS & PRODUCT RANKINGS SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Side: Historical Earning Volume Graphic Canvas */}
-        <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 shadow-sm lg:col-span-2 flex flex-col gap-6 min-h-87.5">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-bold text-zinc-900 tracking-tight">
-              Revenue Volume Trends
-            </span>
-            <div className="text-[11px] font-bold px-2 py-1 bg-zinc-50 border border-zinc-200 rounded-lg text-zinc-400 select-none">
-              Daily Ledger
-            </div>
-          </div>
-
-          <div className="flex-1 w-full h-full relative flex items-end min-h-55 bg-linear-to-t from-zinc-50/50 to-white/0 rounded-xl p-4 border border-zinc-100">
-            <svg
-              className="w-full h-44 stroke-[#0F86EE] stroke-[2.5] fill-none overflow-visible"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none">
-              <path
-                d="M 0 90 Q 20 80 40 85 T 70 40 T 100 20"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <div className="absolute bottom-2 left-0 right-0 flex justify-between px-6 text-[10px] text-zinc-400 font-bold select-none">
-              <span>Dynamic Tracking Matrix</span>
-            </div>
-          </div>
+        {/* Left Side: Real Dynamic Recharts Area Chart */}
+        <div className="rounded-lg border border-zinc-200 bg-white p-7 lg:col-span-2 flex flex-col justify-between">
+          <RevenueChart data={chartSeries} totalRevenue={grossRevenue} />
         </div>
 
-        {/* Right Side: Real Plan Performance Rankings Data Log */}
-        <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 shadow-sm flex flex-col gap-6">
+        {/* Right Side: Plan Performance Rankings */}
+        <div className="rounded-lg border border-zinc-200 bg-white p-7 flex flex-col justify-between">
           <div>
-            <h4 className="text-sm font-bold text-zinc-900 tracking-tight">
-              Top Products Tiers
-            </h4>
-            <p className="text-[11px] text-zinc-400 font-medium mt-0.5">
-              Ranking system volume performers
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-900">
+                  Plan Breakdown
+                </h3>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Subscribers & volume by tier
+                </p>
+              </div>
+              <Link
+                href="/dashboard/products"
+                className="text-xs font-semibold text-[#0F86EE] hover:underline flex items-center gap-1">
+                <span>View all</span>
+                <ExternalLink size={12} />
+              </Link>
+            </div>
+
+            <div className="flex flex-col gap-3 mt-6">
+              {planPerformance.length === 0 ? (
+                <div className="text-center py-10 text-xs text-zinc-400">
+                  <p>No plans created yet.</p>
+                  <Link
+                    href="/dashboard/products"
+                    className="mt-2 inline-block text-xs font-semibold text-[#0F86EE]">
+                    Create your first plan &rarr;
+                  </Link>
+                </div>
+              ) : (
+                planPerformance.slice(0, 4).map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex flex-col gap-1.5 p-3.5 rounded-lg bg-zinc-50/70 border border-zinc-100">
+                    <div className="flex justify-between items-center text-xs">
+                      <div>
+                        <span className="font-semibold text-zinc-800">
+                          {item.name}
+                        </span>
+                        <span className="text-[11px] text-zinc-400 ml-1.5">
+                          ({item.productName})
+                        </span>
+                      </div>
+                      <span className="font-mono font-bold text-zinc-900">
+                        ₦{item.amount.toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-xs text-zinc-500">
+                      <span className="capitalize">{item.interval}</span>
+                      <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-600 font-medium">
+                        {item.subscribers}{" "}
+                        {item.subscribers === 1 ? "subscriber" : "subscribers"}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
-          <div className="flex flex-col gap-4">
-            {activeTopProducts.length === 0 ? (
-              <p className="text-xs text-zinc-400 font-medium text-center py-8">
-                No completed transaction volumes processed yet.
-              </p>
-            ) : (
-              activeTopProducts.slice(0, 3).map((prod, idx) => (
-                <div
-                  key={idx}
-                  className="flex justify-between items-center border-b border-zinc-50 pb-3 last:border-0 last:pb-0">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold text-zinc-900">
-                      {prod.name}
-                    </span>
-                    <span className="text-[10px] text-zinc-400 font-medium capitalize">
-                      {prod.interval} plan
-                    </span>
-                  </div>
-                  <span className="text-xs font-black text-zinc-950">
-                    NGN {prod.amount.toLocaleString()}
-                  </span>
-                </div>
-              ))
-            )}
+          <div className="pt-4 border-t border-zinc-100 mt-6 text-center">
+            <span className="text-xs text-zinc-400">
+              Live subscription states synced across Orbit
+            </span>
           </div>
         </div>
       </div>

@@ -10,7 +10,7 @@ export async function deleteProduct(id: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return;
+  if (!user) return { success: false, message: "Unauthorized" };
 
   const { data: organisation } = await supabase
     .from("organisations")
@@ -18,11 +18,18 @@ export async function deleteProduct(id: string) {
     .eq("user_id", user.id)
     .single();
 
-  await supabase
+  if (!organisation) return { success: false, message: "Organisation not found" };
+
+  const { error } = await supabase
     .from("products")
     .delete()
     .eq("id", id)
-    .eq("organisation_id", organisation?.id);
+    .eq("organisation_id", organisation.id);
+
+  if (error) {
+    return { success: false, message: error.message };
+  }
 
   revalidatePath("/dashboard/products");
+  return { success: true };
 }

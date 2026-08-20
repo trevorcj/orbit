@@ -18,11 +18,10 @@ export default async function Page() {
     .from("organisations")
     .select("id")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   if (organisationError || !organisation) {
     console.error("ORGANISATION FETCH ERROR:", organisationError);
-
     return <CustomersPage customers={[]} />;
   }
 
@@ -57,7 +56,6 @@ export default async function Page() {
 
   if (error) {
     console.error("CUSTOMERS FETCH ERROR:", error);
-
     return <CustomersPage customers={[]} />;
   }
 
@@ -83,13 +81,27 @@ export default async function Page() {
 
       const activeSubscriptions =
         customer.subscriptions?.filter(
-          (subscription) => subscription.status?.toUpperCase() === "ACTIVE",
+          (subscription) =>
+            subscription.status?.toUpperCase() === "ACTIVE",
         ).length ?? 0;
 
-      const customerStatus: CustomerStatus =
-        activeSubscriptions > 0 ? "Active" : "Canceled";
+      const hasActive = activeSubscriptions > 0;
+      const hasTrial = customer.subscriptions?.some(
+        (s) => s.status?.toUpperCase() === "TRIALING",
+      );
+      const hasPastDue = customer.subscriptions?.some(
+        (s) => s.status?.toUpperCase() === "PAST_DUE",
+      );
 
-      let name = "Unknown Customer";
+      const customerStatus: CustomerStatus = hasActive
+        ? "Active"
+        : hasTrial
+          ? "Trialing"
+          : hasPastDue
+            ? "Past due"
+            : "Canceled";
+
+      let name = "Customer";
 
       if (customer.first_name || customer.last_name) {
         name = `${customer.first_name ?? ""} ${
@@ -99,17 +111,11 @@ export default async function Page() {
 
       return {
         id: customer.id,
-
         name,
-
         email: customer.email,
-
-        subscriptions: activeSubscriptions,
-
+        subscriptions: activeSubscriptions + (hasTrial ? 1 : 0),
         totalSpent: `₦${totalSpent.toLocaleString()}`,
-
         status: customerStatus,
-
         joined: new Date(customer.created_at).toLocaleDateString("en-NG", {
           year: "numeric",
           month: "short",
