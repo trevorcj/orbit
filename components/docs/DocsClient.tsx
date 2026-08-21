@@ -55,10 +55,9 @@ const navSections: NavSection[] = [
       { id: "api-root", label: "GET /api/v1 (Discovery)" },
       { id: "check-subscription", label: "GET .../subscription (Verify Access)", badge: "Most Used" },
       { id: "checkout-sessions", label: "POST /api/v1/checkout/sessions" },
-      { id: "list-plans", label: "GET /api/v1/plans" },
+      { id: "list-products", label: "GET /api/v1/products (List All)" },
       { id: "get-product", label: "GET /api/v1/products/:id" },
-      { id: "get-customer", label: "GET /api/v1/customers/:id" },
-      { id: "get-subscription", label: "GET /api/v1/subscriptions/:id" },
+      { id: "list-plans", label: "GET /api/v1/plans" },
       { id: "cancel-subscription", label: "POST .../cancel" },
     ],
   },
@@ -642,6 +641,78 @@ export default function DocsClient() {
   "id": "cs_9f83a8b27c10d4e5f6",
   "url": "${appUrl}/checkout/bolder-saas?session=cs_9f83a8b27c10d4e5f6"
 }`}
+            />
+          </div>
+
+          {/* ENDPOINT: GET /api/v1/products */}
+          <div id="list-products" className="scroll-mt-24 mb-10 p-6 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+            <div className="flex items-center gap-3 mb-2">
+              <MethodBadge method="GET" />
+              <code className="text-sm font-mono font-bold text-zinc-900 dark:text-white">
+                /api/v1/products
+              </code>
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-300 mb-4">
+              <strong>List all products &amp; their attached plans.</strong> Developers can call this to fetch every product and pricing tier programmatically without ever opening the dashboard. (Accepts <code className="font-mono">pk_live_...</code> or <code className="font-mono">sk_live_...</code>).
+            </p>
+            <CodeSnippet
+              title="Request"
+              language="bash"
+              code={`curl -X GET "${appUrl}/api/v1/products" \\
+  -H "Authorization: Bearer pk_live_YOUR_PUBLISHABLE_KEY"`}
+            />
+            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mt-3 mb-1">Response (200 OK):</p>
+            <CodeSnippet
+              title="Response"
+              language="json"
+              code={`{
+  "data": [
+    {
+      "id": "c85d1c24-5d93-41bb-98f9-a9a304f5e043",
+      "name": "Bolder SaaS",
+      "slug": "bolder-saas",
+      "description": "All-in-one platform for modern startups",
+      "brand_color": "#0F86EE",
+      "plans": [
+        {
+          "id": "plan_9481029",
+          "name": "Monthly Starter",
+          "amount": 5000,
+          "currency": "NGN",
+          "interval": "monthly",
+          "features": ["Up to 5 team members", "Unlimited projects"]
+        },
+        {
+          "id": "plan_9481030",
+          "name": "Annual Pro",
+          "amount": 50000,
+          "currency": "NGN",
+          "interval": "yearly",
+          "features": ["Unlimited team members", "Dedicated support"]
+        }
+      ]
+    }
+  ]
+}`}
+            />
+          </div>
+
+          {/* ENDPOINT: GET /api/v1/products/:id */}
+          <div id="get-product" className="scroll-mt-24 mb-10 p-6 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+            <div className="flex items-center gap-3 mb-2">
+              <MethodBadge method="GET" />
+              <code className="text-sm font-mono font-bold text-zinc-900 dark:text-white">
+                /api/v1/products/:id_or_slug
+              </code>
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-300 mb-4">
+              Get a specific product and its active pricing plans. You can pass either the <strong>UUID</strong> (e.g. <code className="font-mono">c85d1c24-...</code>) or the <strong>Slug</strong> (e.g. <code className="font-mono">bolder-saas</code>).
+            </p>
+            <CodeSnippet
+              title="Request (by slug or UUID)"
+              language="bash"
+              code={`curl -X GET "${appUrl}/api/v1/products/bolder-saas" \\
+  -H "Authorization: Bearer pk_live_YOUR_PUBLISHABLE_KEY"`}
             />
           </div>
 
