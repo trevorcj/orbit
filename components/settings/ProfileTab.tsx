@@ -97,7 +97,7 @@ export default function ProfileTab() {
   const initials = `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase() || "U";
 
   return (
-    <form onSubmit={handleSave} className="flex flex-col gap-6 p-6 sm:p-8 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] max-w-2xl shadow-xs">
+    <form onSubmit={handleSave} className="flex flex-col gap-6 p-6 sm:p-8 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] max-w-2xl">
       <div>
         <h2 className="text-base font-bold text-zinc-900 dark:text-white">Profile Details</h2>
         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
@@ -109,7 +109,7 @@ export default function ProfileTab() {
       <div className="flex items-center gap-5 p-4 rounded-xl border border-zinc-100 dark:border-[#1a2942] bg-zinc-50/50 dark:bg-[#0c1524]">
         <div className="relative group">
           {profile?.avatarUrl ? (
-            <div className="relative w-16 h-16 rounded-full overflow-hidden border border-zinc-200 dark:border-[#1e2d47] shadow-xs">
+            <div className="relative w-16 h-16 rounded-full overflow-hidden border border-zinc-200 dark:border-[#1e2d47]">
               <Image
                 src={profile.avatarUrl}
                 alt={`${firstName} ${lastName}`}
@@ -118,7 +118,7 @@ export default function ProfileTab() {
               />
             </div>
           ) : (
-            <div className="w-16 h-16 rounded-full bg-[#0F86EE] flex items-center justify-center text-white text-xl font-bold shadow-xs">
+            <div className="w-16 h-16 rounded-full bg-[#0F86EE] flex items-center justify-center text-white text-xl font-bold">
               {initials}
             </div>
           )}
@@ -127,7 +127,7 @@ export default function ProfileTab() {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadingAvatar}
-            className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-white dark:bg-[#152238] border border-zinc-200 dark:border-[#1e2d47] shadow-md text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-[#1e2d47] transition cursor-pointer"
+            className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-white dark:bg-[#152238] border border-zinc-200 dark:border-[#1e2d47] text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-[#1e2d47] transition cursor-pointer"
             title="Upload avatar photo">
             {uploadingAvatar ? (
               <Loader2 size={12} className="animate-spin text-[#0F86EE]" />

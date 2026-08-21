@@ -219,12 +219,12 @@ export default function DashboardLayoutClient({
                 <Image
                   src={userProfile?.avatarUrl}
                   alt={userFullName}
-                  className="w-8 h-8 rounded-full object-cover shadow-xs shrink-0"
+                  className="w-8 h-8 rounded-full object-cover shrink-0"
                   width={32}
                   height={32}
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-[#0F86EE] text-white font-bold flex items-center justify-center text-xs shadow-xs shrink-0">
+                <div className="w-8 h-8 rounded-full bg-[#0F86EE] text-white font-bold flex items-center justify-center text-xs shrink-0">
                   {`${userProfile.firstName?.[0] || ""}${userProfile.lastName?.[0] || ""}`.toUpperCase() || "U"}
                 </div>
               )}

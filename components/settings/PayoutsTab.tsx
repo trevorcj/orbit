@@ -175,7 +175,7 @@ export default function PayoutsTab() {
   return (
     <div className="flex flex-col gap-6 w-full max-w-4xl">
       {/* 1. PAYSTACK SUBACCOUNT STATUS BANNER */}
-      <div className="p-4 sm:p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+      <div className="p-4 sm:p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-[#0F86EE]/10 dark:bg-[#0F86EE]/20 text-[#0F86EE] dark:text-[#38bdf8] flex items-center justify-center shrink-0">
             <Zap size={17} />
@@ -207,13 +207,13 @@ export default function PayoutsTab() {
       {/* 2. FINANCIAL SUMMARY METRIC CARDS WITH HOVER INFO TOOLTIPS */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Gross Revenue Processed */}
-        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between shadow-xs">
+        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
               <span>Gross Volume</span>
               <div className="relative group">
                 <Info size={13} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-help" />
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-48 p-2 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-[11px] text-white font-normal shadow-lg z-20 pointer-events-none text-center">
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-48 p-2 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-[11px] text-white font-normal z-20 pointer-events-none text-center">
                   Total subscription volume processed across all customer checkouts.
                 </div>
               </div>
@@ -226,13 +226,13 @@ export default function PayoutsTab() {
         </div>
 
         {/* Net Earnings (95%) */}
-        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between shadow-xs">
+        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
               <span>Net Earnings (95%)</span>
               <div className="relative group">
                 <Info size={13} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-help" />
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-48 p-2 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-[11px] text-white font-normal shadow-lg z-20 pointer-events-none text-center">
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-48 p-2 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-[11px] text-white font-normal z-20 pointer-events-none text-center">
                   Total 95% net revenue deposited into your verified Nigerian settlement bank.
                 </div>
               </div>
@@ -245,13 +245,13 @@ export default function PayoutsTab() {
         </div>
 
         {/* Orbit 5% Platform Cut */}
-        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between shadow-xs">
+        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
               <span>Orbit Fee (5%)</span>
               <div className="relative group">
                 <Info size={13} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-help" />
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-48 p-2 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-[11px] text-white font-normal shadow-lg z-20 pointer-events-none text-center">
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-48 p-2 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-[11px] text-white font-normal z-20 pointer-events-none text-center">
                   Orbit platform charge covering recurring billing, card tokenization, and infrastructure.
                 </div>
               </div>
@@ -265,7 +265,7 @@ export default function PayoutsTab() {
       </div>
 
       {/* 3. SETTLEMENT BANK ACCOUNT CONFIGURATION */}
-      <div className="p-6 sm:p-8 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col gap-6 shadow-xs">
+      <div className="p-6 sm:p-8 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col gap-6">
         <div>
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
@@ -349,7 +349,7 @@ export default function PayoutsTab() {
       </div>
 
       {/* 4. SETTLEMENT & PAYOUT AUDIT HISTORY TABLE */}
-      <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] overflow-hidden shadow-xs">
+      <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] overflow-hidden">
         <div className="p-5 border-b border-zinc-100 dark:border-[#1e2d47] flex items-center justify-between">
           <div>
             <h3 className="text-sm font-bold text-zinc-900 dark:text-white">
@@ -433,7 +433,7 @@ export default function PayoutsTab() {
       {/* 5. WITHDRAWAL POPUP MODAL */}
       {showWithdrawModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#111c2e] rounded-xl border border-zinc-200 dark:border-[#1e2d47] shadow-xl w-full max-w-md p-6 flex flex-col gap-5 text-zinc-900 dark:text-white">
+          <div className="bg-white dark:bg-[#111c2e] rounded-xl border border-zinc-200 dark:border-[#1e2d47] w-full max-w-md p-6 flex flex-col gap-5 text-zinc-900 dark:text-white">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-zinc-900 dark:text-white">Request Manual Payout</h3>
               <button

@@ -28,7 +28,7 @@ export default function ProductCard({ product }: { product: Product }) {
   return (
     <div
       onClick={() => router.push(`/dashboard/products/${product.slug}`)}
-      className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] cursor-pointer transition hover:border-zinc-300 dark:hover:border-zinc-600 shadow-xs">
+      className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] cursor-pointer transition hover:border-zinc-300 dark:hover:border-zinc-600">
       <div className="flex items-start justify-between px-8 py-7">
         <div className="flex gap-5">
           <div

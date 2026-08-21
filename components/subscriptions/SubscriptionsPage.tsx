@@ -164,7 +164,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
       </div>
 
       {/* Data Table */}
-      <div className="w-full overflow-x-auto bg-white dark:bg-[#111c2e] rounded-xl border border-zinc-200 dark:border-[#1e2d47] shadow-xs">
+      <div className="w-full overflow-x-auto bg-white dark:bg-[#111c2e] rounded-xl border border-zinc-200 dark:border-[#1e2d47]">
         <table className="w-full border-collapse text-left text-sm text-zinc-600 dark:text-zinc-300">
           <thead>
             <tr className="border-b border-zinc-100 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524] text-zinc-500 dark:text-zinc-400 font-medium text-xs">

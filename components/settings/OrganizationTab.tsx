@@ -232,7 +232,7 @@ export default function OrganizationTab() {
 
           <div className="relative group">
             {org?.logo_url ? (
-              <div className="relative w-24 h-24 rounded-2xl overflow-hidden border border-zinc-200 dark:border-[#1e2d47] shadow-xs">
+              <div className="relative w-24 h-24 rounded-2xl overflow-hidden border border-zinc-200 dark:border-[#1e2d47]">
                 <Image
                   src={org.logo_url}
                   alt={org.name}
@@ -241,7 +241,7 @@ export default function OrganizationTab() {
                 />
               </div>
             ) : (
-              <div className="w-24 h-24 rounded-2xl bg-zinc-950 dark:bg-[#0F86EE] flex items-center justify-center text-white text-3xl font-bold shadow-xs">
+              <div className="w-24 h-24 rounded-2xl bg-zinc-950 dark:bg-[#0F86EE] flex items-center justify-center text-white text-3xl font-bold">
                 {initialLetter}
               </div>
             )}
@@ -250,7 +250,7 @@ export default function OrganizationTab() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingLogo}
-              className="absolute -bottom-2 -right-2 p-2 rounded-full bg-white dark:bg-[#152238] border border-zinc-200 dark:border-[#1e2d47] shadow-md text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-[#1e2d47] transition cursor-pointer"
+              className="absolute -bottom-2 -right-2 p-2 rounded-full bg-white dark:bg-[#152238] border border-zinc-200 dark:border-[#1e2d47] text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-[#1e2d47] transition cursor-pointer"
               title="Upload organization logo">
               {uploadingLogo ? (
                 <Loader2 size={14} className="animate-spin text-[#0F86EE]" />
@@ -310,7 +310,7 @@ export default function OrganizationTab() {
       {/* 3. RESEND-STYLE CONFIRMATION MODAL */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#111c2e] rounded-xl border border-zinc-200 dark:border-[#1e2d47] shadow-2xl w-full max-w-md p-6 flex flex-col gap-5 text-zinc-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white dark:bg-[#111c2e] rounded-xl border border-zinc-200 dark:border-[#1e2d47] w-full max-w-md p-6 flex flex-col gap-5 text-zinc-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                 <AlertTriangle size={18} className="text-rose-600" />

@@ -407,7 +407,7 @@ export async function getPayoutDetails(): Promise<PayoutData | null> {
   const { data: org } = await supabaseAdmin
     .from("organisations")
     .select(
-      "id, settlement_bank_name, settlement_bank_code, settlement_account_number, settlement_account_name, paystack_subaccount_code",
+      "id, settlement_bank_name, settlement_bank_code, settlement_account_number, settlement_account_name",
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
@@ -422,7 +422,7 @@ export async function getPayoutDetails(): Promise<PayoutData | null> {
     bankCode: org.settlement_bank_code || null,
     accountNumber: org.settlement_account_number || null,
     accountName: org.settlement_account_name || null,
-    subaccountCode: org.paystack_subaccount_code || null,
+    subaccountCode: (org as any).paystack_subaccount_code || null,
   };
 }
 
@@ -444,7 +444,7 @@ export async function updatePayoutDetails(params: {
 
   const { data: org } = await supabaseAdmin
     .from("organisations")
-    .select("id, name, paystack_subaccount_code")
+    .select("id, name")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(1)
@@ -453,7 +453,7 @@ export async function updatePayoutDetails(params: {
   if (!org) return { success: false, error: "Organisation not found" };
 
   // 1. Create or update Paystack Subaccount (5% platform fee)
-  let subaccountCode = org.paystack_subaccount_code;
+  let subaccountCode: string | null = null;
 
   try {
     const { createOrUpdatePaystackSubaccount } = await import("@/lib/paystack");
@@ -461,7 +461,6 @@ export async function updatePayoutDetails(params: {
       businessName: org.name || "Merchant",
       bankCode: params.bankCode,
       accountNumber: params.accountNumber,
-      subaccountCode: org.paystack_subaccount_code,
       percentageCharge: 5, // 5% Orbit platform fee
     });
     subaccountCode = subaccountResult.subaccountCode;
@@ -469,17 +468,18 @@ export async function updatePayoutDetails(params: {
     console.warn("Paystack subaccount provision note:", subErr);
   }
 
-  // 2. Persist settlement details and subaccount code
+  // 2. Persist settlement details
+  const updatePayload: Record<string, unknown> = {
+    settlement_bank_name: params.bankName,
+    settlement_bank_code: params.bankCode,
+    settlement_account_number: params.accountNumber,
+    settlement_account_name: params.accountName,
+    updated_at: new Date().toISOString(),
+  };
+
   const { error } = await supabaseAdmin
     .from("organisations")
-    .update({
-      settlement_bank_name: params.bankName,
-      settlement_bank_code: params.bankCode,
-      settlement_account_number: params.accountNumber,
-      settlement_account_name: params.accountName,
-      paystack_subaccount_code: subaccountCode || null,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq("id", org.id);
 
   if (error) {
@@ -487,7 +487,7 @@ export async function updatePayoutDetails(params: {
     return { success: false, error: error.message };
   }
 
-  revalidatePath("/dashboard/settings");
+  revalidatePath("/", "layout");
   return { success: true, subaccountCode };
 }
 

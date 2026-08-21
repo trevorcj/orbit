@@ -74,7 +74,7 @@ export async function getPayoutDashboardData(): Promise<PayoutDashboardData | nu
   const { data: org } = await supabaseAdmin
     .from("organisations")
     .select(
-      "id, settlement_bank_name, settlement_bank_code, settlement_account_number, settlement_account_name, paystack_subaccount_code",
+      "id, name, settlement_bank_name, settlement_bank_code, settlement_account_number, settlement_account_name",
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
