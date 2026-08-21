@@ -108,10 +108,12 @@ export async function uploadUserAvatarAction(formData: FormData): Promise<{ succ
 
     const fileExt = file.name.split(".").pop() || "png";
     const filePath = `users/${user.id}-${Date.now()}.${fileExt}`;
+    const arrayBuffer = await file.arrayBuffer();
+    const fileBuffer = Buffer.from(arrayBuffer);
 
     const { error: uploadError } = await supabaseAdmin.storage
       .from("avatars")
-      .upload(filePath, file, {
+      .upload(filePath, fileBuffer, {
         upsert: true,
         contentType: file.type || "image/png",
       });
@@ -178,10 +180,12 @@ export async function uploadOrganizationLogoAction(formData: FormData): Promise<
 
     const fileExt = file.name.split(".").pop() || "png";
     const filePath = `orgs/${org.id}-${Date.now()}.${fileExt}`;
+    const arrayBuffer = await file.arrayBuffer();
+    const fileBuffer = Buffer.from(arrayBuffer);
 
     const { error: uploadError } = await supabaseAdmin.storage
       .from("avatars")
-      .upload(filePath, file, {
+      .upload(filePath, fileBuffer, {
         upsert: true,
         contentType: file.type || "image/png",
       });

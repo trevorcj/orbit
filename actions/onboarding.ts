@@ -61,13 +61,19 @@ export async function completeOnboarding(
 
   if (logo && logo.size > 0) {
     const file = logo;
-    const fileExt = file.name.split(".").pop();
+    const fileExt = file.name.split(".").pop() || "png";
     const filePath = `orgs/${user.id}-${Date.now()}.${fileExt}`;
 
     try {
+      const arrayBuffer = await file.arrayBuffer();
+      const fileBuffer = Buffer.from(arrayBuffer);
+
       const { error: uploadError } = await supabaseAdmin.storage
         .from("avatars")
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, fileBuffer, {
+          upsert: true,
+          contentType: file.type || "image/png",
+        });
 
       if (!uploadError) {
         const { data: publicUrlData } = supabaseAdmin.storage
