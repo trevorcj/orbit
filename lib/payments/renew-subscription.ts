@@ -139,13 +139,8 @@ export async function renewSubscription(subscriptionId: string) {
    * 4. Charge saved card via Paystack headless authorization charge (with 95/5 split)
    */
   try {
-    const { data: org } = await supabase
-      .from("organisations")
-      .select("paystack_subaccount_code")
-      .eq("id", subscription.organisation_id)
-      .maybeSingle();
-
-    const subaccountCode = org?.paystack_subaccount_code || undefined;
+    const { ensureOrganisationSubaccount } = await import("@/lib/paystack");
+    const subaccountCode = await ensureOrganisationSubaccount(subscription.organisation_id);
 
     const result = await chargePaystackAuthorization({
       authorizationCode: subscription.card_token,

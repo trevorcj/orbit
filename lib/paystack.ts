@@ -180,6 +180,51 @@ export async function createOrUpdatePaystackSubaccount(params: {
 }
 
 /**
+ * Ensures an organisation has a Paystack Subaccount linked.
+ * If the organisation has bank details but no subaccount code yet,
+ * it automatically provisions one and persists it to the database.
+ */
+export async function ensureOrganisationSubaccount(organisationId: string): Promise<string | undefined> {
+  try {
+    const { supabaseAdmin } = await import("@/lib/supabase-admin");
+    const { data: org, error } = await supabaseAdmin
+      .from("organisations")
+      .select("*")
+      .eq("id", organisationId)
+      .maybeSingle();
+
+    if (error || !org) return undefined;
+
+    const existingCode = (org as any).paystack_subaccount_code;
+    if (existingCode) return existingCode;
+
+    const bankCode = (org as any).settlement_bank_code;
+    const accountNumber = (org as any).settlement_account_number;
+    const businessName = (org as any).name || "Merchant";
+
+    if (bankCode && accountNumber) {
+      const res = await createOrUpdatePaystackSubaccount({
+        businessName,
+        bankCode,
+        accountNumber,
+        percentageCharge: 5,
+      });
+
+      // Update organisation with newly created subaccount code
+      await supabaseAdmin
+        .from("organisations")
+        .update({ paystack_subaccount_code: res.subaccountCode })
+        .eq("id", organisationId);
+
+      return res.subaccountCode;
+    }
+  } catch (err) {
+    console.warn(`Could not ensure subaccount for organisation ${organisationId}:`, err);
+  }
+  return undefined;
+}
+
+/**
  * Initialize a Paystack checkout transaction (with optional subaccount split)
  */
 export async function initializePaystackTransaction(

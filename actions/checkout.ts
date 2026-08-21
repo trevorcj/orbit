@@ -100,15 +100,10 @@ export async function initiateSubscriptionPayment(formData: FormData) {
   }
 
   /*
-   * 3. Fetch organisation Paystack Subaccount (if configured)
+   * 3. Ensure organisation Paystack Subaccount (auto-provisions for existing orgs)
    */
-  const { data: org } = await supabase
-    .from("organisations")
-    .select("paystack_subaccount_code")
-    .eq("id", plan.organisation_id)
-    .maybeSingle();
-
-  const subaccountCode = org?.paystack_subaccount_code || undefined;
+  const { ensureOrganisationSubaccount } = await import("@/lib/paystack");
+  const subaccountCode = await ensureOrganisationSubaccount(plan.organisation_id);
 
   /*
    * 4. Initialize Paystack Transaction in Kobo (with automatic 95/5 split)
