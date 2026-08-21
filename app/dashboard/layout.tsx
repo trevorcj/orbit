@@ -24,7 +24,7 @@ export default async function DashboardLayout({
         firstName: profile?.first_name || "Merchant",
         lastName: profile?.last_name || "",
         email: profile?.email || user.email || "",
-        avatarUrl: null,
+        avatarUrl: profile?.avatar_url || null,
       }}
       organization={{
         name: organisation.name,

@@ -18,7 +18,7 @@ export async function getOrganisation() {
 
   const { data: profile } = await supabase
     .from("users")
-    .select("id, email, first_name, last_name")
+    .select("id, email, first_name, last_name, avatar_url")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -32,6 +32,8 @@ export async function getOrganisation() {
       `,
     )
     .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (organisationError) {

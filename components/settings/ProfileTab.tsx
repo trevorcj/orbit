@@ -155,7 +155,7 @@ export default function ProfileTab() {
             <span>{uploadingAvatar ? "Uploading photo..." : "Upload photo"}</span>
           </button>
           <span className="text-[11px] text-zinc-400">
-            JPG, PNG or GIF. Stored securely in your Supabase avatars bucket.
+            JPG, PNG or GIF. Max 2MB.
           </span>
         </div>
       </div>

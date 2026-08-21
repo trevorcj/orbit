@@ -261,8 +261,27 @@ export async function updateOrganizationDetails(params: {
 
   if (!user) return { success: false, error: "Unauthorized" };
 
-  const updatePayload: { name: string; updated_at: string; logo_url?: string } = {
-    name: params.name.trim(),
+  const trimmedName = params.name.trim();
+  const newSlug = trimmedName.toLowerCase().replace(/\s+/g, "-");
+
+  // Check if another organization already uses this name or slug
+  const { data: existingOrg } = await supabaseAdmin
+    .from("organisations")
+    .select("id")
+    .neq("user_id", user.id)
+    .or(`slug.eq.${newSlug},name.ilike.${trimmedName}`)
+    .maybeSingle();
+
+  if (existingOrg) {
+    return {
+      success: false,
+      error: `The organization name "${trimmedName}" is already taken. Please choose a unique name.`,
+    };
+  }
+
+  const updatePayload: { name: string; slug: string; updated_at: string; logo_url?: string } = {
+    name: trimmedName,
+    slug: newSlug,
     updated_at: new Date().toISOString(),
   };
 
@@ -280,7 +299,7 @@ export async function updateOrganizationDetails(params: {
     return { success: false, error: error.message };
   }
 
-  revalidatePath("/dashboard/settings");
+  revalidatePath("/", "layout");
   return { success: true };
 }
 

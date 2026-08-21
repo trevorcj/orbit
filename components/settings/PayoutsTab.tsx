@@ -1,35 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import BankSelect, { Bank } from "@/components/BankSelect";
+import { useEffect, useState } from "react";
+import {
+  Building2,
+  CheckCircle2,
+  Loader2,
+  AlertCircle,
+  Zap,
+  Info,
+  Wallet,
+  Percent,
+  ArrowUpRight,
+} from "lucide-react";
 import Input from "@/components/Input";
+import BankSelect, { Bank } from "@/components/BankSelect";
+import { updatePayoutDetails } from "@/actions/settings";
 import {
   getPayoutDashboardData,
   requestPayout,
   PayoutDashboardData,
 } from "@/actions/payouts";
-import { updatePayoutDetails } from "@/actions/settings";
-import {
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-  Building2,
-  ArrowUpRight,
-  Wallet,
-  Clock,
-  Percent,
-  ShieldCheck,
-  Zap,
-} from "lucide-react";
+import { toast } from "sonner";
 
 export default function PayoutsTab() {
   const [data, setData] = useState<PayoutDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [savingBank, setSavingBank] = useState(false);
-  const [withdrawing, setWithdrawing] = useState(false);
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState<number | "">("");
 
   // Bank Form State
   const [bankCode, setBankCode] = useState("");
@@ -38,6 +33,12 @@ export default function PayoutsTab() {
   const [accountName, setAccountName] = useState("");
   const [checkingBank, setCheckingBank] = useState(false);
   const [lookupError, setLookupError] = useState("");
+  const [savingBank, setSavingBank] = useState(false);
+
+  // Manual Withdrawal Modal State
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState<number | "">("");
+  const [withdrawing, setWithdrawing] = useState(false);
 
   const loadData = async () => {
     try {
@@ -69,6 +70,17 @@ export default function PayoutsTab() {
       return;
     }
 
+    // Skip lookup if already matching verified bank details
+    if (
+      data?.bankDetails?.accountNumber === accountNumber &&
+      data?.bankDetails?.bankCode === bankCode &&
+      data?.bankDetails?.accountName
+    ) {
+      setAccountName(data.bankDetails.accountName);
+      setLookupError("");
+      return;
+    }
+
     const verify = async () => {
       setCheckingBank(true);
       setLookupError("");
@@ -96,7 +108,7 @@ export default function PayoutsTab() {
 
     const timer = setTimeout(verify, 400);
     return () => clearTimeout(timer);
-  }, [accountNumber, bankCode]);
+  }, [accountNumber, bankCode, data?.bankDetails]);
 
   const handleSaveBank = async () => {
     if (!bankCode || !bankName || accountNumber.length !== 10 || !accountName) {
@@ -114,38 +126,38 @@ export default function PayoutsTab() {
       });
 
       if (res.success) {
-        toast.success("Settlement bank & Paystack Subaccount updated successfully!");
-        loadData();
+        toast.success("Settlement bank account updated!");
+        await loadData();
       } else {
-        toast.error(res.error || "Failed to update payout account");
+        toast.error(res.error || "Failed to update settlement bank.");
       }
     } catch {
-      toast.error("Failed to save changes");
+      toast.error("An unexpected error occurred.");
     } finally {
       setSavingBank(false);
     }
   };
 
-  const handleExecutePayout = async () => {
-    const amount = Number(withdrawAmount);
-    if (!amount || amount < 100) {
+  const handleManualWithdrawal = async () => {
+    const amt = Number(withdrawAmount);
+    if (!amt || amt < 100) {
       toast.error("Minimum withdrawal amount is ₦100.");
       return;
     }
 
-    if (data && amount > data.availableBalance) {
-      toast.error("Amount exceeds available balance.");
+    if (amt > (data?.availableBalance || 0)) {
+      toast.error("Withdrawal exceeds available balance.");
       return;
     }
 
     setWithdrawing(true);
     try {
-      const res = await requestPayout(amount);
+      const res = await requestPayout(amt);
       if (res.success) {
-        toast.success(`Payout of ₦${amount.toLocaleString()} processed successfully!`);
+        toast.success("Manual withdrawal submitted successfully!");
         setShowWithdrawModal(false);
         setWithdrawAmount("");
-        loadData();
+        await loadData();
       } else {
         toast.error(res.error || "Failed to process payout.");
       }
@@ -161,97 +173,99 @@ export default function PayoutsTab() {
   );
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-4xl">
-      {/* 1. PAYSTACK SUBACCOUNT & SETTLEMENT ENGINE BANNER */}
-      <div className="p-5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-3.5">
-          <div className="w-9 h-9 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
-            <Zap size={18} />
+    <div className="flex flex-col gap-6 w-full max-w-4xl">
+      {/* 1. PAYSTACK SUBACCOUNT STATUS BANNER */}
+      <div className="p-4 sm:p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[#0F86EE]/10 dark:bg-[#0F86EE]/20 text-[#0F86EE] dark:text-[#38bdf8] flex items-center justify-center shrink-0">
+            <Zap size={17} />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-bold text-zinc-900 dark:text-white">
-                Automated Split Payments (Paystack Subaccount)
+                Paystack Subaccount
               </h3>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/70 text-emerald-800 dark:text-emerald-300">
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  isBankLinked
+                    ? "bg-emerald-100 dark:bg-emerald-900/70 text-emerald-800 dark:text-emerald-300"
+                    : "bg-amber-100 dark:bg-amber-900/70 text-amber-800 dark:text-amber-300"
+                }`}>
                 {isBankLinked ? "Active" : "Pending Bank Setup"}
               </span>
             </div>
-            <p className="text-xs text-zinc-600 dark:text-zinc-300 mt-1 max-w-xl">
-              Paystack splits customer payments automatically: <strong>95%</strong> is deposited directly into your bank account on standard <strong>T+1 schedule (~5:40 AM)</strong>, while Orbit retains a <strong>5% platform fee</strong>.
-            </p>
           </div>
         </div>
 
         {data?.bankDetails?.subaccountCode && (
-          <div className="px-3 py-1.5 rounded-md bg-white dark:bg-[#111c2e] border border-emerald-200 dark:border-emerald-800 text-[11px] font-mono text-zinc-700 dark:text-zinc-300 shrink-0 self-start sm:self-center">
-            Subaccount: <span className="font-bold text-emerald-600 dark:text-emerald-400">{data.bankDetails.subaccountCode}</span>
+          <div className="px-3 py-1.5 rounded-lg bg-zinc-50 dark:bg-[#152238] border border-zinc-200 dark:border-[#1e2d47] text-xs font-mono text-zinc-700 dark:text-zinc-300 shrink-0 self-start sm:self-center">
+            Subaccount: <span className="font-bold text-[#0F86EE] dark:text-[#38bdf8]">{data.bankDetails.subaccountCode}</span>
           </div>
         )}
       </div>
 
-      {/* 2. FINANCIAL SUMMARY METRIC CARDS */}
+      {/* 2. FINANCIAL SUMMARY METRIC CARDS WITH HOVER INFO TOOLTIPS */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Gross Revenue Processed */}
-        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Gross Volume
-              </span>
-              <Wallet size={15} className="text-[#0F86EE] dark:text-[#38bdf8]" />
+        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between shadow-xs">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              <span>Gross Volume</span>
+              <div className="relative group">
+                <Info size={13} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-help" />
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-48 p-2 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-[11px] text-white font-normal shadow-lg z-20 pointer-events-none text-center">
+                  Total subscription volume processed across all customer checkouts.
+                </div>
+              </div>
             </div>
-            <div className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight mt-2 font-mono">
-              ₦{loading ? "..." : (data?.grossRevenue || 0).toLocaleString()}
-            </div>
+            <Wallet size={16} className="text-[#0F86EE] dark:text-[#38bdf8]" />
           </div>
-
-          <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-[#1e2d47] text-xs text-zinc-400 dark:text-zinc-500">
-            Total subscription charges processed
+          <div className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight mt-3 font-mono">
+            ₦{loading ? "..." : (data?.grossRevenue || 0).toLocaleString()}
           </div>
         </div>
 
-        {/* Net Receivable (95%) */}
-        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Net Earnings (95%)
-              </span>
-              <Building2 size={15} className="text-emerald-500" />
+        {/* Net Earnings (95%) */}
+        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between shadow-xs">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              <span>Net Earnings (95%)</span>
+              <div className="relative group">
+                <Info size={13} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-help" />
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-48 p-2 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-[11px] text-white font-normal shadow-lg z-20 pointer-events-none text-center">
+                  Total 95% net revenue deposited into your verified Nigerian settlement bank.
+                </div>
+              </div>
             </div>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight mt-2 font-mono">
-              ₦{loading ? "..." : Math.round((data?.grossRevenue || 0) * 0.95).toLocaleString()}
-            </div>
+            <Building2 size={16} className="text-emerald-500" />
           </div>
-
-          <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-[#1e2d47] text-xs text-zinc-400 dark:text-zinc-500">
-            Deposited directly to your bank account
+          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight mt-3 font-mono">
+            ₦{loading ? "..." : Math.round((data?.grossRevenue || 0) * 0.95).toLocaleString()}
           </div>
         </div>
 
         {/* Orbit 5% Platform Cut */}
-        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Orbit Fee (5%)
-              </span>
-              <Percent size={15} className="text-zinc-400 dark:text-zinc-500" />
+        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between shadow-xs">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              <span>Orbit Fee (5%)</span>
+              <div className="relative group">
+                <Info size={13} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-help" />
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-48 p-2 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-[11px] text-white font-normal shadow-lg z-20 pointer-events-none text-center">
+                  Orbit platform charge covering recurring billing, card tokenization, and infrastructure.
+                </div>
+              </div>
             </div>
-            <div className="text-2xl font-bold text-zinc-700 dark:text-zinc-300 tracking-tight mt-2 font-mono">
-              ₦{loading ? "..." : Math.round((data?.grossRevenue || 0) * 0.05).toLocaleString()}
-            </div>
+            <Percent size={16} className="text-zinc-400 dark:text-zinc-500" />
           </div>
-
-          <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-[#1e2d47] text-xs text-zinc-400 dark:text-zinc-500">
-            Covers recurring engine &amp; tokenization
+          <div className="text-2xl font-bold text-zinc-700 dark:text-zinc-300 tracking-tight mt-3 font-mono">
+            ₦{loading ? "..." : Math.round((data?.grossRevenue || 0) * 0.05).toLocaleString()}
           </div>
         </div>
       </div>
 
       {/* 3. SETTLEMENT BANK ACCOUNT CONFIGURATION */}
-      <div className="p-6 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col gap-6">
+      <div className="p-6 sm:p-8 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col gap-6 shadow-xs">
         <div>
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
@@ -266,7 +280,7 @@ export default function PayoutsTab() {
             )}
           </div>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-            Provide the Nigerian bank account where Paystack should automatically deposit your subscription earnings.
+            Provide the Nigerian bank account where Paystack should deposit your subscription earnings.
           </p>
         </div>
 
@@ -334,28 +348,15 @@ export default function PayoutsTab() {
         </div>
       </div>
 
-      {/* 4. HOW SETTLEMENT WORKS INFO CARD */}
-      <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524] flex flex-col gap-3 text-xs text-zinc-600 dark:text-zinc-300">
-        <h4 className="font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-          <ShieldCheck size={16} className="text-[#0F86EE] dark:text-[#38bdf8]" />
-          <span>How Orbit &amp; Paystack Settlements Work</span>
-        </h4>
-        <ul className="list-disc pl-4 space-y-1.5 text-zinc-600 dark:text-zinc-400">
-          <li><strong>Zero Co-Mingling:</strong> Your funds never get trapped in manual payout queues. Paystack splits each transaction instantly at the gateway level.</li>
-          <li><strong>Automatic T+1 Deposit:</strong> Paystack sweeps your 95% net revenue straight into your linked bank account every morning at ~5:40 AM.</li>
-          <li><strong>No Transfer Surcharges:</strong> Because the split occurs at payment initialization, there are zero additional transfer fees deducted from your balance.</li>
-        </ul>
-      </div>
-
-      {/* 5. SETTLEMENT & PAYOUT AUDIT HISTORY TABLE */}
-      <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] overflow-hidden">
+      {/* 4. SETTLEMENT & PAYOUT AUDIT HISTORY TABLE */}
+      <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] overflow-hidden shadow-xs">
         <div className="p-5 border-b border-zinc-100 dark:border-[#1e2d47] flex items-center justify-between">
           <div>
             <h3 className="text-sm font-bold text-zinc-900 dark:text-white">
               Payout &amp; Settlement Ledger
             </h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              Historical ledger of automated disbursements and withdrawals.
+              Historical ledger of disbursements and settled balances.
             </p>
           </div>
           {data && data.availableBalance >= 100 && (
@@ -420,7 +421,7 @@ export default function PayoutsTab() {
               ) : (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-zinc-400 dark:text-zinc-500">
-                    No historical manual ledger records found. Standard T+1 card settlements are swept directly to your bank account daily by Paystack.
+                    No historical manual ledger records found. Standard T+1 settlements are swept directly to your bank account daily by Paystack.
                   </td>
                 </tr>
               )}
@@ -429,7 +430,7 @@ export default function PayoutsTab() {
         </div>
       </div>
 
-      {/* 6. WITHDRAWAL POPUP MODAL */}
+      {/* 5. WITHDRAWAL POPUP MODAL */}
       {showWithdrawModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#111c2e] rounded-xl border border-zinc-200 dark:border-[#1e2d47] shadow-xl w-full max-w-md p-6 flex flex-col gap-5 text-zinc-900 dark:text-white">
@@ -498,20 +499,22 @@ export default function PayoutsTab() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-zinc-100 dark:border-[#1e2d47]">
               <button
                 type="button"
                 onClick={() => setShowWithdrawModal(false)}
-                className="h-10 px-4 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] text-zinc-700 dark:text-zinc-300 text-xs font-semibold hover:bg-zinc-50 cursor-pointer">
+                disabled={withdrawing}
+                className="h-10 px-4 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] text-zinc-700 dark:text-zinc-300 text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-[#1c2e4a] cursor-pointer">
                 Cancel
               </button>
+
               <button
                 type="button"
-                onClick={handleExecutePayout}
+                onClick={handleManualWithdrawal}
                 disabled={withdrawing || !withdrawAmount || Number(withdrawAmount) < 100}
-                className="h-10 px-6 rounded-lg bg-[#0F86EE] hover:bg-[#0d7ad9] text-white text-xs font-semibold disabled:bg-zinc-300 dark:disabled:bg-zinc-800 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2">
+                className="h-10 px-5 rounded-lg bg-[#0F86EE] hover:bg-[#0d7ad9] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition cursor-pointer flex items-center gap-2">
                 {withdrawing && <Loader2 size={14} className="animate-spin" />}
-                <span>Confirm Payout</span>
+                <span>{withdrawing ? "Processing..." : "Confirm Payout"}</span>
               </button>
             </div>
           </div>

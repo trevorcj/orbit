@@ -11,8 +11,6 @@ import {
   ExternalLink,
   Plus,
   RefreshCw,
-  Webhook,
-  Clock,
 } from "lucide-react";
 import Input from "@/components/Input";
 import {
@@ -421,13 +419,16 @@ export default function DeveloperTab({
             </div>
             <div className="flex-1 min-w-52">
               <Input
-                label="Events (comma separated, blank = all)"
+                label="Subscribed Events"
                 isRequired={false}
                 type="text"
                 name="events"
-                placeholder="payment.succeeded, subscription.created"
+                placeholder="payment.succeeded, subscription.renewed"
                 className="border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] dark:text-white"
               />
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-500 block mt-1">
+                Comma-separated (e.g. <code>payment.succeeded</code>). Leave blank to subscribe to all events.
+              </span>
             </div>
             <button
               disabled={creatingWebhook}
@@ -437,116 +438,6 @@ export default function DeveloperTab({
               {creatingWebhook ? "Adding..." : "Add endpoint"}
             </button>
           </form>
-
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            <span className="text-[11px] text-zinc-400 mr-1">
-              Available events:
-            </span>
-            {webhookEvents.map((event) => (
-              <code
-                key={event}
-                className="text-[10px] text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 rounded px-1.5 py-0.5">
-                {event}
-              </code>
-            ))}
-          </div>
-
-          <p className="mt-3 text-[11px] text-zinc-400 dark:text-zinc-500">
-            Verify deliveries with the{" "}
-            <code className="text-[10px]">orbit-signature</code> header:{" "}
-            <code className="text-[10px]">
-              t=timestamp,v1=hmac_sha256(secret, timestamp + &quot;.&quot; +
-              body)
-            </code>
-            . The secret is shown above.
-          </p>
-        </div>
-      </div>
-
-      {/* ============ SYSTEM ENDPOINTS (PAYSTACK & CRON) ============ */}
-      <div className="flex flex-col gap-6 p-8 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
-        <div>
-          <h2 className="text-base font-bold text-zinc-900 dark:text-white">
-            System Infrastructure Endpoints
-          </h2>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-            Gateway listeners and recurring billing cron job URLs.
-          </p>
-        </div>
-
-        {/* PAYSTACK WEBHOOK */}
-        <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/40 dark:bg-[#0c1524] p-4 flex flex-col gap-2">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <Webhook size={15} className="text-[#0F86EE] dark:text-[#38bdf8]" />
-              <span className="font-semibold text-zinc-900 dark:text-white">
-                Paystack Webhook Endpoint
-              </span>
-            </div>
-            <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
-              Listens to charge.success
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              readOnly
-              value={`${appUrl}/api/webhooks/paystack`}
-              className="flex-1 h-9 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] px-3 font-mono text-xs text-zinc-700 dark:text-zinc-200 outline-none"
-            />
-            <button
-              type="button"
-              onClick={() =>
-                handleCopyText(
-                  `${appUrl}/api/webhooks/paystack`,
-                  "Paystack Webhook",
-                )
-              }
-              className="h-9 px-3 rounded-lg bg-white dark:bg-[#152238] border border-zinc-200 dark:border-[#1e2d47] hover:bg-zinc-50 dark:hover:bg-[#1e2d47] text-xs font-semibold text-zinc-700 dark:text-zinc-200 flex items-center gap-1 cursor-pointer">
-              {copiedGeneral === "Paystack Webhook" ? (
-                <Check size={13} className="text-emerald-500" />
-              ) : (
-                <Copy size={13} />
-              )}
-              <span>Copy</span>
-            </button>
-          </div>
-        </div>
-
-        {/* AUTO-BILLING CRON */}
-        <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/40 dark:bg-[#0c1524] p-4 flex flex-col gap-2">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <Clock size={15} className="text-indigo-600 dark:text-indigo-400" />
-              <span className="font-semibold text-zinc-900 dark:text-white">
-                Auto-Billing Cron URL
-              </span>
-            </div>
-            <span className="text-[11px] text-zinc-400 dark:text-zinc-500">Everyday</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              readOnly
-              value={`${appUrl}/api/cron/renew`}
-              className="flex-1 h-9 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] px-3 font-mono text-xs text-zinc-700 dark:text-zinc-200 outline-none"
-            />
-            <button
-              type="button"
-              onClick={() =>
-                handleCopyText(`${appUrl}/api/cron/renew`, "Cron URL")
-              }
-              className="h-9 px-3 rounded-lg bg-white dark:bg-[#152238] border border-zinc-200 dark:border-[#1e2d47] hover:bg-zinc-50 dark:hover:bg-[#1e2d47] text-xs font-semibold text-zinc-700 dark:text-zinc-200 flex items-center gap-1 cursor-pointer">
-              {copiedGeneral === "Cron URL" ? (
-                <Check size={13} className="text-emerald-500" />
-              ) : (
-                <Copy size={13} />
-              )}
-              <span>Copy</span>
-            </button>
-          </div>
         </div>
       </div>
 

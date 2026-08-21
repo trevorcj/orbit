@@ -82,6 +82,24 @@ export async function completeOnboarding(
     }
   }
 
+  // Check if an organisation with this name or slug already exists
+  const { data: existingOrg } = await supabaseAdmin
+    .from("organisations")
+    .select("id")
+    .or(`slug.eq.${slug},name.ilike.${values.organisationName}`)
+    .maybeSingle();
+
+  if (existingOrg) {
+    return {
+      errors: {
+        organisationName: [
+          `The organization name "${values.organisationName}" is already taken. Please choose a unique name.`,
+        ],
+      },
+      message: `The organization name "${values.organisationName}" is already taken. Please choose a unique name.`,
+    };
+  }
+
   // Insert organisation using supabaseAdmin
   const { data: newOrg, error: insertError } = await supabaseAdmin
     .from("organisations")
