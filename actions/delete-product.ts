@@ -20,6 +20,13 @@ export async function deleteProduct(id: string) {
 
   if (!organisation) return { success: false, message: "Organisation not found" };
 
+  // 1. Delete associated payment orders
+  await supabase
+    .from("payment_orders")
+    .delete()
+    .eq("product_id", id);
+
+  // 2. Delete product
   const { error } = await supabase
     .from("products")
     .delete()

@@ -171,34 +171,75 @@ export async function deleteOrganization(): Promise<{ success: boolean; error?: 
 
   if (!org) return { success: false, error: "Organisation not found" };
 
-  // Explicit cleanup of associated records
   try {
+    // 1. Fetch child entity IDs
+    const { data: products } = await supabaseAdmin
+      .from("products")
+      .select("id")
+      .eq("organisation_id", org.id);
+    const productIds = (products || []).map((p) => p.id);
+
+    const { data: plans } = await supabaseAdmin
+      .from("plans")
+      .select("id")
+      .eq("organisation_id", org.id);
+    const planIds = (plans || []).map((p) => p.id);
+
+    const { data: customers } = await supabaseAdmin
+      .from("customers")
+      .select("id")
+      .eq("organisation_id", org.id);
+    const customerIds = (customers || []).map((c) => c.id);
+
+    // 2. Delete payment_orders (references products and plans)
+    if (productIds.length > 0) {
+      await supabaseAdmin.from("payment_orders").delete().in("product_id", productIds);
+    }
+    if (planIds.length > 0) {
+      await supabaseAdmin.from("payment_orders").delete().in("plan_id", planIds);
+    }
+
+    // 3. Delete customer payment methods (references customers)
+    if (customerIds.length > 0) {
+      await supabaseAdmin.from("customer_payment_methods").delete().in("customer_id", customerIds);
+    }
+
+    // 4. Delete payments & payouts
     await supabaseAdmin.from("payouts").delete().eq("organisation_id", org.id);
-    await supabaseAdmin.from("payment_orders").delete().eq("organisation_id", org.id);
     await supabaseAdmin.from("payments").delete().eq("organisation_id", org.id);
+
+    // 5. Delete subscriptions
     await supabaseAdmin.from("subscriptions").delete().eq("organisation_id", org.id);
-    await supabaseAdmin.from("customers").delete().eq("organisation_id", org.id);
+
+    // 6. Delete plans & products
     await supabaseAdmin.from("plans").delete().eq("organisation_id", org.id);
     await supabaseAdmin.from("products").delete().eq("organisation_id", org.id);
+
+    // 7. Delete customers
+    await supabaseAdmin.from("customers").delete().eq("organisation_id", org.id);
+
+    // 8. Delete developer API keys & webhook events
     await supabaseAdmin.from("api_keys").delete().eq("organisation_id", org.id);
     await supabaseAdmin.from("webhook_events").delete().eq("organisation_id", org.id);
-  } catch (cleanErr) {
-    console.warn("Cleanup warning during org deletion:", cleanErr);
+
+    // 9. Delete organisation
+    const { error: orgDeleteError } = await supabaseAdmin
+      .from("organisations")
+      .delete()
+      .eq("id", org.id);
+
+    if (orgDeleteError) {
+      console.error("Failed to delete organisation record:", orgDeleteError);
+      return { success: false, error: orgDeleteError.message };
+    }
+
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to delete organization";
+    console.error("deleteOrganization exception:", err);
+    return { success: false, error: msg };
   }
-
-  // Delete organisation record
-  const { error } = await supabaseAdmin
-    .from("organisations")
-    .delete()
-    .eq("id", org.id);
-
-  if (error) {
-    console.error("Failed to delete organization:", error);
-    return { success: false, error: error.message };
-  }
-
-  revalidatePath("/", "layout");
-  return { success: true };
 }
 
 /**
