@@ -153,6 +153,55 @@ export async function updateOrganizationDetails(params: {
 }
 
 /**
+ * Permanently deletes the user's organization and all associated data
+ */
+export async function deleteOrganization(): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const { data: org } = await supabaseAdmin
+    .from("organisations")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!org) return { success: false, error: "Organisation not found" };
+
+  // Explicit cleanup of associated records
+  try {
+    await supabaseAdmin.from("payouts").delete().eq("organisation_id", org.id);
+    await supabaseAdmin.from("payment_orders").delete().eq("organisation_id", org.id);
+    await supabaseAdmin.from("payments").delete().eq("organisation_id", org.id);
+    await supabaseAdmin.from("subscriptions").delete().eq("organisation_id", org.id);
+    await supabaseAdmin.from("customers").delete().eq("organisation_id", org.id);
+    await supabaseAdmin.from("plans").delete().eq("organisation_id", org.id);
+    await supabaseAdmin.from("products").delete().eq("organisation_id", org.id);
+    await supabaseAdmin.from("api_keys").delete().eq("organisation_id", org.id);
+    await supabaseAdmin.from("webhook_events").delete().eq("organisation_id", org.id);
+  } catch (cleanErr) {
+    console.warn("Cleanup warning during org deletion:", cleanErr);
+  }
+
+  // Delete organisation record
+  const { error } = await supabaseAdmin
+    .from("organisations")
+    .delete()
+    .eq("id", org.id);
+
+  if (error) {
+    console.error("Failed to delete organization:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
+/**
  * Fetches payout settlement details for the current user's organization
  */
 export async function getPayoutDetails(): Promise<PayoutData | null> {
