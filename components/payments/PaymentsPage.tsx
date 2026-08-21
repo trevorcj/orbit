@@ -382,9 +382,75 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
     toast.success("Receipt details copied to clipboard!");
   };
 
+  const handleExportCSV = () => {
+    if (filteredPayments.length === 0) {
+      toast.error("No payments to export.");
+      return;
+    }
+
+    const headers = [
+      "ID",
+      "Customer Name",
+      "Customer Email",
+      "Amount",
+      "Currency",
+      "Plan",
+      "Status",
+      "Reference",
+      "Paid At",
+    ];
+    const rows = filteredPayments.map((p) => [
+      p.id,
+      `"${p.customers?.name || ""}"`,
+      `"${p.customers?.email || ""}"`,
+      p.amount,
+      p.currency || "NGN",
+      `"${p.subscriptions?.plans?.name || "One-time"}"`,
+      p.status,
+      `"${p.provider_reference || ""}"`,
+      `"${p.paid_at || p.created_at || ""}"`,
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute(
+      "download",
+      `payments_export_${new Date().toISOString().split("T")[0]}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Payments CSV exported successfully!");
+  };
+
   return (
     <>
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-8 w-full max-w-full mx-auto p-6 relative">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+              Payments
+            </h1>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              View all transactions, billing charges, and settlement activity.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleExportCSV}
+              className="flex h-11 items-center gap-2 rounded-lg border border-zinc-200 dark:border-[#1e2d47] px-5 text-sm font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-[#111c2e] hover:bg-zinc-50 dark:hover:bg-[#152238] transition-colors cursor-pointer">
+              <Download size={16} />
+              Export
+            </button>
+          </div>
+        </div>
+
         {/* Search & Status Filters */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative w-full sm:w-80">
