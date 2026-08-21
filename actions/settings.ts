@@ -90,59 +90,133 @@ export async function updateUserProfile(params: {
 }
 
 /**
- * Updates user profile avatar URL
+ * Server-side User Avatar upload using supabaseAdmin (bypasses RLS)
  */
-export async function updateUserAvatar(avatarUrl: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export async function uploadUserAvatarAction(formData: FormData): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) return { success: false, error: "Unauthorized" };
+    if (!user) return { success: false, error: "Unauthorized" };
 
-  const { error } = await supabaseAdmin
-    .from("users")
-    .update({
-      avatar_url: avatarUrl,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", user.id);
+    const file = formData.get("file") as File | null;
+    if (!file || file.size === 0) {
+      return { success: false, error: "No image file provided." };
+    }
 
-  if (error) {
-    console.error("Failed to update user avatar:", error);
-    return { success: false, error: error.message };
+    const fileExt = file.name.split(".").pop() || "png";
+    const filePath = `users/${user.id}-${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("avatars")
+      .upload(filePath, file, {
+        upsert: true,
+        contentType: file.type || "image/png",
+      });
+
+    if (uploadError) {
+      console.error("User avatar storage upload failed:", uploadError);
+      return { success: false, error: uploadError.message };
+    }
+
+    const { data: publicUrlData } = supabaseAdmin.storage
+      .from("avatars")
+      .getPublicUrl(filePath);
+
+    const avatarUrl = publicUrlData.publicUrl;
+
+    const { error: updateError } = await supabaseAdmin
+      .from("users")
+      .update({
+        avatar_url: avatarUrl,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", user.id);
+
+    if (updateError) {
+      console.error("Failed to update user avatar in DB:", updateError);
+      return { success: false, error: updateError.message };
+    }
+
+    revalidatePath("/", "layout");
+    return { success: true, url: avatarUrl };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to upload avatar";
+    console.error("uploadUserAvatarAction exception:", err);
+    return { success: false, error: msg };
   }
-
-  revalidatePath("/", "layout");
-  return { success: true };
 }
 
 /**
- * Updates organization logo URL
+ * Server-side Organization Logo upload using supabaseAdmin (bypasses RLS)
  */
-export async function updateOrganizationLogo(logoUrl: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export async function uploadOrganizationLogoAction(formData: FormData): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) return { success: false, error: "Unauthorized" };
+    if (!user) return { success: false, error: "Unauthorized" };
 
-  const { error } = await supabaseAdmin
-    .from("organisations")
-    .update({
-      logo_url: logoUrl,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", user.id);
+    const file = formData.get("file") as File | null;
+    if (!file || file.size === 0) {
+      return { success: false, error: "No image file provided." };
+    }
 
-  if (error) {
-    console.error("Failed to update organization logo:", error);
-    return { success: false, error: error.message };
+    const { data: org } = await supabaseAdmin
+      .from("organisations")
+      .select("id")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!org) return { success: false, error: "Organization not found" };
+
+    const fileExt = file.name.split(".").pop() || "png";
+    const filePath = `orgs/${org.id}-${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("avatars")
+      .upload(filePath, file, {
+        upsert: true,
+        contentType: file.type || "image/png",
+      });
+
+    if (uploadError) {
+      console.error("Org logo storage upload failed:", uploadError);
+      return { success: false, error: uploadError.message };
+    }
+
+    const { data: publicUrlData } = supabaseAdmin.storage
+      .from("avatars")
+      .getPublicUrl(filePath);
+
+    const logoUrl = publicUrlData.publicUrl;
+
+    const { error: updateError } = await supabaseAdmin
+      .from("organisations")
+      .update({
+        logo_url: logoUrl,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", org.id);
+
+    if (updateError) {
+      console.error("Failed to update organization logo in DB:", updateError);
+      return { success: false, error: updateError.message };
+    }
+
+    revalidatePath("/", "layout");
+    return { success: true, url: logoUrl };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to upload logo";
+    console.error("uploadOrganizationLogoAction exception:", err);
+    return { success: false, error: msg };
   }
-
-  revalidatePath("/", "layout");
-  return { success: true };
 }
 
 /**

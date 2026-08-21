@@ -6,11 +6,10 @@ import Input from "@/components/Input";
 import {
   getOrganizationDetails,
   updateOrganizationDetails,
-  updateOrganizationLogo,
+  uploadOrganizationLogoAction,
   deleteOrganization,
   OrganizationData,
 } from "@/actions/settings";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -83,26 +82,12 @@ export default function OrganizationTab() {
 
     setUploadingLogo(true);
     try {
-      const supabase = createClient();
-      const fileExt = file.name.split(".").pop();
-      const filePath = `orgs/${org?.id || "org"}-${Date.now()}.${fileExt}`;
+      const formData = new FormData();
+      formData.append("file", file);
 
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) {
-        toast.error("Failed to upload image: " + uploadError.message);
-        return;
-      }
-
-      const { data: publicUrlData } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
-
-      const res = await updateOrganizationLogo(publicUrlData.publicUrl);
-      if (res.success) {
-        setOrg((prev) => (prev ? { ...prev, logo_url: publicUrlData.publicUrl } : null));
+      const res = await uploadOrganizationLogoAction(formData);
+      if (res.success && res.url) {
+        setOrg((prev) => (prev ? { ...prev, logo_url: res.url! } : null));
         toast.success("Organization logo updated successfully!");
         router.refresh();
       } else {

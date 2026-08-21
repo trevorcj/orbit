@@ -5,10 +5,9 @@ import Input from "@/components/Input";
 import {
   getUserProfile,
   updateUserProfile,
-  updateUserAvatar,
+  uploadUserAvatarAction,
   UserProfileData,
 } from "@/actions/settings";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Upload, Camera } from "lucide-react";
 import Image from "next/image";
@@ -69,30 +68,16 @@ export default function ProfileTab() {
 
     setUploadingAvatar(true);
     try {
-      const supabase = createClient();
-      const fileExt = file.name.split(".").pop();
-      const filePath = `users/${profile?.id || "user"}-${Date.now()}.${fileExt}`;
+      const formData = new FormData();
+      formData.append("file", file);
 
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) {
-        toast.error("Failed to upload avatar: " + uploadError.message);
-        return;
-      }
-
-      const { data: publicUrlData } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
-
-      const res = await updateUserAvatar(publicUrlData.publicUrl);
-      if (res.success) {
-        setProfile((prev) => (prev ? { ...prev, avatarUrl: publicUrlData.publicUrl } : null));
+      const res = await uploadUserAvatarAction(formData);
+      if (res.success && res.url) {
+        setProfile((prev) => (prev ? { ...prev, avatarUrl: res.url! } : null));
         toast.success("Profile avatar updated successfully!");
         router.refresh();
       } else {
-        toast.error(res.error || "Failed to update avatar.");
+        toast.error(res.error || "Failed to upload avatar.");
       }
     } catch {
       toast.error("An unexpected error occurred during avatar upload.");
