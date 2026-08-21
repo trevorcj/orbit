@@ -4,32 +4,29 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  Code2,
-  Key,
-  CreditCard,
-  Users,
-  Webhook,
-  Layers,
-  ShieldCheck,
-  Check,
   Copy,
-  ChevronRight,
+  Check,
+  Search,
   ExternalLink,
   Sun,
   Moon,
-  Monitor,
-  Search,
-  BookOpen,
+  ChevronRight,
+  ShieldCheck,
   Terminal,
   Zap,
+  Code2,
+  Lock,
   ArrowRight,
   Sparkles,
-  GitBranch,
-  AlertTriangle,
-  HelpCircle,
+  Server,
+  RefreshCw,
   Clock,
   ArrowDownRight,
   DollarSign,
+  Building2,
+  Percent,
+  CheckCircle2,
+  Layers,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
@@ -47,6 +44,15 @@ const navSections: NavSection[] = [
       { id: "api-keys", label: "API Keys & Authentication" },
       { id: "quickstart", label: "5-Minute Quickstart" },
       { id: "postman-testing", label: "Testing with Postman / cURL" },
+    ],
+  },
+  {
+    title: "Merchant & Payouts",
+    items: [
+      { id: "payouts-overview", label: "How Payouts Work (T+1)" },
+      { id: "platform-fee", label: "5% Platform Fee & 95% Net" },
+      { id: "split-payments", label: "Paystack Subaccount Architecture" },
+      { id: "merchant-bank-setup", label: "Linking Settlement Bank" },
     ],
   },
   {
@@ -68,7 +74,7 @@ const navSections: NavSection[] = [
       { id: "webhooks-flow", label: "Step-by-Step Delivery Flow" },
       { id: "signature-explained", label: "Signature & Header Line-by-Line" },
       { id: "webhook-code", label: "Complete Next.js & Express Code" },
-      { id: "webhook-events", label: "Event Types & Payloads" },
+      { id: "webhook-events", label: "Event Types & Sample Payloads", badge: "6 Events" },
     ],
   },
   {
@@ -77,7 +83,6 @@ const navSections: NavSection[] = [
       { id: "hosted-checkout", label: "Option 1: Hosted Checkout Link" },
       { id: "custom-checkout", label: "Option 2: Custom In-App Checkout" },
       { id: "react-component", label: "Option 3: React Pricing Component" },
-      { id: "customer-portal", label: "Customer Billing Portal" },
     ],
   },
   {
@@ -100,83 +105,54 @@ function CodeSnippet({
 }) {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
+  const copy = async () => {
+    await navigator.clipboard.writeText(code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="relative my-4 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-[#090e17] overflow-hidden text-zinc-100 shadow-xs">
+    <div className="relative my-3 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-[#0A0F19] dark:bg-[#070D18] text-zinc-100 overflow-hidden font-mono text-xs shadow-xs">
       {title && (
-        <div className="flex items-center justify-between px-4 py-2 bg-[#0d1522] border-b border-[#1e2d47] text-xs text-zinc-400 font-mono">
+        <div className="flex items-center justify-between px-4 py-2 bg-zinc-900/90 dark:bg-[#0B1320] border-b border-zinc-800 dark:border-[#1e2d47] text-zinc-400 text-[11px]">
           <span>{title}</span>
-          <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-500">
-            {language}
-          </span>
+          <span className="uppercase text-[10px] tracking-wider text-zinc-500 font-sans">{language}</span>
         </div>
       )}
-      <div className="relative">
-        <button
-          type="button"
-          onClick={handleCopy}
-          aria-label="Copy code"
-          className="absolute right-3 top-3 p-1.5 rounded-md bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 transition-colors z-10 cursor-pointer">
-          {copied ? (
-            <Check size={14} className="text-emerald-400" />
-          ) : (
-            <Copy size={14} />
-          )}
-        </button>
-        <pre className="p-4 text-xs font-mono leading-relaxed overflow-x-auto text-zinc-200">
-          <code>{code}</code>
-        </pre>
+      <div className="p-4 overflow-x-auto">
+        <pre className="text-emerald-400 dark:text-emerald-300 leading-relaxed">{code}</pre>
       </div>
+      <button
+        onClick={copy}
+        className="absolute top-2.5 right-3 p-1.5 rounded-md bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 transition cursor-pointer"
+        title="Copy to clipboard"
+        aria-label="Copy snippet">
+        {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+      </button>
     </div>
   );
 }
 
 function MethodBadge({ method }: { method: "GET" | "POST" | "DELETE" | "PUT" }) {
-  const config = {
-    GET: "bg-blue-50 dark:bg-blue-950/60 text-[#0F86EE] dark:text-[#38bdf8] border-blue-200 dark:border-blue-800/80",
-    POST: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/80",
-    DELETE: "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/80",
-    PUT: "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/80",
+  const colors = {
+    GET: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900",
+    POST: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900",
+    PUT: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900",
+    DELETE: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900",
   };
   return (
     <span
-      className={`px-2 py-0.5 rounded text-[11px] font-bold font-mono uppercase border ${config[method]}`}>
+      className={`px-2 py-0.5 rounded font-mono text-[11px] font-bold border ${colors[method]}`}>
       {method}
     </span>
   );
 }
 
-function Callout({
-  type = "info",
-  title,
-  children,
-}: {
-  type?: "info" | "warning" | "success";
-  title?: string;
-  children: React.ReactNode;
-}) {
-  const styles = {
-    info: "border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-200",
-    warning: "border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200",
-    success: "border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-200",
-  };
-
-  return (
-    <div className={`my-4 p-4 rounded-xl border ${styles[type]} text-xs leading-relaxed`}>
-      {title && <p className="font-bold text-sm mb-1">{title}</p>}
-      {children}
-    </div>
-  );
-}
-
 export default function DocsClient() {
   const { resolvedTheme, setTheme } = useTheme();
+  const toggleTheme = () => setTheme(resolvedTheme === "dark" ? "light" : "dark");
   const [activeSection, setActiveSection] = useState("welcome");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const appUrl =
     typeof window !== "undefined"
@@ -185,317 +161,342 @@ export default function DocsClient() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const headings = document.querySelectorAll("section[id], div[id]");
-      const scrollPos = window.scrollY + 120;
-
-      for (let i = headings.length - 1; i >= 0; i--) {
-        const heading = headings[i] as HTMLElement;
-        if (heading.offsetTop <= scrollPos) {
-          setActiveSection(heading.id);
-          break;
+      const allSections = navSections.flatMap((s) => s.items.map((i) => i.id));
+      for (const id of allSections) {
+        const el = document.getElementById(id);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= 140 && rect.bottom >= 140) {
+            setActiveSection(id);
+            break;
+          }
         }
       }
     };
-
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const scrollToSection = (id: string) => {
     setActiveSection(id);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    const el = document.getElementById(id);
+    if (el) {
+      const topOffset = 80;
+      const elementPosition = el.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - topOffset;
+      window.scrollTo({ top: offsetPosition, behavior: "smooth" });
     }
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0B1320] text-zinc-900 dark:text-zinc-100 font-sans antialiased transition-colors duration-200">
+    <div className="min-h-screen bg-white dark:bg-[#0B1320] text-zinc-900 dark:text-zinc-100 antialiased">
       {/* ================= TOP NAVBAR ================= */}
-      <header className="sticky top-0 z-40 w-full border-b border-zinc-200 dark:border-[#1e2d47] bg-white/90 dark:bg-[#0B1320]/90 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      <header className="sticky top-0 z-40 w-full border-b border-zinc-200 dark:border-[#1a2942] bg-white/95 dark:bg-[#0B1320]/95 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2.5">
+            <Link href="/" className="flex items-center gap-2">
               <Image
                 src="/orbit-light.svg"
-                alt="Orbit Logo"
+                alt="Orbit"
                 width={85}
-                height={22}
+                height={20}
                 className="w-auto h-5 block dark:hidden"
                 priority
               />
               <Image
                 src="/orbit-dark.svg"
-                alt="Orbit Logo"
+                alt="Orbit"
                 width={85}
-                height={22}
+                height={20}
                 className="w-auto h-5 hidden dark:block"
                 priority
               />
-              <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
-                v1.0 REST
-              </span>
             </Link>
-
-            <nav className="hidden md:flex items-center gap-5 text-sm font-medium">
-              <a
-                href="#welcome"
-                onClick={() => scrollToSection("welcome")}
-                className="text-[#0F86EE] dark:text-[#38bdf8] font-semibold">
-                Documentation
-              </a>
-              <a
-                href="#api-root"
-                onClick={() => scrollToSection("api-root")}
-                className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
-                API Reference
-              </a>
-              <a
-                href="#webhooks-why"
-                onClick={() => scrollToSection("webhooks-why")}
-                className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
-                Webhooks
-              </a>
-            </nav>
+            <span className="text-xs px-2 py-0.5 rounded-full font-mono bg-zinc-100 dark:bg-[#1a2942] text-zinc-600 dark:text-zinc-300 font-medium">
+              v1.0 Docs
+            </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] hover:bg-zinc-50 dark:hover:bg-[#152238] text-zinc-700 dark:text-zinc-200 transition-colors">
-              <span>Merchant Dashboard</span>
-              <ArrowRight size={13} />
+              className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors">
+              Dashboard
+            </Link>
+            <Link
+              href="/dashboard/settings"
+              className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors">
+              API Keys
             </Link>
 
-            <div className="h-4 w-px bg-zinc-200 dark:bg-[#1e2d47]" />
-
-            <div className="flex items-center rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#111c2e] p-0.5">
-              <button
-                type="button"
-                onClick={() => setTheme("light")}
-                className={`p-1 rounded-md transition-colors cursor-pointer ${
-                  resolvedTheme === "light"
-                    ? "bg-white text-amber-500 shadow-xs"
-                    : "text-zinc-400 hover:text-zinc-700"
-                }`}
-                title="Light Mode">
-                <Sun size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setTheme("dark")}
-                className={`p-1 rounded-md transition-colors cursor-pointer ${
-                  resolvedTheme === "dark"
-                    ? "bg-[#152238] text-[#38bdf8] shadow-xs"
-                    : "text-zinc-400 hover:text-zinc-200"
-                }`}
-                title="Dark Mode">
-                <Moon size={14} />
-              </button>
-            </div>
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 rounded-md text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-[#131f33] transition cursor-pointer"
+              aria-label="Toggle theme">
+              {resolvedTheme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
           </div>
         </div>
       </header>
 
-      {/* ================= 3-COLUMN SHADCN LAYOUT ================= */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex gap-8">
+      {/* ================= 3-COLUMN DOCS LAYOUT ================= */}
+      <div className="max-w-7xl mx-auto flex px-4 sm:px-6">
         {/* ================= LEFT SIDEBAR ================= */}
-        <aside className="hidden lg:block w-64 shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto py-8 pr-4 border-r border-zinc-200/80 dark:border-[#1e2d47]">
-          <div className="flex flex-col gap-6 text-sm">
-            {navSections.map((section) => (
-              <div key={section.title} className="flex flex-col gap-1.5">
-                <p className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 px-2.5 mb-1">
-                  {section.title}
-                </p>
-                {section.items.map((item) => {
-                  const isActive = activeSection === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => scrollToSection(item.id)}
-                      className={`w-full flex items-center justify-between text-left px-2.5 py-1.5 rounded-md text-xs transition-colors cursor-pointer ${
-                        isActive
-                          ? "bg-zinc-100 dark:bg-[#152238] font-semibold text-zinc-900 dark:text-white"
-                          : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-[#111c2e] hover:text-zinc-900 dark:hover:text-zinc-200"
-                      }`}>
-                      <span>{item.label}</span>
-                      {item.badge && (
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-50 dark:bg-blue-900/40 text-[#0F86EE] dark:text-[#38bdf8] font-semibold">
-                          {item.badge}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
+        <aside className="hidden lg:block w-64 shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto py-8 pr-6 border-r border-zinc-200 dark:border-[#1a2942]">
+          <div className="relative mb-6">
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
+            />
+            <input
+              type="text"
+              placeholder="Search docs..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#111c2e] text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-[#0F86EE]"
+            />
           </div>
+
+          <nav className="space-y-6 text-xs">
+            {navSections.map((section) => {
+              const filteredItems = section.items.filter((item) =>
+                item.label.toLowerCase().includes(searchQuery.toLowerCase()),
+              );
+              if (searchQuery && filteredItems.length === 0) return null;
+
+              return (
+                <div key={section.title}>
+                  <h4 className="font-bold text-zinc-900 dark:text-white uppercase tracking-wider text-[11px] mb-2 px-2">
+                    {section.title}
+                  </h4>
+                  <ul className="space-y-1">
+                    {filteredItems.map((item) => {
+                      const isActive = activeSection === item.id;
+                      return (
+                        <li key={item.id}>
+                          <button
+                            onClick={() => scrollToSection(item.id)}
+                            className={`w-full text-left px-2.5 py-1.5 rounded-md font-medium transition-colors flex items-center justify-between cursor-pointer ${
+                              isActive
+                                ? "bg-zinc-100 dark:bg-[#131f33] text-[#0F86EE] dark:text-[#38bdf8] font-semibold"
+                                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-[#0e1726]"
+                            }`}>
+                            <span>{item.label}</span>
+                            {item.badge && (
+                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#0F86EE]/10 text-[#0F86EE] dark:text-[#38bdf8] font-bold">
+                                {item.badge}
+                              </span>
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
+          </nav>
         </aside>
 
-        {/* ================= CENTER MAIN CONTENT ================= */}
-        <main className="flex-1 min-w-0 py-8 max-w-3xl">
-          {/* WELCOME */}
+        {/* ================= MAIN CONTENT ================= */}
+        <main className="flex-1 min-w-0 py-8 lg:px-10 max-w-4xl">
+          {/* ================= WELCOME ================= */}
           <section id="welcome" className="scroll-mt-24 mb-12">
-            <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
-              Welcome to Orbit Developer API
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-900/60 bg-blue-50 dark:bg-blue-950/40 text-xs font-semibold text-blue-700 dark:text-blue-400 mb-4">
+              <Sparkles size={14} />
+              <span>Orbit Developer Documentation &amp; Merchant Guide</span>
+            </div>
+            <h1 className="text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-white mb-4">
+              Developer API &amp; Merchant Architecture
             </h1>
-            <p className="mt-3 text-base text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              Orbit is subscription billing and payment infrastructure for software companies.
-              Orbit acts as your entire recurring billing engine: we create checkout pages, charge customer cards via Paystack, save authorization tokens, automatically re-charge cards every month, and handle retries when cards fail.
-            </p>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              Your software simply asks Orbit: <em className="text-zinc-800 dark:text-zinc-200 font-medium">&quot;Is Alex Johnson subscribed right now?&quot;</em> If yes, your app lets Alex use your premium features.
+            <p className="text-base text-zinc-600 dark:text-zinc-300 leading-relaxed">
+              Orbit is the recurring billing &amp; customer subscription engine for Nigerian businesses. It handles recurring card tokenization, Paystack split payments, automated renewals, and customer billing portals.
             </p>
           </section>
 
-          {/* MENTAL MODEL */}
-          <section id="mental-model" className="scroll-mt-24 mb-12">
+          {/* ================= MENTAL MODEL ================= */}
+          <section id="mental-model" className="scroll-mt-24 mb-12 pt-8 border-t border-zinc-200 dark:border-[#1e2d47]">
             <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3">
-              How Orbit Works (The Mental Model)
+              How Orbit Works (Mental Model)
             </h2>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
-              Building recurring billing from scratch is notoriously hard: you have to store card tokens securely, calculate renewal dates, run cron jobs at midnight, send dunning recovery emails, and update database states.
-            </p>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
-              Here is how the responsibility is divided between <strong>Orbit</strong> and <strong>Your App</strong>:
+              If you have never built a subscription app before, here is the complete 30-second explanation:
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
-              <div className="p-5 rounded-xl border border-blue-200 dark:border-[#1e2d47] bg-blue-50/40 dark:bg-[#111c2e]">
-                <p className="font-bold text-sm text-[#0F86EE] dark:text-[#38bdf8] mb-2">
-                  What Orbit Does:
-                </p>
-                <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-2 list-disc pl-4">
-                  <li>Provides a hosted Paystack checkout page.</li>
-                  <li>Saves customer card authorization tokens.</li>
-                  <li>Runs daily automatic renewals at midnight.</li>
-                  <li>Retries failed cards automatically (3-attempt dunning).</li>
-                  <li>Delivers Webhooks to your server when money moves.</li>
-                  <li>Settles 95% net revenue into your Nigerian bank account.</li>
-                </ul>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-4 text-xs">
+              <div className="p-4 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+                <div className="font-bold text-zinc-900 dark:text-white mb-1">1. Customer Subscribes</div>
+                <p className="text-zinc-500 dark:text-zinc-400">Customer pays ₦10,000 via Orbit hosted checkout. Orbit saves their card token securely with Paystack.</p>
               </div>
-
-              <div className="p-5 rounded-xl border border-emerald-200 dark:border-[#1e2d47] bg-emerald-50/40 dark:bg-[#111c2e]">
-                <p className="font-bold text-sm text-emerald-600 dark:text-emerald-400 mb-2">
-                  What Your App Does:
-                </p>
-                <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-2 list-disc pl-4">
-                  <li>Sends the customer to the Orbit checkout link.</li>
-                  <li>Queries Orbit API to check if the user is active.</li>
-                  <li>Listens to Webhooks to update user privileges in your DB.</li>
-                  <li>Focuses 100% on building your software product!</li>
-                </ul>
+              <div className="p-4 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+                <div className="font-bold text-zinc-900 dark:text-white mb-1">2. Orbit Manages Renewals</div>
+                <p className="text-zinc-500 dark:text-zinc-400">Every 30 days, Orbit automatically charges their card token in the background and splits payments.</p>
+              </div>
+              <div className="p-4 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+                <div className="font-bold text-zinc-900 dark:text-white mb-1">3. Your App Verifies</div>
+                <p className="text-zinc-500 dark:text-zinc-400">Your app simply asks Orbit: <em>&quot;Is this customer active?&quot;</em> or listens to real-time Webhooks.</p>
               </div>
             </div>
           </section>
 
-          {/* API KEYS & AUTHENTICATION */}
-          <section id="api-keys" className="scroll-mt-24 mb-12">
-            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3">
-              API Keys & Authentication
+          {/* ================= MERCHANT & PAYOUTS GUIDE ================= */}
+          <section id="payouts-overview" className="scroll-mt-24 mb-12 pt-8 border-t border-zinc-200 dark:border-[#1e2d47]">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#0F86EE] mb-2">
+              <Building2 size={16} />
+              <span>Merchant &amp; Settlement Architecture</span>
+            </div>
+            <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white mb-3">
+              How Payouts &amp; Settlements Work
             </h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
-              Orbit provides two types of API keys for each organization:
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
+              When customers subscribe to your software through Orbit, funds are processed through Paystack using automated <strong>Split Payments (Subaccounts)</strong>.
             </p>
 
-            <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-[#1e2d47] my-4">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-zinc-50 dark:bg-[#0c1524] border-b border-zinc-200 dark:border-[#1e2d47] text-zinc-700 dark:text-zinc-300">
-                    <th className="py-3 px-4 font-semibold">Key Type</th>
-                    <th className="py-3 px-4 font-semibold">Prefix</th>
-                    <th className="py-3 px-4 font-semibold">Permissions & Safety</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-[#1e2d47] bg-white dark:bg-[#111c2e]">
-                  <tr>
-                    <td className="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400">Publishable Key</td>
-                    <td className="py-3 px-4 font-mono text-zinc-600 dark:text-zinc-400">pk_live_...</td>
-                    <td className="py-3 px-4 text-zinc-600 dark:text-zinc-300">
-                      <strong>Safe for client-side / browsers.</strong> Read-only access to list products and plans. Cannot charge cards or read customer emails.
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-4 font-bold text-rose-600 dark:text-rose-400">Secret Key</td>
-                    <td className="py-3 px-4 font-mono text-zinc-600 dark:text-zinc-400">sk_live_...</td>
-                    <td className="py-3 px-4 text-zinc-600 dark:text-zinc-300">
-                      <strong>Must stay on your server.</strong> Full write access: create checkout sessions, check customer subscription statuses, cancel subscriptions.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            {/* SPLIT BREAKDOWN BOX */}
+            <div id="platform-fee" className="scroll-mt-24 mb-6 p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+              <h3 className="text-base font-bold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
+                <Percent size={18} className="text-[#0F86EE]" />
+                <span>Orbit 5% Platform Fee &amp; 95% Net Settlement</span>
+              </h3>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+                Orbit charges a flat <strong>5% platform fee</strong> on successful subscription payments. This covers automated tokenized recurring charges, headless payment retry engines, customer billing portals, and API infrastructure.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
+                <div className="p-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-300">
+                  <div className="font-bold text-sm">95% Settled to Merchant</div>
+                  <div className="text-[11px] mt-1 text-emerald-700 dark:text-emerald-400">
+                    Deposited directly into your verified Nigerian bank account every morning (~5:40 AM).
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-lg bg-zinc-50 dark:bg-[#0c1524] border border-zinc-200 dark:border-[#1e2d47] text-zinc-800 dark:text-zinc-300">
+                  <div className="font-bold text-sm">5% Retained by Orbit</div>
+                  <div className="text-[11px] mt-1 text-zinc-500 dark:text-zinc-400">
+                    Platform infrastructure, gateway tokenization, and recurring billing maintenance.
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
-              Pass your API key in the standard HTTP <code className="font-mono bg-zinc-100 dark:bg-[#152238] px-1 py-0.5 rounded">Authorization</code> header:
+            {/* PAYSTACK SUBACCOUNT ARCHITECTURE */}
+            <div id="split-payments" className="scroll-mt-24 mb-6 p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+              <h3 className="text-base font-bold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
+                <ShieldCheck size={18} className="text-emerald-500" />
+                <span>Zero Co-Mingling (Paystack Subaccount Architecture)</span>
+              </h3>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+                Your money is never trapped in Orbit. When a customer pays ₦10,000:
+              </p>
+              <ol className="list-decimal pl-5 space-y-2 text-xs text-zinc-600 dark:text-zinc-300">
+                <li><strong>Instant Split:</strong> Paystack instantly splits the payment at the gateway level into ₦9,500 (your Subaccount) and ₦500 (Orbit).</li>
+                <li><strong>Automatic Next-Morning Sweep (T+1):</strong> Paystack automatically transfers the ₦9,500 into your Nigerian bank account the next morning at ~5:40 AM.</li>
+                <li><strong>Zero Transfer Surcharges:</strong> Because the split occurs at payment initialization, there are <strong>₦0 manual transfer fees</strong>.</li>
+              </ol>
+            </div>
+
+            {/* LINKING BANK */}
+            <div id="merchant-bank-setup" className="scroll-mt-24 p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524]">
+              <h3 className="text-sm font-bold text-zinc-900 dark:text-white mb-1">
+                How to Link Your Settlement Bank Account
+              </h3>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                Go to <Link href="/dashboard/settings" className="text-[#0F86EE] font-semibold underline">Dashboard &gt; Settings &gt; Billing &amp; Payouts</Link>. Enter your 10-digit NUBAN and bank name. Orbit will automatically verify the account name and provision your Paystack Subaccount instantly!
+              </p>
+            </div>
+          </section>
+
+          {/* ================= API KEYS & AUTH ================= */}
+          <section id="api-keys" className="scroll-mt-24 mb-12 pt-8 border-t border-zinc-200 dark:border-[#1e2d47]">
+            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3">
+              API Keys &amp; Authentication
+            </h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+              Authenticate requests by sending your key in the <code className="font-mono bg-zinc-100 dark:bg-[#152238] px-1 py-0.5 rounded">Authorization</code> header:
             </p>
 
             <CodeSnippet
-              title="HTTP Header"
+              title="HTTP Header Format"
               language="http"
-              code={`Authorization: Bearer sk_live_your_secret_key_here`}
+              code={`Authorization: Bearer sk_live_YOUR_SECRET_KEY`}
             />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 text-xs">
+              <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20">
+                <div className="font-mono font-bold text-emerald-700 dark:text-emerald-400 mb-1">
+                  pk_live_... (Publishable)
+                </div>
+                <p className="text-zinc-600 dark:text-zinc-400">
+                  Safe for frontend browsers. Used for read-only lookups (fetching plans, product details).
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/40 dark:bg-rose-950/20">
+                <div className="font-mono font-bold text-rose-700 dark:text-rose-400 mb-1">
+                  sk_live_... (Secret)
+                </div>
+                <p className="text-zinc-600 dark:text-zinc-400">
+                  <strong>Never expose in frontend.</strong> Used in your backend Node.js / Python server.
+                </p>
+              </div>
+            </div>
           </section>
 
-          {/* 5-MINUTE QUICKSTART */}
-          <section id="quickstart" className="scroll-mt-24 mb-12">
+          {/* ================= 5-MINUTE QUICKSTART ================= */}
+          <section id="quickstart" className="scroll-mt-24 mb-12 pt-8 border-t border-zinc-200 dark:border-[#1e2d47]">
             <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3">
               5-Minute Quickstart (Verify Subscription)
             </h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
-              Whenever a logged-in user visits a paid feature in your web or mobile app, send a single request from your backend to Orbit:
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+              Whenever a user logs into your website or app, check if they have paid:
             </p>
 
             <CodeSnippet
-              title="Backend Check (cURL or Node.js)"
-              language="bash"
-              code={`curl -X GET "${appUrl}/api/v1/customers/idawari005@gmail.com/subscription" \\
-  -H "Authorization: Bearer sk_live_YOUR_SECRET_KEY"`}
-            />
+              title="Verify User Access (Node.js / Next.js API Route)"
+              language="typescript"
+              code={`// Example: app/api/check-user-plan/route.ts
+import { NextResponse } from "next/server";
 
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 font-semibold">
-              Example Successful Response (200 OK):
-            </p>
+export async function GET(req: Request) {
+  const userEmail = "jane@company.com"; // from your auth session
 
-            <CodeSnippet
-              title="200 OK Response"
-              language="json"
-              code={`{
-  "customer": {
-    "id": "8fa24018-c5a4-4f05-89f4-180db63d2319",
-    "name": "Idawari Justus",
-    "email": "idawari005@gmail.com"
-  },
-  "has_active_subscription": true,
-  "subscription": {
-    "id": "41e8c9b2-38d5-45a1-9a7c-bc709320e101",
-    "status": "ACTIVE",
-    "plan_name": "Monthly Pro",
-    "amount": 15000,
-    "currency": "NGN",
-    "billing_interval": "monthly",
-    "renews_at": "2026-09-20T12:00:00.000Z"
+  // Call Orbit's subscription verification endpoint
+  const response = await fetch(
+    \`${appUrl}/api/v1/customers/\${encodeURIComponent(userEmail)}/subscription\`,
+    {
+      headers: {
+        Authorization: \`Bearer \${process.env.ORBIT_SECRET_KEY}\`,
+      },
+      cache: "no-store", // always fetch live status
+    }
+  );
+
+  const data = await response.json();
+
+  if (data.has_active_subscription) {
+    return NextResponse.json({
+      accessGranted: true,
+      plan: data.subscription.plan_name,
+      renewsAt: data.subscription.renews_at,
+    });
   }
+
+  return NextResponse.json({ accessGranted: false, reason: "No active subscription" });
 }`}
             />
-
-            <Callout type="success" title="How to use this response in your code:">
-              If <code className="font-mono font-bold">has_active_subscription === true</code>, unlock your feature! If <code className="font-mono font-bold">false</code> or if the status is <code className="font-mono">&quot;PAST_DUE&quot;</code>, prompt the user to update their payment method or subscribe.
-            </Callout>
           </section>
 
-          {/* POSTMAN TESTING */}
-          <section id="postman-testing" className="scroll-mt-24 mb-12">
+          {/* ================= POSTMAN TESTING ================= */}
+          <section id="postman-testing" className="scroll-mt-24 mb-12 pt-8 border-t border-zinc-200 dark:border-[#1e2d47]">
             <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3">
-              Testing with Postman / REST Clients
+              Testing with Postman or cURL
             </h2>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
-              You can test every endpoint directly inside <strong>Postman</strong>, <strong>Insomnia</strong>, or <strong>VS Code REST Client</strong>:
+              You can test your endpoints right now in Postman, Insomnia, or Terminal:
             </p>
 
-            <ol className="text-xs text-zinc-600 dark:text-zinc-400 space-y-2 list-decimal pl-5">
-              <li>Set HTTP Method to <strong>GET</strong> or <strong>POST</strong>.</li>
-              <li>Set URL to <code className="font-mono text-[#0F86EE]">{appUrl}/api/v1/customers/YOUR_EMAIL/subscription</code></li>
+            <ol className="list-decimal pl-5 space-y-2 text-xs text-zinc-600 dark:text-zinc-300 mb-4">
+              <li>Open Postman and create a new <code className="font-mono font-semibold">GET</code> request.</li>
+              <li>Enter URL: <code className="font-mono bg-zinc-100 dark:bg-[#152238] px-1 py-0.5 rounded">{appUrl}/api/v1/customers/idawari005@gmail.com/subscription</code></li>
               <li>Under the <strong>Headers</strong> tab, add key: <code className="font-mono font-semibold">Authorization</code> with value <code className="font-mono font-semibold">Bearer sk_live_YOUR_KEY</code></li>
               <li>Click <strong>Send</strong>. Orbit will return live JSON data!</li>
             </ol>
@@ -528,20 +529,6 @@ export default function DocsClient() {
               code={`curl -X GET "${appUrl}/api/v1" \\
   -H "Authorization: Bearer sk_live_YOUR_KEY"`}
             />
-            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mt-3 mb-1">Response (200 OK):</p>
-            <CodeSnippet
-              title="Response"
-              language="json"
-              code={`{
-  "name": "Orbit Developer API",
-  "version": "v1",
-  "status": "operational",
-  "organisation": {
-    "id": "org_9481029",
-    "name": "Bolda Inc"
-  }
-}`}
-            />
           </div>
 
           {/* ENDPOINT: GET .../subscription */}
@@ -556,19 +543,14 @@ export default function DocsClient() {
               <strong>The most important endpoint.</strong> Checks if a customer currently has an active subscription. You can pass either the customer&apos;s Orbit UUID or their email address directly.
             </p>
 
-            <div className="text-xs text-zinc-700 dark:text-zinc-300 font-semibold mb-2">Path Parameters:</div>
-            <div className="p-3 rounded-lg bg-zinc-50 dark:bg-[#0c1524] text-xs font-mono mb-4 text-zinc-700 dark:text-zinc-300">
-              <span className="text-[#0F86EE] font-bold">id_or_email</span> (string, required) — e.g. <code className="text-zinc-900 dark:text-white">&quot;idawari005@gmail.com&quot;</code> or <code className="text-zinc-900 dark:text-white">&quot;8fa24018-c5a4-4f05-89f4-180db63d2319&quot;</code>
-            </div>
-
             <CodeSnippet
-              title="Request"
+              title="Request (by Email)"
               language="bash"
               code={`curl -X GET "${appUrl}/api/v1/customers/idawari005@gmail.com/subscription" \\
   -H "Authorization: Bearer sk_live_YOUR_KEY"`}
             />
 
-            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mt-3 mb-1">When user has an active plan (200 OK):</p>
+            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mt-3 mb-1">When user has active subscription (200 OK):</p>
             <CodeSnippet
               title="Response (Active)"
               language="json"
@@ -580,29 +562,15 @@ export default function DocsClient() {
   },
   "has_active_subscription": true,
   "subscription": {
-    "id": "sub_410294124",
+    "id": "sub_48912",
     "status": "ACTIVE",
-    "plan_name": "Premium Tier",
-    "amount": 15000,
+    "plan_id": "plan_9481029",
+    "plan_name": "Monthly Starter",
+    "amount": 5000,
     "currency": "NGN",
     "billing_interval": "monthly",
     "renews_at": "2026-09-20T12:00:00.000Z"
   }
-}`}
-            />
-
-            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mt-3 mb-1">When user has no active plan (200 OK):</p>
-            <CodeSnippet
-              title="Response (Inactive)"
-              language="json"
-              code={`{
-  "customer": {
-    "id": "8fa24018-c5a4-4f05-89f4-180db63d2319",
-    "name": "Idawari Justus",
-    "email": "idawari005@gmail.com"
-  },
-  "has_active_subscription": false,
-  "subscription": null
 }`}
             />
           </div>
@@ -627,20 +595,12 @@ export default function DocsClient() {
   -H "Content-Type: application/json" \\
   -d '{
     "plan_id": "plan_9103984",
-    "customer_email": "jane@company.com",
-    "customer_name": "Jane Doe",
+    "customer": {
+      "email": "jane@company.com",
+      "name": "Jane Doe"
+    },
     "success_url": "https://yourapp.com/dashboard?subscribed=true"
   }'`}
-            />
-
-            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mt-3 mb-1">Response (200 OK):</p>
-            <CodeSnippet
-              title="Response"
-              language="json"
-              code={`{
-  "id": "cs_9f83a8b27c10d4e5f6",
-  "url": "${appUrl}/checkout/bolder-saas?session=cs_9f83a8b27c10d4e5f6"
-}`}
             />
           </div>
 
@@ -653,47 +613,13 @@ export default function DocsClient() {
               </code>
             </div>
             <p className="text-xs text-zinc-600 dark:text-zinc-300 mb-4">
-              <strong>List all products &amp; their attached plans.</strong> Developers can call this to fetch every product and pricing tier programmatically without ever opening the dashboard. (Accepts <code className="font-mono">pk_live_...</code> or <code className="font-mono">sk_live_...</code>).
+              <strong>List all products &amp; attached plans programmatically.</strong> Retrieve all products and pricing tiers without needing to visit the dashboard.
             </p>
             <CodeSnippet
               title="Request"
               language="bash"
               code={`curl -X GET "${appUrl}/api/v1/products" \\
   -H "Authorization: Bearer pk_live_YOUR_PUBLISHABLE_KEY"`}
-            />
-            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mt-3 mb-1">Response (200 OK):</p>
-            <CodeSnippet
-              title="Response"
-              language="json"
-              code={`{
-  "data": [
-    {
-      "id": "c85d1c24-5d93-41bb-98f9-a9a304f5e043",
-      "name": "Bolder SaaS",
-      "slug": "bolder-saas",
-      "description": "All-in-one platform for modern startups",
-      "brand_color": "#0F86EE",
-      "plans": [
-        {
-          "id": "plan_9481029",
-          "name": "Monthly Starter",
-          "amount": 5000,
-          "currency": "NGN",
-          "interval": "monthly",
-          "features": ["Up to 5 team members", "Unlimited projects"]
-        },
-        {
-          "id": "plan_9481030",
-          "name": "Annual Pro",
-          "amount": 50000,
-          "currency": "NGN",
-          "interval": "yearly",
-          "features": ["Unlimited team members", "Dedicated support"]
-        }
-      ]
-    }
-  ]
-}`}
             />
           </div>
 
@@ -706,10 +632,10 @@ export default function DocsClient() {
               </code>
             </div>
             <p className="text-xs text-zinc-600 dark:text-zinc-300 mb-4">
-              Get a specific product and its active pricing plans. You can pass either the <strong>UUID</strong> (e.g. <code className="font-mono">c85d1c24-...</code>) or the <strong>Slug</strong> (e.g. <code className="font-mono">bolder-saas</code>).
+              Get a specific product and its plans by <strong>UUID</strong> (e.g. <code className="font-mono">c85d1c24-...</code>) or <strong>Slug</strong> (e.g. <code className="font-mono">bolder-saas</code>).
             </p>
             <CodeSnippet
-              title="Request (by slug or UUID)"
+              title="Request"
               language="bash"
               code={`curl -X GET "${appUrl}/api/v1/products/bolder-saas" \\
   -H "Authorization: Bearer pk_live_YOUR_PUBLISHABLE_KEY"`}
@@ -725,7 +651,7 @@ export default function DocsClient() {
               </code>
             </div>
             <p className="text-xs text-zinc-600 dark:text-zinc-300 mb-4">
-              Returns all active plans created under your organization. (Accepts <code className="font-mono">pk_live_...</code> or <code className="font-mono">sk_live_...</code>).
+              Returns all active plans created under your organization.
             </p>
             <CodeSnippet
               title="Request"
@@ -744,7 +670,7 @@ export default function DocsClient() {
               </code>
             </div>
             <p className="text-xs text-zinc-600 dark:text-zinc-300 mb-4">
-              Cancels an active subscription. By default (<code className="font-mono">cancel_at_period_end: true</code>), access remains active until the current paid period ends.
+              Cancels an active subscription.
             </p>
             <CodeSnippet
               title="Request"
@@ -759,48 +685,22 @@ export default function DocsClient() {
           {/* ================= WEBHOOKS DEEP DIVE ================= */}
           <section id="webhooks-why" className="scroll-mt-24 mb-12 pt-8 border-t border-zinc-200 dark:border-[#1e2d47]">
             <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white mb-3">
-              Webhooks (Deep Dive for Beginners)
+              Webhooks (Deep Dive)
             </h2>
-
-            <div className="p-5 rounded-xl border border-blue-200 dark:border-[#1e2d47] bg-blue-50/50 dark:bg-[#111c2e] my-4 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
-              <p className="font-bold text-sm text-[#0F86EE] dark:text-[#38bdf8] mb-1">
-                What is a Webhook and why do you need it?
-              </p>
-              When a customer&apos;s subscription renews at 2:00 AM while they are asleep, Paystack charges their card automatically. Your database needs to know that this payment succeeded so you can keep their account open.
-              <br /><br />
-              Instead of your server polling Orbit every minute asking <em>&quot;Did anyone pay?&quot;</em>, <strong>Orbit sends an HTTP POST request directly to your server</strong> whenever an event happens. That notification is called a <strong>Webhook</strong>.
-            </div>
-
-            <h3 id="webhooks-flow" className="text-xl font-bold text-zinc-900 dark:text-white mt-8 mb-2">
-              The Security Problem: Why We Verify Signatures
-            </h3>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3 leading-relaxed">
-              Because your webhook endpoint (e.g. <code className="font-mono">https://yourapp.com/api/webhooks/orbit</code>) is a public URL on the internet, anyone could send fake data trying to get free access.
-              <br /><br />
-              To guarantee that every webhook genuinely came from Orbit and was not modified in transit, Orbit signs each payload using <strong>HMAC-SHA256</strong>.
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+              A <strong>Webhook</strong> is an automated HTTP POST request that Orbit sends to your server whenever an important event happens (such as a subscription charging at 2:00 AM while the customer is asleep).
             </p>
 
-            <h3 id="signature-explained" className="text-xl font-bold text-zinc-900 dark:text-white mt-8 mb-2">
-              Where does the Header and Secret come from?
-            </h3>
-
-            <div className="space-y-4 text-xs text-zinc-600 dark:text-zinc-400">
-              <div className="p-4 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524]">
-                <p className="font-bold text-zinc-900 dark:text-white mb-1">1. The Signing Secret (<code className="text-[#0F86EE]">whsec_...</code>)</p>
-                When you add your webhook URL in <strong>Dashboard &gt; Settings &gt; Developer tab</strong>, Orbit generates a secret key (e.g. <code className="font-mono">whsec_9a8b7c...</code>). You save this in your server&apos;s <code className="font-mono">.env</code> file as <code className="font-mono">ORBIT_WEBHOOK_SECRET</code>.
-              </div>
-
-              <div className="p-4 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524]">
-                <p className="font-bold text-zinc-900 dark:text-white mb-1">2. The <code className="text-[#0F86EE]">orbit-signature</code> Header</p>
-                Orbit sends this header with every POST request:
-                <code className="block mt-2 font-mono p-2.5 rounded bg-zinc-100 dark:bg-[#152238] text-zinc-800 dark:text-zinc-200">
-                  orbit-signature: t=1756184000,v1=a849f7b1e42c98d6...
-                </code>
-                <ul className="mt-2 space-y-1 list-disc pl-4">
-                  <li><strong className="font-mono">t</strong> = The exact timestamp (Unix seconds) when Orbit sent the webhook. (Prevents replay attacks).</li>
-                  <li><strong className="font-mono">v1</strong> = The cryptographic hash calculated by Orbit: <code className="font-mono">HMAC_SHA256(secret, timestamp + &quot;.&quot; + payload)</code>.</li>
-                </ul>
-              </div>
+            <div id="signature-explained" className="scroll-mt-24 p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#0c1524] my-4">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-2">
+                Understanding the <code className="font-mono">orbit-signature</code> Header
+              </h4>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3">
+                Orbit sends an <code className="font-mono">orbit-signature</code> header with every webhook:
+              </p>
+              <code className="block p-3 rounded-lg bg-zinc-100 dark:bg-[#111c2e] text-xs font-mono text-zinc-800 dark:text-zinc-200 break-all select-all">
+                t=1756184000,v1=a849f7b1c3d2e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9
+              </code>
             </div>
 
             {/* FULL WEBHOOK CODE */}
@@ -818,10 +718,10 @@ export default function DocsClient() {
 import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
-  // 1. Read the raw request body as text (DO NOT parse as JSON yet!)
+  // 1. Read raw body as text (DO NOT parse JSON yet!)
   const payload = await req.text();
 
-  // 2. Extract the signature header sent by Orbit
+  // 2. Extract Orbit signature header
   const signatureHeader = req.headers.get("orbit-signature");
   const secret = process.env.ORBIT_WEBHOOK_SECRET;
 
@@ -829,7 +729,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing signature or secret" }, { status: 400 });
   }
 
-  // 3. Deconstruct the header: "t=1756184000,v1=a849f7b..."
+  // 3. Deconstruct header: "t=1756184000,v1=a849f7b..."
   const [tPart, v1Part] = signatureHeader.split(",");
   const timestamp = tPart?.split("=")[1];
   const signature = v1Part?.split("=")[1];
@@ -838,13 +738,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Malformed signature header" }, { status: 400 });
   }
 
-  // 4. Calculate YOUR expected signature using your secret key
+  // 4. Calculate expected signature using HMAC-SHA256
   const expectedSignature = crypto
     .createHmac("sha256", secret)
     .update(\`\${timestamp}.\${payload}\`)
     .digest("hex");
 
-  // 5. Compare Orbit's signature against your calculated signature safely
+  // 5. Compare signatures securely
   const isValid = crypto.timingSafeEqual(
     Buffer.from(signature),
     Buffer.from(expectedSignature)
@@ -854,29 +754,211 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature. Request rejected." }, { status: 401 });
   }
 
-  // 6. ✅ SIGNATURE VERIFIED! Now safely parse the payload and update your database:
+  // 6. ✅ SIGNATURE VERIFIED! Handle the event:
   const event = JSON.parse(payload);
 
   switch (event.type) {
     case "payment.succeeded":
-      console.log(\`✅ Payment of ₦\${event.data.amount} succeeded for \${event.data.customer_email}\`);
-      // TODO: Set user.is_subscribed = true in your DB!
+      console.log(\`✅ Payment succeeded: ₦\${event.data.amount} for \${event.data.customer_email}\`);
+      // Update database: Grant access to user
+      break;
+
+    case "subscription.created":
+      console.log(\`🎉 New subscription: \${event.data.plan_name} for \${event.data.customer_email}\`);
+      break;
+
+    case "subscription.renewed":
+      console.log(\`🔄 Subscription renewed: Next renewal on \${event.data.renews_at}\`);
       break;
 
     case "subscription.cancelled":
       console.log(\`⚠️ Subscription cancelled for \${event.data.customer_email}\`);
-      // TODO: Update subscription status in your DB
       break;
 
     case "payment.failed":
-      console.log(\`❌ Renewal payment failed for \${event.data.customer_email}\`);
+      console.log(\`❌ Renewal charge failed for \${event.data.customer_email}\`);
       break;
   }
 
-  // 7. Acknowledge receipt to Orbit with 200 OK
+  // 7. Return 200 OK receipt
   return NextResponse.json({ received: true });
 }`}
             />
+
+            {/* ================= ALL 6 WEBHOOK EVENT TYPES ================= */}
+            <div id="webhook-events" className="scroll-mt-24 mt-10 pt-6 border-t border-zinc-200 dark:border-[#1e2d47]">
+              <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
+                <Layers size={20} className="text-[#0F86EE]" />
+                <span>Webhook Event Types &amp; Sample Payloads</span>
+              </h3>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-6">
+                Below are all 6 webhook event types triggered by Orbit, matching the Developer settings:
+              </p>
+
+              {/* EVENT 1: payment.succeeded */}
+              <div className="mb-6 p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-0.5 rounded font-mono text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                    payment.succeeded
+                  </span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">Triggered whenever any payment successfully processes.</span>
+                </div>
+                <CodeSnippet
+                  title="Event: payment.succeeded"
+                  language="json"
+                  code={`{
+  "id": "evt_948102938475",
+  "type": "payment.succeeded",
+  "created_at": "2026-08-21T06:30:00.000Z",
+  "data": {
+    "payment_id": "pay_849102",
+    "amount": 15000,
+    "currency": "NGN",
+    "customer_id": "8fa24018-c5a4-4f05-89f4-180db63d2319",
+    "customer_email": "jane@company.com",
+    "customer_name": "Jane Doe",
+    "plan_id": "plan_9481029",
+    "plan_name": "Annual Pro",
+    "subscription_id": "sub_48912",
+    "reference": "orbit_ord_9f83a8b27c10"
+  }
+}`}
+                />
+              </div>
+
+              {/* EVENT 2: payment.failed */}
+              <div className="mb-6 p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-0.5 rounded font-mono text-[11px] font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                    payment.failed
+                  </span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">Triggered when a recurring billing attempt is declined (e.g. insufficient funds).</span>
+                </div>
+                <CodeSnippet
+                  title="Event: payment.failed"
+                  language="json"
+                  code={`{
+  "id": "evt_948102938476",
+  "type": "payment.failed",
+  "created_at": "2026-08-21T06:30:00.000Z",
+  "data": {
+    "subscription_id": "sub_48912",
+    "customer_id": "8fa24018-c5a4-4f05-89f4-180db63d2319",
+    "customer_email": "jane@company.com",
+    "amount": 15000,
+    "currency": "NGN",
+    "failure_reason": "Insufficient funds in card account",
+    "next_retry_at": "2026-08-22T06:30:00.000Z"
+  }
+}`}
+                />
+              </div>
+
+              {/* EVENT 3: subscription.created */}
+              <div className="mb-6 p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-0.5 rounded font-mono text-[11px] font-bold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                    subscription.created
+                  </span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">Triggered when a customer completes their first checkout.</span>
+                </div>
+                <CodeSnippet
+                  title="Event: subscription.created"
+                  language="json"
+                  code={`{
+  "id": "evt_948102938477",
+  "type": "subscription.created",
+  "created_at": "2026-08-21T06:30:00.000Z",
+  "data": {
+    "subscription_id": "sub_48912",
+    "customer_id": "8fa24018-c5a4-4f05-89f4-180db63d2319",
+    "customer_email": "jane@company.com",
+    "plan_id": "plan_9481029",
+    "plan_name": "Monthly Starter",
+    "status": "ACTIVE",
+    "billing_interval": "monthly",
+    "renews_at": "2026-09-21T06:30:00.000Z"
+  }
+}`}
+                />
+              </div>
+
+              {/* EVENT 4: subscription.renewed */}
+              <div className="mb-6 p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-0.5 rounded font-mono text-[11px] font-bold bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
+                    subscription.renewed
+                  </span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">Triggered upon successful automatic recurring billing renewal.</span>
+                </div>
+                <CodeSnippet
+                  title="Event: subscription.renewed"
+                  language="json"
+                  code={`{
+  "id": "evt_948102938478",
+  "type": "subscription.renewed",
+  "created_at": "2026-08-21T06:30:00.000Z",
+  "data": {
+    "subscription_id": "sub_48912",
+    "customer_email": "jane@company.com",
+    "amount": 5000,
+    "renews_at": "2026-10-21T06:30:00.000Z"
+  }
+}`}
+                />
+              </div>
+
+              {/* EVENT 5: subscription.cancelled */}
+              <div className="mb-6 p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-0.5 rounded font-mono text-[11px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                    subscription.cancelled
+                  </span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">Triggered when a customer or admin cancels a subscription.</span>
+                </div>
+                <CodeSnippet
+                  title="Event: subscription.cancelled"
+                  language="json"
+                  code={`{
+  "id": "evt_948102938479",
+  "type": "subscription.cancelled",
+  "created_at": "2026-08-21T06:30:00.000Z",
+  "data": {
+    "subscription_id": "sub_48912",
+    "customer_email": "jane@company.com",
+    "cancel_at_period_end": true,
+    "ends_at": "2026-09-21T06:30:00.000Z"
+  }
+}`}
+                />
+              </div>
+
+              {/* EVENT 6: subscription.updated */}
+              <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-0.5 rounded font-mono text-[11px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
+                    subscription.updated
+                  </span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">Triggered when a plan or billing tier is upgraded or modified.</span>
+                </div>
+                <CodeSnippet
+                  title="Event: subscription.updated"
+                  language="json"
+                  code={`{
+  "id": "evt_948102938480",
+  "type": "subscription.updated",
+  "created_at": "2026-08-21T06:30:00.000Z",
+  "data": {
+    "subscription_id": "sub_48912",
+    "customer_email": "jane@company.com",
+    "previous_plan_id": "plan_9481029",
+    "new_plan_id": "plan_9481030",
+    "new_plan_name": "Annual Pro"
+  }
+}`}
+                />
+              </div>
+            </div>
           </section>
 
           {/* ================= FRONTEND INTEGRATION ================= */}
@@ -902,9 +984,6 @@ export async function POST(req: NextRequest) {
               <code className="block p-3 rounded-lg bg-zinc-100 dark:bg-[#0c1524] text-xs font-mono text-[#0F86EE] dark:text-[#38bdf8] select-all">
                 {`${appUrl}/checkout/YOUR_PRODUCT_SLUG`}
               </code>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
-                Customers choose their plan (Monthly or Yearly), pay with Paystack, and Orbit redirects them back to your website!
-              </p>
             </div>
 
             {/* OPTION 2 */}
@@ -922,7 +1001,7 @@ export async function POST(req: NextRequest) {
             <div id="react-component" className="mb-6 p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e]">
               <div className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white mb-2">
                 <Code2 size={16} className="text-emerald-500" />
-                <span>Method 3: React Pricing Component (shadcn-style Copy & Paste)</span>
+                <span>Method 3: React Pricing Component (shadcn-style Copy &amp; Paste)</span>
               </div>
               <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3 leading-relaxed">
                 If you want a pre-built React pricing grid that automatically fetches your product&apos;s plans, you can copy the following file into your project at <code className="font-mono bg-zinc-100 dark:bg-[#152238] px-1 py-0.5 rounded">components/OrbitPricingTable.tsx</code>:
@@ -985,7 +1064,7 @@ export default function OrbitPricingTable({
           {/* ================= ERRORS & STATUS CODES ================= */}
           <section id="error-handling" className="scroll-mt-24 mb-12 pt-8 border-t border-zinc-200 dark:border-[#1e2d47]">
             <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white mb-3">
-              Errors & Status Codes
+              Errors &amp; Status Codes
             </h2>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
               Orbit uses standard HTTP status codes. When an error occurs, Orbit returns a JSON payload with a clear, readable message:
@@ -1020,7 +1099,7 @@ export default function OrbitPricingTable({
                   <tr>
                     <td className="py-3 px-4 font-mono font-bold text-amber-600">400 Bad Request</td>
                     <td className="py-3 px-4">Missing Parameters</td>
-                    <td className="py-3 px-4 text-zinc-600 dark:text-zinc-300">Check required JSON body fields (e.g. <code className="font-mono">plan_id</code>, <code className="font-mono">customer_email</code>).</td>
+                    <td className="py-3 px-4 text-zinc-600 dark:text-zinc-300">Check required JSON body fields.</td>
                   </tr>
                   <tr>
                     <td className="py-3 px-4 font-mono font-bold text-rose-600">401 Unauthorized</td>
@@ -1047,14 +1126,19 @@ export default function OrbitPricingTable({
             {[
               { id: "welcome", label: "Welcome to Orbit" },
               { id: "mental-model", label: "Mental Model" },
+              { id: "payouts-overview", label: "Merchant Payouts (T+1)" },
+              { id: "platform-fee", label: "5% Fee & 95% Net" },
+              { id: "split-payments", label: "Subaccount Architecture" },
               { id: "api-keys", label: "API Keys" },
-              { id: "quickstart", label: "Quickstart (Verify)" },
+              { id: "quickstart", label: "5-Min Quickstart" },
               { id: "postman-testing", label: "Postman Testing" },
               { id: "api-root", label: "GET /api/v1" },
               { id: "check-subscription", label: "Check Subscription" },
               { id: "checkout-sessions", label: "Checkout Sessions" },
+              { id: "list-products", label: "GET /api/v1/products" },
               { id: "webhooks-why", label: "Webhooks Guide" },
               { id: "webhook-code", label: "Webhook Handler Code" },
+              { id: "webhook-events", label: "All 6 Event Types" },
               { id: "hosted-checkout", label: "Frontend Integration" },
               { id: "error-handling", label: "Errors & Status Codes" },
             ].map((link) => {

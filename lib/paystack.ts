@@ -33,6 +33,8 @@ export interface PaystackInitializeOptions {
   metadata?: Record<string, unknown>;
   channels?: string[];
   reference?: string;
+  subaccount?: string;
+  bearer?: "account" | "subaccount";
 }
 
 export interface PaystackInitializeResponse {
@@ -104,38 +106,100 @@ export async function resolvePaystackAccount(
   try {
     json = JSON.parse(text);
   } catch {
-    throw new Error(`Invalid response from Paystack account resolution: ${text}`);
+    throw new Error(
+      `Paystack account lookup failed (${response.status}): ${text.slice(0, 100)}`,
+    );
   }
 
   if (!response.ok || !json.status || !json.data) {
-    const errMsg = json.message || `Account resolution failed (${response.status})`;
-
-    // Automatic graceful resolution for test environments
-    if (
-      secretKey.startsWith("sk_test_") &&
-      (errMsg.toLowerCase().includes("test mode") ||
-        errMsg.toLowerCase().includes("limit") ||
-        errMsg.toLowerCase().includes("test bank"))
-    ) {
-      return {
-        account_number: cleanAccountNumber,
-        account_name: "Verified Merchant Account",
-      };
-    }
-
-    throw new Error(errMsg);
+    throw new Error(
+      json.message ||
+        `Could not resolve account with number ${cleanAccountNumber} and bank code ${cleanBankCode}`,
+    );
   }
 
   return json.data;
 }
 
+export const resolveAccount = resolvePaystackAccount;
+
 /**
- * Initialize a transaction on Paystack hosted checkout
+ * Create or update a Paystack Subaccount with a flat 5% Orbit platform fee
+ */
+export async function createOrUpdatePaystackSubaccount(params: {
+  businessName: string;
+  bankCode: string;
+  accountNumber: string;
+  subaccountCode?: string | null;
+  percentageCharge?: number; // Defaults to 5% Orbit platform cut
+}): Promise<{ subaccountCode: string; id: number }> {
+  const secretKey = getSecretKey();
+  const percentageCharge = params.percentageCharge ?? 5;
+
+  const payload = {
+    business_name: params.businessName,
+    settlement_bank: params.bankCode,
+    account_number: params.accountNumber,
+    percentage_charge: percentageCharge,
+    description: `Orbit Platform Subaccount - ${params.businessName}`,
+  };
+
+  const isUpdate = Boolean(params.subaccountCode);
+  const url = isUpdate
+    ? `${PAYSTACK_BASE_URL}/subaccount/${params.subaccountCode}`
+    : `${PAYSTACK_BASE_URL}/subaccount`;
+
+  const response = await fetch(url, {
+    method: isUpdate ? "PUT" : "POST",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const json = await response.json();
+
+  if (!response.ok || !json.status || !json.data) {
+    // If update failed because subaccount was not found, retry creation
+    if (isUpdate) {
+      return createOrUpdatePaystackSubaccount({
+        ...params,
+        subaccountCode: null,
+      });
+    }
+    throw new Error(
+      json.message || `Failed to create/update Paystack subaccount (${response.status})`,
+    );
+  }
+
+  return {
+    subaccountCode: json.data.subaccount_code,
+    id: json.data.id,
+  };
+}
+
+/**
+ * Initialize a Paystack checkout transaction (with optional subaccount split)
  */
 export async function initializePaystackTransaction(
   options: PaystackInitializeOptions,
-): Promise<PaystackInitializeResponse["data"]> {
+): Promise<PaystackInitializeResponse> {
   const secretKey = getSecretKey();
+
+  const payload: Record<string, unknown> = {
+    email: options.email,
+    amount: options.amount,
+    callback_url: options.callbackUrl || options.callback_url,
+    metadata: options.metadata,
+    channels: options.channels || ["card", "bank", "ussd", "bank_transfer"],
+    reference: options.reference,
+  };
+
+  if (options.subaccount) {
+    payload.subaccount = options.subaccount;
+    payload.bearer = options.bearer || "subaccount";
+  }
 
   const response = await fetch(`${PAYSTACK_BASE_URL}/transaction/initialize`, {
     method: "POST",
@@ -143,14 +207,7 @@ export async function initializePaystackTransaction(
       Authorization: `Bearer ${secretKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      email: options.email,
-      amount: options.amount,
-      callback_url: options.callbackUrl || options.callback_url,
-      metadata: options.metadata,
-      channels: options.channels || ["card"],
-      reference: options.reference,
-    }),
+    body: JSON.stringify(payload),
   });
 
   const json = await response.json();
@@ -160,19 +217,25 @@ export async function initializePaystackTransaction(
     );
   }
 
-  return json.data;
+  return json;
 }
+
+export const initializeTransaction = initializePaystackTransaction;
 
 export interface VerifiedTransactionData {
   id: number;
   domain: string;
   status: string;
   reference: string;
-  amount: number;
+  amount: number; // in Kobo
+  message: string | null;
   gateway_response: string;
   paid_at: string;
+  created_at: string;
   channel: string;
   currency: string;
+  ip_address: string;
+  metadata: Record<string, unknown>;
   customer: {
     id: number;
     first_name: string | null;
@@ -180,6 +243,8 @@ export interface VerifiedTransactionData {
     email: string;
     customer_code: string;
     phone: string | null;
+    metadata: Record<string, unknown> | null;
+    risk_action: string;
   };
   authorization?: {
     authorization_code: string;
@@ -194,8 +259,9 @@ export interface VerifiedTransactionData {
     brand: string;
     reusable: boolean;
     signature: string;
+    account_name: string | null;
   };
-  metadata?: Record<string, unknown>;
+  plan?: Record<string, unknown> | null;
 }
 
 /**
@@ -221,35 +287,38 @@ export async function verifyPaystackTransaction(
   const json = await response.json();
   if (!response.ok || !json.status) {
     throw new Error(
-      json.message || `Paystack verification failed (${response.status})`,
+      json.message || `Paystack verification failed for ref ${reference}`,
     );
   }
 
   return json.data;
 }
 
+export const verifyTransaction = verifyPaystackTransaction;
+
 /**
- * Verify Paystack webhook HMAC SHA512 signature
+ * Verify Paystack webhook HMAC-SHA512 signature
  */
 export function verifyPaystackWebhookSignature(
   rawBody: string,
-  signature: string | null,
+  signatureHeader: string | null,
 ): boolean {
-  if (!signature) return false;
+  if (!signatureHeader) return false;
   try {
     const secretKey = getSecretKey();
     const hash = crypto
       .createHmac("sha512", secretKey)
       .update(rawBody)
       .digest("hex");
-    return hash === signature;
-  } catch {
+    return hash === signatureHeader;
+  } catch (err) {
+    console.error("Webhook signature verification error:", err);
     return false;
   }
 }
 
 /**
- * Headlessly charge a stored authorization token (for recurring billing)
+ * Headlessly charge a stored authorization token (for recurring billing renewals)
  */
 export async function chargePaystackAuthorization(options: {
   authorization_code?: string;
@@ -258,12 +327,27 @@ export async function chargePaystackAuthorization(options: {
   amount: number; // in Kobo
   reference?: string;
   metadata?: Record<string, unknown>;
+  subaccount?: string;
+  bearer?: "account" | "subaccount";
 }): Promise<VerifiedTransactionData> {
   const secretKey = getSecretKey();
   const authCode = options.authorizationCode || options.authorization_code;
 
   if (!authCode) {
     throw new Error("Authorization code is required to charge card");
+  }
+
+  const payload: Record<string, unknown> = {
+    authorization_code: authCode,
+    email: options.email,
+    amount: options.amount,
+    reference: options.reference,
+    metadata: options.metadata,
+  };
+
+  if (options.subaccount) {
+    payload.subaccount = options.subaccount;
+    payload.bearer = options.bearer || "subaccount";
   }
 
   const response = await fetch(
@@ -274,13 +358,7 @@ export async function chargePaystackAuthorization(options: {
         Authorization: `Bearer ${secretKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        authorization_code: authCode,
-        email: options.email,
-        amount: options.amount,
-        reference: options.reference,
-        metadata: options.metadata,
-      }),
+      body: JSON.stringify(payload),
     },
   );
 
@@ -364,4 +442,3 @@ export async function initiatePaystackTransfer(params: {
 
   return json.data;
 }
-

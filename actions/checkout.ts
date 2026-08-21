@@ -100,7 +100,18 @@ export async function initiateSubscriptionPayment(formData: FormData) {
   }
 
   /*
-   * 3. Initialize Paystack Transaction in Kobo
+   * 3. Fetch organisation Paystack Subaccount (if configured)
+   */
+  const { data: org } = await supabase
+    .from("organisations")
+    .select("paystack_subaccount_code")
+    .eq("id", plan.organisation_id)
+    .maybeSingle();
+
+  const subaccountCode = org?.paystack_subaccount_code || undefined;
+
+  /*
+   * 4. Initialize Paystack Transaction in Kobo (with automatic 95/5 split)
    */
   const checkoutData = await initializePaystackTransaction({
     email,
@@ -108,6 +119,7 @@ export async function initiateSubscriptionPayment(formData: FormData) {
     callbackUrl: callbackUrl.toString(),
     reference: orderReference,
     channels: ["card"],
+    subaccount: subaccountCode,
     metadata: {
       orderReference,
       planId: plan.id,
@@ -135,12 +147,12 @@ export async function initiateSubscriptionPayment(formData: FormData) {
     },
   });
 
-  if (!checkoutData.authorization_url) {
+  if (!checkoutData.data?.authorization_url) {
     throw new Error("Unable to initialize Paystack checkout.");
   }
 
   /*
-   * 4. Save pending payment order tracking record
+   * 5. Save pending payment order tracking record
    */
   const { error: paymentOrderError } = await supabase
     .from("payment_orders")
@@ -168,5 +180,5 @@ export async function initiateSubscriptionPayment(formData: FormData) {
     isTrial,
   });
 
-  redirect(checkoutData.authorization_url);
+  redirect(checkoutData.data.authorization_url);
 }

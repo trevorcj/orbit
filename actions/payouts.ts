@@ -28,6 +28,7 @@ export interface PayoutDashboardData {
     bankCode: string | null;
     accountNumber: string | null;
     accountName: string | null;
+    subaccountCode?: string | null;
   } | null;
   grossRevenue: number;
   availableBalance: number;
@@ -73,7 +74,7 @@ export async function getPayoutDashboardData(): Promise<PayoutDashboardData | nu
   const { data: org } = await supabaseAdmin
     .from("organisations")
     .select(
-      "id, settlement_bank_name, settlement_bank_code, settlement_account_number, settlement_account_name",
+      "id, settlement_bank_name, settlement_bank_code, settlement_account_number, settlement_account_name, paystack_subaccount_code",
     )
     .eq("user_id", user.id)
     .maybeSingle();
@@ -161,6 +162,7 @@ export async function getPayoutDashboardData(): Promise<PayoutDashboardData | nu
       bankCode: org.settlement_bank_code || null,
       accountNumber: org.settlement_account_number || null,
       accountName: org.settlement_account_name || null,
+      subaccountCode: org.paystack_subaccount_code || null,
     },
     grossRevenue,
     availableBalance,
