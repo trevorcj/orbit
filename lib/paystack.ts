@@ -141,9 +141,7 @@ export async function findExistingPaystackSubaccount(
     const json = await response.json();
     if (json.status && Array.isArray(json.data)) {
       const match = json.data.find(
-        (sub: any) =>
-          sub.account_number === accountNumber &&
-          (sub.settlement_bank === bankCode || String(sub.settlement_bank).includes(bankCode)),
+        (sub: any) => String(sub.account_number).trim() === String(accountNumber).trim(),
       );
 
       if (match) {

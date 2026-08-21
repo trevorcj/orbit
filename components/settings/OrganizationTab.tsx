@@ -85,8 +85,13 @@ export default function OrganizationTab() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await uploadOrganizationLogoAction(formData);
-      if (res.success && res.url) {
+      const response = await fetch("/api/upload-logo", {
+        method: "POST",
+        body: formData,
+      });
+
+      const res = await response.json();
+      if (response.ok && res.success && res.url) {
         setOrg((prev) => (prev ? { ...prev, logo_url: res.url! } : null));
         toast.success("Organization logo updated successfully!");
         router.refresh();

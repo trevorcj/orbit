@@ -71,8 +71,13 @@ export default function ProfileTab() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await uploadUserAvatarAction(formData);
-      if (res.success && res.url) {
+      const response = await fetch("/api/upload-avatar", {
+        method: "POST",
+        body: formData,
+      });
+
+      const res = await response.json();
+      if (response.ok && res.success && res.url) {
         setProfile((prev) => (prev ? { ...prev, avatarUrl: res.url! } : null));
         toast.success("Profile avatar updated successfully!");
         router.refresh();
