@@ -83,11 +83,7 @@ export async function getPayoutDashboardData(): Promise<PayoutDashboardData | nu
 
   if (!org) return null;
 
-  let subaccountCode = (org as any).paystack_subaccount_code;
-  if (!subaccountCode && (org as any).settlement_bank_code && (org as any).settlement_account_number) {
-    const { ensureOrganisationSubaccount } = await import("@/lib/paystack");
-    subaccountCode = await ensureOrganisationSubaccount(org.id);
-  }
+  const subaccountCode = (org as any).paystack_subaccount_code || null;
 
   // 1. Calculate Gross Revenue from successful customer payments
   const { data: payments } = await supabaseAdmin

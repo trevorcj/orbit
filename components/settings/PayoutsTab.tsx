@@ -11,6 +11,8 @@ import {
   Wallet,
   Percent,
   ArrowUpRight,
+  Pencil,
+  X,
 } from "lucide-react";
 import Input from "@/components/Input";
 import BankSelect, { Bank } from "@/components/BankSelect";
@@ -34,6 +36,7 @@ export default function PayoutsTab() {
   const [checkingBank, setCheckingBank] = useState(false);
   const [lookupError, setLookupError] = useState("");
   const [savingBank, setSavingBank] = useState(false);
+  const [isEditingBank, setIsEditingBank] = useState(false);
 
   // Manual Withdrawal Modal State
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -127,6 +130,7 @@ export default function PayoutsTab() {
 
       if (res.success) {
         toast.success("Settlement bank account updated!");
+        setIsEditingBank(false);
         await loadData();
       } else {
         toast.error(res.error || "Failed to update settlement bank.");
@@ -266,86 +270,139 @@ export default function PayoutsTab() {
 
       {/* 3. SETTLEMENT BANK ACCOUNT CONFIGURATION */}
       <div className="p-6 sm:p-8 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col gap-6">
-        <div>
-          <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between">
+          <div>
             <h2 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
               <Building2 size={18} className="text-[#0F86EE] dark:text-[#38bdf8]" />
               <span>Settlement Bank Account</span>
             </h2>
-            {isBankLinked && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                <CheckCircle2 size={13} />
-                <span>Verified Settlement Bank</span>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              Your subscription payouts are routed automatically to this verified bank account on daily T+1 settlement.
+            </p>
+          </div>
+
+          {isBankLinked && !isEditingBank && (
+            <button
+              type="button"
+              onClick={() => setIsEditingBank(true)}
+              className="h-8 px-3 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#152238] hover:bg-zinc-100 dark:hover:bg-[#1e2d47] text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center gap-1.5 shrink-0">
+              <Pencil size={12} />
+              <span>Change Bank</span>
+            </button>
+          )}
+        </div>
+
+        {/* Established / Verified View */}
+        {isBankLinked && !isEditingBank ? (
+          <div className="p-4 sm:p-5 rounded-xl border border-zinc-100 dark:border-[#1e2d47] bg-zinc-50/60 dark:bg-[#0c1524] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                Bank &amp; Account Holder
               </span>
-            )}
-          </div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-            Provide the Nigerian bank account where Paystack should deposit your subscription earnings.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block mb-1.5">
-              Destination Bank *
-            </label>
-            <BankSelect
-              value={bankCode}
-              onChange={(bank: Bank) => {
-                setBankCode(bank.code);
-                setBankName(bank.name);
-              }}
-            />
-          </div>
-
-          <div>
-            <Input
-              label="Account Number (NUBAN)"
-              isRequired={true}
-              type="text"
-              placeholder="0123456789"
-              value={accountNumber}
-              maxLength={10}
-              onChange={(e) =>
-                setAccountNumber(e.target.value.replace(/\D/g, "").slice(0, 10))
-              }
-            />
-            {checkingBank && (
-              <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1.5">
-                <Loader2 size={13} className="animate-spin" />
-                <span>Resolving account details with Paystack...</span>
+              <div className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                <span>{data?.bankDetails?.bankName}</span>
+                <span className="text-zinc-400 font-normal">•</span>
+                <span className="font-mono text-zinc-600 dark:text-zinc-300">
+                  •••• {data?.bankDetails?.accountNumber?.slice(-4)}
+                </span>
               </div>
-            )}
-            {lookupError && (
-              <div className="flex items-center gap-1.5 text-xs text-red-500 mt-1.5">
-                <AlertCircle size={13} />
-                <span>{lookupError}</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                {data?.bankDetails?.accountName}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-center">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                <CheckCircle2 size={14} />
+                <span>Active Settlement Account</span>
+              </span>
+            </div>
+          </div>
+        ) : (
+          /* Edit / Add Bank Form */
+          <div className="flex flex-col gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block mb-1.5">
+                  Destination Bank *
+                </label>
+                <BankSelect
+                  value={bankCode}
+                  onChange={(bank: Bank) => {
+                    setBankCode(bank.code);
+                    setBankName(bank.name);
+                  }}
+                />
               </div>
-            )}
-          </div>
 
-          <div className="md:col-span-2">
-            <Input
-              label="Verified Account Name"
-              isRequired={false}
-              type="text"
-              placeholder="Account holder name will appear here..."
-              value={accountName}
-              readOnly
-              className="bg-zinc-50 dark:bg-[#152238] cursor-not-allowed font-medium text-zinc-800 dark:text-zinc-200"
-            />
-          </div>
-        </div>
+              <div>
+                <Input
+                  label="Account Number (NUBAN)"
+                  isRequired={true}
+                  type="text"
+                  placeholder="0123456789"
+                  value={accountNumber}
+                  maxLength={10}
+                  onChange={(e) =>
+                    setAccountNumber(e.target.value.replace(/\D/g, "").slice(0, 10))
+                  }
+                />
+                {checkingBank && (
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1.5">
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Resolving account details with Paystack...</span>
+                  </div>
+                )}
+                {lookupError && (
+                  <div className="flex items-center gap-1.5 text-xs text-red-500 mt-1.5">
+                    <AlertCircle size={13} />
+                    <span>{lookupError}</span>
+                  </div>
+                )}
+              </div>
 
-        <div className="flex justify-end pt-3 border-t border-zinc-100 dark:border-[#1e2d47]">
-          <button
-            onClick={handleSaveBank}
-            disabled={savingBank || !accountName || accountNumber.length !== 10}
-            className="h-10 px-6 rounded-lg bg-[#0F86EE] hover:bg-[#0d7ad9] disabled:bg-zinc-200 dark:disabled:bg-zinc-800 text-white font-semibold text-xs transition cursor-pointer disabled:cursor-not-allowed flex items-center gap-2">
-            {savingBank && <Loader2 size={14} className="animate-spin" />}
-            <span>Save &amp; Link Paystack Subaccount</span>
-          </button>
-        </div>
+              <div className="md:col-span-2">
+                <Input
+                  label="Verified Account Name"
+                  isRequired={false}
+                  type="text"
+                  placeholder="Account holder name will appear here..."
+                  value={accountName}
+                  readOnly
+                  className="bg-zinc-50 dark:bg-[#152238] cursor-not-allowed font-medium text-zinc-800 dark:text-zinc-200"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-[#1e2d47]">
+              {isBankLinked && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditingBank(false);
+                    if (data?.bankDetails) {
+                      setBankCode(data.bankDetails.bankCode || "");
+                      setBankName(data.bankDetails.bankName || "");
+                      setAccountNumber(data.bankDetails.accountNumber || "");
+                      setAccountName(data.bankDetails.accountName || "");
+                    }
+                  }}
+                  className="h-10 px-4 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#152238] hover:bg-zinc-100 dark:hover:bg-[#1e2d47] text-zinc-700 dark:text-zinc-300 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5">
+                  <X size={13} />
+                  <span>Cancel</span>
+                </button>
+              )}
+
+              <button
+                onClick={handleSaveBank}
+                disabled={savingBank || !accountName || accountNumber.length !== 10}
+                className="h-10 px-6 rounded-lg bg-[#0F86EE] hover:bg-[#0d7ad9] disabled:bg-zinc-200 dark:disabled:bg-zinc-800 text-white font-semibold text-xs transition cursor-pointer disabled:cursor-not-allowed flex items-center gap-2">
+                {savingBank && <Loader2 size={14} className="animate-spin" />}
+                <span>{isBankLinked ? "Update Settlement Bank" : "Save & Link Settlement Bank"}</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 4. SETTLEMENT & PAYOUT AUDIT HISTORY TABLE */}

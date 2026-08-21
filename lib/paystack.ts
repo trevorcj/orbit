@@ -124,6 +124,42 @@ export async function resolvePaystackAccount(
 export const resolveAccount = resolvePaystackAccount;
 
 /**
+ * Checks if a subaccount already exists on Paystack for a given bank and account number
+ */
+export async function findExistingPaystackSubaccount(
+  bankCode: string,
+  accountNumber: string,
+): Promise<{ subaccountCode: string; id: number } | null> {
+  try {
+    const secretKey = getSecretKey();
+    const response = await fetch(`${PAYSTACK_BASE_URL}/subaccount?perPage=100`, {
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+      },
+    });
+
+    const json = await response.json();
+    if (json.status && Array.isArray(json.data)) {
+      const match = json.data.find(
+        (sub: any) =>
+          sub.account_number === accountNumber &&
+          (sub.settlement_bank === bankCode || String(sub.settlement_bank).includes(bankCode)),
+      );
+
+      if (match) {
+        return {
+          subaccountCode: match.subaccount_code,
+          id: match.id,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("Could not query existing Paystack subaccounts:", err);
+  }
+  return null;
+}
+
+/**
  * Create or update a Paystack Subaccount with a flat 5% Orbit platform fee
  */
 export async function createOrUpdatePaystackSubaccount(params: {
@@ -135,6 +171,14 @@ export async function createOrUpdatePaystackSubaccount(params: {
 }): Promise<{ subaccountCode: string; id: number }> {
   const secretKey = getSecretKey();
   const percentageCharge = params.percentageCharge ?? 5;
+
+  // 1. If not an explicit update, check if Paystack already has a subaccount for this bank account
+  if (!params.subaccountCode) {
+    const existing = await findExistingPaystackSubaccount(params.bankCode, params.accountNumber);
+    if (existing) {
+      return existing;
+    }
+  }
 
   const payload = {
     business_name: params.businessName,
@@ -161,12 +205,10 @@ export async function createOrUpdatePaystackSubaccount(params: {
   const json = await response.json();
 
   if (!response.ok || !json.status || !json.data) {
-    // If update failed because subaccount was not found, retry creation
+    // If update failed because subaccount was not found, check existing or retry creation
     if (isUpdate) {
-      return createOrUpdatePaystackSubaccount({
-        ...params,
-        subaccountCode: null,
-      });
+      const existing = await findExistingPaystackSubaccount(params.bankCode, params.accountNumber);
+      if (existing) return existing;
     }
     throw new Error(
       json.message || `Failed to create/update Paystack subaccount (${response.status})`,
@@ -181,26 +223,22 @@ export async function createOrUpdatePaystackSubaccount(params: {
 
 /**
  * Ensures an organisation has a Paystack Subaccount linked.
- * If the organisation has bank details but no subaccount code yet,
- * it automatically provisions one and persists it to the database.
+ * Reuses existing Paystack subaccounts to prevent duplicates.
  */
 export async function ensureOrganisationSubaccount(organisationId: string): Promise<string | undefined> {
   try {
     const { supabaseAdmin } = await import("@/lib/supabase-admin");
     const { data: org, error } = await supabaseAdmin
       .from("organisations")
-      .select("*")
+      .select("id, name, settlement_bank_code, settlement_account_number")
       .eq("id", organisationId)
       .maybeSingle();
 
     if (error || !org) return undefined;
 
-    const existingCode = (org as any).paystack_subaccount_code;
-    if (existingCode) return existingCode;
-
-    const bankCode = (org as any).settlement_bank_code;
-    const accountNumber = (org as any).settlement_account_number;
-    const businessName = (org as any).name || "Merchant";
+    const bankCode = org.settlement_bank_code;
+    const accountNumber = org.settlement_account_number;
+    const businessName = org.name || "Merchant";
 
     if (bankCode && accountNumber) {
       const res = await createOrUpdatePaystackSubaccount({
@@ -209,12 +247,6 @@ export async function ensureOrganisationSubaccount(organisationId: string): Prom
         accountNumber,
         percentageCharge: 5,
       });
-
-      // Update organisation with newly created subaccount code
-      await supabaseAdmin
-        .from("organisations")
-        .update({ paystack_subaccount_code: res.subaccountCode })
-        .eq("id", organisationId);
 
       return res.subaccountCode;
     }
