@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -61,41 +62,56 @@ export async function completeOnboarding(
   if (logo && logo.size > 0) {
     const file = logo;
     const fileExt = file.name.split(".").pop();
-    const filePath = `${user.id}/${Math.random()}.${fileExt}`;
+    const filePath = `orgs/${user.id}-${Date.now()}.${fileExt}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from("organisationLogos")
-      .upload(filePath, file);
+    try {
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true });
 
-    if (uploadError) {
-      console.error("Logo upload error:", uploadError);
-      return { message: "Failed to upload logo." };
+      if (!uploadError) {
+        const { data: publicUrlData } = supabaseAdmin.storage
+          .from("avatars")
+          .getPublicUrl(filePath);
+        logoUrl = publicUrlData.publicUrl;
+      } else {
+        console.warn("Logo upload warning:", uploadError.message);
+      }
+    } catch (uploadErr) {
+      console.warn("Logo storage upload exception:", uploadErr);
     }
-
-    const { data: publicUrlData } = supabase.storage
-      .from("organisationLogos")
-      .getPublicUrl(filePath);
-
-    logoUrl = publicUrlData.publicUrl;
   }
 
-  const { error: insertError } = await supabase.from("organisations").insert({
-    user_id: user.id,
-    name: values.organisationName,
-    slug: slug,
-    logo_url: logoUrl,
-    settlement_bank_name: values.bankName,
-    settlement_bank_code: values.bankCode,
-    settlement_account_number: values.accountNumber,
-    settlement_account_name: values.accountName,
-  });
+  // Insert organisation using supabaseAdmin
+  const { data: newOrg, error: insertError } = await supabaseAdmin
+    .from("organisations")
+    .insert({
+      user_id: user.id,
+      name: values.organisationName,
+      slug: slug,
+      logo_url: logoUrl,
+      settlement_bank_name: values.bankName,
+      settlement_bank_code: values.bankCode,
+      settlement_account_number: values.accountNumber,
+      settlement_account_name: values.accountName,
+    })
+    .select("id")
+    .single();
 
-  if (insertError) {
+  if (insertError || !newOrg) {
     console.error("Organisation insert error:", insertError);
     return { message: "Failed to save organisation details." };
   }
 
-  // Revalidate path to ensure middleware can find the new organisation
+  // Auto-provision Paystack subaccount immediately during onboarding
+  try {
+    const { ensureOrganisationSubaccount } = await import("@/lib/paystack");
+    await ensureOrganisationSubaccount(newOrg.id);
+  } catch (subErr) {
+    console.warn("Paystack subaccount provision note during onboarding:", subErr);
+  }
+
+  // Revalidate path to ensure middleware and dashboard find the new organisation
   revalidatePath("/", "layout");
   redirect("/dashboard");
 }

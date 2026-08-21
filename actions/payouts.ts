@@ -77,6 +77,8 @@ export async function getPayoutDashboardData(): Promise<PayoutDashboardData | nu
       "id, settlement_bank_name, settlement_bank_code, settlement_account_number, settlement_account_name, paystack_subaccount_code",
     )
     .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (!org) return null;
@@ -201,6 +203,8 @@ export async function requestPayout(
       "id, settlement_bank_name, settlement_bank_code, settlement_account_number, settlement_account_name",
     )
     .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (!org) return { success: false, error: "Organisation not found" };

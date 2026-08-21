@@ -9,6 +9,7 @@ export interface UserProfileData {
   firstName: string;
   lastName: string;
   email: string;
+  avatarUrl: string | null;
 }
 
 export interface OrganizationData {
@@ -41,9 +42,9 @@ export async function getUserProfile(): Promise<UserProfileData | null> {
 
   const { data: profile } = await supabaseAdmin
     .from("users")
-    .select("id, email, first_name, last_name")
+    .select("id, email, first_name, last_name, avatar_url")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   if (!profile) return null;
 
@@ -52,6 +53,7 @@ export async function getUserProfile(): Promise<UserProfileData | null> {
     firstName: profile.first_name || "",
     lastName: profile.last_name || "",
     email: profile.email || user.email || "",
+    avatarUrl: profile.avatar_url || null,
   };
 }
 
@@ -83,7 +85,63 @@ export async function updateUserProfile(params: {
     return { success: false, error: error.message };
   }
 
-  revalidatePath("/dashboard/settings");
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
+/**
+ * Updates user profile avatar URL
+ */
+export async function updateUserAvatar(avatarUrl: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const { error } = await supabaseAdmin
+    .from("users")
+    .update({
+      avatar_url: avatarUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id);
+
+  if (error) {
+    console.error("Failed to update user avatar:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
+/**
+ * Updates organization logo URL
+ */
+export async function updateOrganizationLogo(logoUrl: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const { error } = await supabaseAdmin
+    .from("organisations")
+    .update({
+      logo_url: logoUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("Failed to update organization logo:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/", "layout");
   return { success: true };
 }
 
@@ -102,7 +160,7 @@ export async function getOrganizationDetails(): Promise<OrganizationData | null>
     .from("organisations")
     .select("id, name, slug, logo_url, user_id")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   if (!org) return null;
 
@@ -259,7 +317,9 @@ export async function getPayoutDetails(): Promise<PayoutData | null> {
       "id, settlement_bank_name, settlement_bank_code, settlement_account_number, settlement_account_name, paystack_subaccount_code",
     )
     .eq("user_id", user.id)
-    .single();
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   if (!org) return null;
 
@@ -293,6 +353,8 @@ export async function updatePayoutDetails(params: {
     .from("organisations")
     .select("id, name, paystack_subaccount_code")
     .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (!org) return { success: false, error: "Organisation not found" };

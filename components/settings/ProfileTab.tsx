@@ -1,19 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Input from "@/components/Input";
-import { getUserProfile, updateUserProfile, UserProfileData } from "@/actions/settings";
-import { useTheme } from "@/components/ThemeProvider";
+import {
+  getUserProfile,
+  updateUserProfile,
+  updateUserAvatar,
+  UserProfileData,
+} from "@/actions/settings";
+import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Sun, Moon, Monitor } from "lucide-react";
+import { Loader2, Upload, Camera } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function ProfileTab() {
-  const { theme, setTheme } = useTheme();
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     getUserProfile().then((data) => {
@@ -38,6 +47,7 @@ export default function ProfileTab() {
       const res = await updateUserProfile({ firstName, lastName });
       if (res.success) {
         toast.success("Profile updated successfully!");
+        router.refresh();
       } else {
         toast.error(res.error || "Failed to update profile.");
       }
@@ -45,6 +55,49 @@ export default function ProfileTab() {
       toast.error("An unexpected error occurred.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload a valid image file (PNG, JPG, SVG).");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const supabase = createClient();
+      const fileExt = file.name.split(".").pop();
+      const filePath = `users/${profile?.id || "user"}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) {
+        toast.error("Failed to upload avatar: " + uploadError.message);
+        return;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      const res = await updateUserAvatar(publicUrlData.publicUrl);
+      if (res.success) {
+        setProfile((prev) => (prev ? { ...prev, avatarUrl: publicUrlData.publicUrl } : null));
+        toast.success("Profile avatar updated successfully!");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to update avatar.");
+      }
+    } catch {
+      toast.error("An unexpected error occurred during avatar upload.");
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -59,12 +112,67 @@ export default function ProfileTab() {
   const initials = `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase() || "U";
 
   return (
-    <form onSubmit={handleSave} className="flex flex-col gap-6 p-8 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] max-w-2xl shadow-xs">
+    <form onSubmit={handleSave} className="flex flex-col gap-6 p-6 sm:p-8 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] max-w-2xl shadow-xs">
       <div>
-        <h2 className="text-base font-bold text-zinc-900 dark:text-white">Profile & Preferences</h2>
+        <h2 className="text-base font-bold text-zinc-900 dark:text-white">Profile Details</h2>
         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-          Manage your personal account details and theme preferences.
+          Manage your personal merchant account details and avatar.
         </p>
+      </div>
+
+      {/* Account Avatar Section with Upload Button */}
+      <div className="flex items-center gap-5 p-4 rounded-xl border border-zinc-100 dark:border-[#1a2942] bg-zinc-50/50 dark:bg-[#0c1524]">
+        <div className="relative group">
+          {profile?.avatarUrl ? (
+            <div className="relative w-16 h-16 rounded-full overflow-hidden border border-zinc-200 dark:border-[#1e2d47] shadow-xs">
+              <Image
+                src={profile.avatarUrl}
+                alt={`${firstName} ${lastName}`}
+                fill
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-[#0F86EE] flex items-center justify-center text-white text-xl font-bold shadow-xs">
+              {initials}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingAvatar}
+            className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-white dark:bg-[#152238] border border-zinc-200 dark:border-[#1e2d47] shadow-md text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-[#1e2d47] transition cursor-pointer"
+            title="Upload avatar photo">
+            {uploadingAvatar ? (
+              <Loader2 size={12} className="animate-spin text-[#0F86EE]" />
+            ) : (
+              <Camera size={12} />
+            )}
+          </button>
+        </div>
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleAvatarUpload}
+          accept="image/*"
+          className="hidden"
+        />
+
+        <div className="flex flex-col gap-1.5">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingAvatar}
+            className="h-8 px-3 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] hover:bg-zinc-50 dark:hover:bg-[#1e2d47] text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center gap-1.5 w-fit">
+            <Upload size={13} />
+            <span>{uploadingAvatar ? "Uploading photo..." : "Upload photo"}</span>
+          </button>
+          <span className="text-[11px] text-zinc-400">
+            JPG, PNG or GIF. Stored securely in your Supabase avatars bucket.
+          </span>
+        </div>
       </div>
 
       <div className="flex flex-col gap-5">
@@ -104,85 +212,13 @@ export default function ProfileTab() {
             Email is associated with your login and cannot be changed here.
           </span>
         </div>
-
-        {/* Appearance / Theme Settings (Paystack Style with Lucide Icons) */}
-        <div className="flex flex-col gap-2 pt-3 border-t border-zinc-100 dark:border-[#1e2d47]">
-          <div className="text-[14px] text-zinc-800 dark:text-zinc-200 font-medium">Appearance & Theme</div>
-          <p className="text-[11px] text-zinc-400">
-            Choose your preferred theme across the Orbit dashboard interface.
-          </p>
-
-          <div className="grid grid-cols-3 gap-3 mt-1.5">
-            <button
-              type="button"
-              onClick={() => {
-                setTheme("light");
-                toast.success("Theme set to Light");
-              }}
-              className={`flex flex-col items-center justify-center p-3.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                theme === "light"
-                  ? "border-[#0F86EE] bg-blue-50/50 dark:bg-blue-900/30 text-[#0F86EE] font-semibold"
-                  : "border-zinc-200 dark:border-[#1e2d47] hover:border-zinc-300 dark:hover:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-[#152238]"
-              }`}>
-              <Sun size={18} className="mb-1 text-amber-500" />
-              <span>Light</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setTheme("dark");
-                toast.success("Theme set to Dark");
-              }}
-              className={`flex flex-col items-center justify-center p-3.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                theme === "dark"
-                  ? "border-[#0F86EE] bg-blue-50/50 dark:bg-blue-900/30 text-[#0F86EE] font-semibold"
-                  : "border-zinc-200 dark:border-[#1e2d47] hover:border-zinc-300 dark:hover:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-[#152238]"
-              }`}>
-              <Moon size={18} className="mb-1 text-blue-400" />
-              <span>Dark</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setTheme("system");
-                toast.success("Theme set to System");
-              }}
-              className={`flex flex-col items-center justify-center p-3.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                theme === "system"
-                  ? "border-[#0F86EE] bg-blue-50/50 dark:bg-blue-900/30 text-[#0F86EE] font-semibold"
-                  : "border-zinc-200 dark:border-[#1e2d47] hover:border-zinc-300 dark:hover:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-[#152238]"
-              }`}>
-              <Monitor size={18} className="mb-1 text-zinc-400" />
-              <span>System</span>
-            </button>
-          </div>
-        </div>
-
-        {/* User Specific Circular Avatar Controls */}
-        <div className="flex flex-col gap-1.5 pt-3 border-t border-zinc-100 dark:border-[#1e2d47]">
-          <div className="text-[14px] text-zinc-800 dark:text-zinc-200 font-medium">Avatar</div>
-          <div className="flex items-center gap-4 mt-1">
-            <div className="w-14 h-14 rounded-full bg-[#0F86EE] text-white overflow-hidden border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg font-bold">
-              {initials}
-            </div>
-
-            <div className="flex flex-col">
-              <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Account Avatar</span>
-              <span className="text-[11px] text-zinc-400 mt-0.5">
-                Automatically generated from your initials.
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div className="pt-2">
         <button
           type="submit"
           disabled={saving}
-          className="h-11 rounded-full text-sm bg-[#0F86EE] px-8 font-semibold text-white hover:bg-[#0d7ad9] transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2">
+          className="h-10 sm:h-11 rounded-full text-xs sm:text-sm bg-[#0F86EE] px-8 font-semibold text-white hover:bg-[#0d7ad9] transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2">
           {saving && <Loader2 className="animate-spin" size={16} />}
           <span>{saving ? "Saving changes..." : "Save changes"}</span>
         </button>

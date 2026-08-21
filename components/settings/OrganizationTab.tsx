@@ -1,24 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Copy, Check, Loader2, AlertTriangle, Trash2 } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Copy, Check, Loader2, AlertTriangle, Trash2, Upload, Camera } from "lucide-react";
 import Input from "@/components/Input";
 import {
   getOrganizationDetails,
   updateOrganizationDetails,
+  updateOrganizationLogo,
   deleteOrganization,
   OrganizationData,
 } from "@/actions/settings";
+import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function OrganizationTab() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [org, setOrg] = useState<OrganizationData | null>(null);
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // Delete Modal State
@@ -65,6 +69,49 @@ export default function OrganizationTab() {
       toast.error("An unexpected error occurred.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload a valid image file (PNG, JPG, SVG).");
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const supabase = createClient();
+      const fileExt = file.name.split(".").pop();
+      const filePath = `orgs/${org?.id || "org"}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) {
+        toast.error("Failed to upload image: " + uploadError.message);
+        return;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      const res = await updateOrganizationLogo(publicUrlData.publicUrl);
+      if (res.success) {
+        setOrg((prev) => (prev ? { ...prev, logo_url: publicUrlData.publicUrl } : null));
+        toast.success("Organization logo updated successfully!");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to update organization logo.");
+      }
+    } catch {
+      toast.error("An unexpected error occurred during logo upload.");
+    } finally {
+      setUploadingLogo(false);
     }
   };
 
@@ -187,7 +234,7 @@ export default function OrganizationTab() {
           </div>
         </div>
 
-        {/* Right Avatar Column */}
+        {/* Right Avatar Column with Upload Button */}
         <div className="flex flex-col items-center lg:items-start gap-4 lg:pl-8 lg:border-l border-zinc-100 dark:border-[#1e2d47]">
           <div>
             <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
@@ -198,23 +245,55 @@ export default function OrganizationTab() {
             </p>
           </div>
 
-          {org?.logo_url ? (
-            <div className="relative w-24 h-24 rounded-2xl overflow-hidden border border-zinc-200 dark:border-[#1e2d47] shadow-xs">
-              <Image
-                src={org.logo_url}
-                alt={org.name}
-                fill
-                className="object-cover"
-              />
-            </div>
-          ) : (
-            <div className="w-24 h-24 rounded-2xl bg-zinc-950 dark:bg-[#0F86EE] flex items-center justify-center text-white text-3xl font-bold mt-2 shadow-xs">
-              {initialLetter}
-            </div>
-          )}
+          <div className="relative group">
+            {org?.logo_url ? (
+              <div className="relative w-24 h-24 rounded-2xl overflow-hidden border border-zinc-200 dark:border-[#1e2d47] shadow-xs">
+                <Image
+                  src={org.logo_url}
+                  alt={org.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-24 h-24 rounded-2xl bg-zinc-950 dark:bg-[#0F86EE] flex items-center justify-center text-white text-3xl font-bold shadow-xs">
+                {initialLetter}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingLogo}
+              className="absolute -bottom-2 -right-2 p-2 rounded-full bg-white dark:bg-[#152238] border border-zinc-200 dark:border-[#1e2d47] shadow-md text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-[#1e2d47] transition cursor-pointer"
+              title="Upload organization logo">
+              {uploadingLogo ? (
+                <Loader2 size={14} className="animate-spin text-[#0F86EE]" />
+              ) : (
+                <Camera size={14} />
+              )}
+            </button>
+          </div>
+
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleLogoUpload}
+            accept="image/*"
+            className="hidden"
+          />
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingLogo}
+            className="h-8 px-3 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#152238] hover:bg-zinc-100 dark:hover:bg-[#1e2d47] text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center gap-1.5">
+            <Upload size={13} />
+            <span>{uploadingLogo ? "Uploading..." : "Upload logo"}</span>
+          </button>
 
           <span className="text-[11px] text-zinc-400">
-            Generated based on your organization identity.
+            JPG, PNG or SVG. Max size 2MB.
           </span>
         </div>
       </form>
