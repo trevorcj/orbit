@@ -126,8 +126,8 @@ export default function PayoutsTab() {
 
   const handleExecutePayout = async () => {
     const amount = Number(withdrawAmount);
-    if (!amount || amount < 2000) {
-      toast.error("Minimum withdrawal amount is ₦2,000.");
+    if (!amount || amount < 100) {
+      toast.error("Minimum withdrawal amount is ₦100.");
       return;
     }
 
@@ -443,7 +443,7 @@ export default function PayoutsTab() {
                 </span>
                 <input
                   type="number"
-                  min={2000}
+                  min={100}
                   max={data?.availableBalance || 0}
                   value={withdrawAmount}
                   onChange={(e) =>

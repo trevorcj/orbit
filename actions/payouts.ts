@@ -138,7 +138,7 @@ export async function getPayoutDashboardData(): Promise<PayoutDashboardData | nu
 
   // 4. Rate Limiting Check (Maximum once every 7 days)
   const hasBankLinked = Boolean(org.settlement_account_number && org.settlement_bank_code);
-  const minThresholdMet = availableBalance >= 2000;
+  const minThresholdMet = availableBalance >= 100;
 
   let canRequestPayout = hasBankLinked && minThresholdMet;
   let cooldownMessage: string | undefined;
@@ -234,10 +234,10 @@ export async function requestPayout(
   // 2. Validate Amount
   const amountToWithdraw = Math.round(requestedAmount);
 
-  if (amountToWithdraw < 2000) {
+  if (amountToWithdraw < 100) {
     return {
       success: false,
-      error: "Minimum withdrawal amount is ₦2,000.",
+      error: "Minimum withdrawal amount is ₦100.",
     };
   }
 
