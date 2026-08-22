@@ -25,7 +25,7 @@ export default function SettingsTabs({
   ] as const;
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-full mx-auto p-6">
+    <div className="flex flex-col gap-6 sm:gap-8 w-full max-w-full mx-auto p-4 sm:p-6 md:p-8">
       {/* Top Page Header */}
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Settings</h1>
@@ -34,8 +34,8 @@ export default function SettingsTabs({
         </p>
       </div>
 
-      {/* Tab Navigation Menu */}
-      <div className="flex items-center gap-8 border-b border-zinc-100 dark:border-[#1e2d47] pb-px">
+      {/* Tab Navigation Menu (Horizontally scrollable on mobile) */}
+      <div className="flex items-center gap-4 sm:gap-8 border-b border-zinc-100 dark:border-[#1e2d47] pb-px overflow-x-auto no-scrollbar scrollbar-none whitespace-nowrap">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -43,7 +43,7 @@ export default function SettingsTabs({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 pb-3 text-[14px] font-medium transition-all relative cursor-pointer ${
+              className={`flex items-center gap-2 pb-3 text-xs sm:text-[14px] font-medium transition-all relative shrink-0 cursor-pointer ${
                 isActive
                   ? "text-[#0F86EE] dark:text-[#38bdf8]"
                   : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200"

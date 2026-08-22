@@ -37,7 +37,8 @@ export default async function Page() {
       customers(
         first_name,
         last_name,
-        email
+        email,
+        portal_token
       ),
 
       subscriptions(
@@ -96,32 +97,21 @@ export default async function Page() {
 
       return {
         id: payment.id,
-
         organisation_id: payment.organisation_id,
-
         subscription_id: payment.subscription_id,
-
         customer_id: payment.customer_id,
-
         amount: Number(payment.amount ?? 0),
-
         currency: payment.currency,
-
         status,
-
         provider: payment.provider,
-
         provider_reference: payment.provider_reference,
-
         paid_at: payment.paid_at,
-
         created_at: payment.created_at,
-
         customers: {
           name: customerName,
           email: customer?.email ?? "",
+          portalToken: customer?.portal_token ?? null,
         },
-
         subscriptions: {
           plans: {
             name: plan?.name ?? "One-time payment",

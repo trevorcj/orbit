@@ -364,13 +364,18 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
   const handleShareReceipt = async (payment: Payment) => {
     const receiptNum = `RCT-${(payment.provider_reference || payment.id).slice(-5).toUpperCase()}`;
     const amountStr = `₦${Number(payment.amount).toLocaleString("en-NG")}`;
-    const shareText = `Orbit Payment Receipt ${receiptNum} for ${amountStr} (${payment.customers?.name || "Customer"}). Reference: ${payment.provider_reference || payment.id}`;
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const portalUrl = (payment.customers as any)?.portalToken
+      ? `${origin}/portal/${(payment.customers as any).portalToken}`
+      : `${origin}/dashboard/payments`;
+    const shareText = `*Orbit Payment Receipt: ${receiptNum}*\nAmount: ${amountStr}\nCustomer: ${payment.customers?.name || "Customer"}\nReference: ${payment.provider_reference || payment.id}\nDate: ${new Date(payment.paid_at || payment.created_at).toLocaleDateString("en-NG")}\n\nView Receipt & Invoices:\n${portalUrl}`;
 
     if (navigator.share) {
       try {
         await navigator.share({
           title: `Receipt ${receiptNum}`,
           text: shareText,
+          url: portalUrl,
         });
         return;
       } catch {
@@ -379,7 +384,7 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
     }
 
     await navigator.clipboard.writeText(shareText);
-    toast.success("Receipt details copied to clipboard!");
+    toast.success("Receipt link & details copied to clipboard!");
   };
 
   const handleExportCSV = () => {

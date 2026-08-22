@@ -14,6 +14,7 @@ export interface Payment {
   customers: {
     name: string;
     email: string;
+    portalToken?: string | null;
   } | null;
   subscriptions: {
     plans: {

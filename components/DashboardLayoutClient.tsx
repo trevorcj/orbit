@@ -285,8 +285,28 @@ export default function DashboardLayoutClient({
             />
           </Link>
 
-          <div className="w-8 h-8 rounded-full bg-[#0F86EE] text-white font-bold flex items-center justify-center text-xs">
-            {getInitials(organization?.name || userProfile.firstName || "M")}
+          <div className="flex items-center gap-2">
+            {userProfile?.avatarUrl ? (
+              <Image
+                src={userProfile.avatarUrl}
+                alt={userFullName}
+                className="w-8 h-8 rounded-full object-cover shrink-0 border border-zinc-200 dark:border-[#1a2942]"
+                width={32}
+                height={32}
+              />
+            ) : organization?.logoUrl ? (
+              <Image
+                src={organization.logoUrl}
+                alt={organization.name}
+                className="w-8 h-8 rounded-full object-cover shrink-0 border border-zinc-200 dark:border-[#1a2942]"
+                width={32}
+                height={32}
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-[#0F86EE] text-white font-bold flex items-center justify-center text-xs">
+                {getInitials(userFullName || organization?.name || "M")}
+              </div>
+            )}
           </div>
         </header>
 
