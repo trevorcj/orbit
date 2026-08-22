@@ -13,7 +13,7 @@ export async function processBackgroundRenewals(): Promise<{
   const { data: expiringRows, error: scanError } = await supabaseAdmin
     .from("subscriptions")
     .select("id, status, renews_at, cancel_at_period_end, ends_at")
-    .in("status", ["ACTIVE", "TRIALING"])
+    .in("status", ["ACTIVE", "TRIALING", "PAST_DUE"])
     .lte("renews_at", currentTimestamp);
 
   if (scanError) {

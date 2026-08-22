@@ -225,6 +225,14 @@ export async function fulfillPayment({
     renewsAt.setDate(renewsAt.getDate() + trialDays);
   } else {
     switch (plan.billing_interval) {
+      case "daily":
+        renewsAt.setDate(renewsAt.getDate() + 1);
+        break;
+
+      case "weekly":
+        renewsAt.setDate(renewsAt.getDate() + 7);
+        break;
+
       case "yearly":
         renewsAt.setFullYear(renewsAt.getFullYear() + 1);
         break;

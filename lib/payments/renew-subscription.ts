@@ -134,6 +134,7 @@ export async function renewSubscription(subscriptionId: string) {
 
   const merchantTxRef = `renew_${subscription.id}_${crypto.randomUUID()}`;
   const amount = Number(plan.amount);
+  const amountInKobo = Math.round(amount * 100);
 
   /*
    * 4. Charge saved card via Paystack headless authorization charge (with 95/5 split)
@@ -145,7 +146,7 @@ export async function renewSubscription(subscriptionId: string) {
     const result = await chargePaystackAuthorization({
       authorizationCode: subscription.card_token,
       email: customer.email,
-      amount,
+      amount: amountInKobo,
       reference: merchantTxRef,
       subaccount: subaccountCode,
       metadata: {
@@ -186,6 +187,14 @@ export async function renewSubscription(subscriptionId: string) {
     const nextRenewal = new Date(now);
 
     switch (plan.billing_interval) {
+      case "daily":
+        nextRenewal.setDate(nextRenewal.getDate() + 1);
+        break;
+
+      case "weekly":
+        nextRenewal.setDate(nextRenewal.getDate() + 7);
+        break;
+
       case "yearly":
         nextRenewal.setFullYear(nextRenewal.getFullYear() + 1);
         break;
