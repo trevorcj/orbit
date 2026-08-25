@@ -171,7 +171,7 @@ export default async function MerchantDashboardPage() {
   return (
     <div className="flex flex-col gap-8 antialiased max-w-full">
       {/* Top Welcome & Actions Header */}
-      <div className="flex items-start justify-between">
+      <div id="tour-welcome" className="flex items-start justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">
             Dashboard
@@ -193,7 +193,7 @@ export default async function MerchantDashboardPage() {
       </div>
 
       {/* KPI METRIC CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div id="tour-metrics" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Gross Revenue Card */}
         <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] p-6 flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors">
           <div>

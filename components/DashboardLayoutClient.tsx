@@ -15,8 +15,10 @@ import {
   Menu,
   X,
   HandCoins,
+  Sparkles,
 } from "lucide-react";
 import Image from "next/image";
+import ProductTour, { startOrbitProductTour } from "@/components/ProductTour";
 
 interface DashboardLayoutClientProps {
   children: React.ReactNode;
@@ -168,6 +170,7 @@ export default function DashboardLayoutClient({
             </Link>
 
             <Link
+              id="tour-nav-products"
               href="/dashboard/products"
               className={getLinkStyles("/dashboard/products").className}
               onClick={() => setMobileOpen(false)}>
@@ -179,6 +182,7 @@ export default function DashboardLayoutClient({
             </Link>
 
             <Link
+              id="tour-nav-customers"
               href="/dashboard/customers"
               className={getLinkStyles("/dashboard/customers").className}
               onClick={() => setMobileOpen(false)}>
@@ -190,6 +194,7 @@ export default function DashboardLayoutClient({
             </Link>
 
             <Link
+              id="tour-nav-subscriptions"
               href="/dashboard/subscriptions"
               className={getLinkStyles("/dashboard/subscriptions").className}
               onClick={() => setMobileOpen(false)}>
@@ -201,6 +206,7 @@ export default function DashboardLayoutClient({
             </Link>
 
             <Link
+              id="tour-nav-payments"
               href="/dashboard/payments"
               className={getLinkStyles("/dashboard/payments").className}
               onClick={() => setMobileOpen(false)}>
@@ -217,6 +223,7 @@ export default function DashboardLayoutClient({
         <div className="space-y-4 pt-4 border-t border-zinc-100 dark:border-[#1a2942]">
           <nav className="space-y-1">
             <Link
+              id="tour-nav-settings"
               href="/dashboard/settings"
               className={getLinkStyles("/dashboard/settings").className}
               onClick={() => setMobileOpen(false)}>
@@ -227,12 +234,23 @@ export default function DashboardLayoutClient({
               Settings
             </Link>
             <Link
+              id="tour-nav-docs"
               href="/docs"
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
               onClick={() => setMobileOpen(false)}>
               <HelpCircle size={17} />
               API Docs
             </Link>
+            <button
+              type="button"
+              onClick={() => {
+                setMobileOpen(false);
+                startOrbitProductTour();
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[#0F86EE] hover:bg-blue-50/60 dark:hover:bg-[#131f33] transition-colors cursor-pointer text-left">
+              <Sparkles size={17} />
+              <span>Product Tour</span>
+            </button>
           </nav>
 
           <div className="pt-3 border-t border-zinc-100 dark:border-[#1a2942] flex items-center justify-between">
@@ -338,6 +356,9 @@ export default function DashboardLayoutClient({
           {children}
         </main>
       </div>
+
+      {/* Driver.js Product Tour */}
+      <ProductTour />
     </div>
   );
 }
