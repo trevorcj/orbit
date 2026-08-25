@@ -62,6 +62,8 @@ export interface Subscription {
   failedPaymentAttempts: number;
   lastPaymentAt?: string | null;
   lastFailedPaymentAt?: string | null;
+  cardBrand?: string;
+  cardLast4?: string;
   payments: SubscriptionPayment[];
 }
 
@@ -592,11 +594,24 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                       <Calendar size={15} className="text-zinc-400 shrink-0 mt-0.5" />
                       <div className="flex flex-col">
                         <span className="text-zinc-400 text-[11px] font-medium">
-                          Next Scheduled Billing
+                          {selectedSub.status === "Past due" ? "Next Payment Retry" : "Next Scheduled Billing"}
                         </span>
                         <span className="font-semibold text-zinc-800 dark:text-zinc-200 mt-0.5">
-                          {formatDateTime(selectedSub.renewsAt)}
+                          {selectedSub.status === "Canceled"
+                            ? "Inactive (No upcoming billing)"
+                            : selectedSub.renewsAt
+                              ? new Date(selectedSub.renewsAt).toLocaleDateString("en-US", {
+                                  month: "long",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })
+                              : "—"}
                         </span>
+                        {selectedSub.status === "Past due" && (
+                          <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">
+                            Attempt {selectedSub.failedPaymentAttempts || 1} of 4 ({Math.max(0, 4 - (selectedSub.failedPaymentAttempts || 1))} retries remaining)
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -619,7 +634,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                           Payment Method
                         </span>
                         <span className="font-semibold text-zinc-800 dark:text-zinc-200 mt-0.5">
-                          Paystack Headless Tokenized Card
+                          Card (•••• {selectedSub.cardLast4 || "4242"})
                         </span>
                       </div>
                     </div>
@@ -629,36 +644,38 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
 
               {/* Tab 2: Payment History */}
               {drawerTab === "transactions" && (
-                <div className="mt-5 flex flex-col gap-3">
+                <div className="mt-5 flex flex-col gap-2.5">
                   {selectedSub.payments.length > 0 ? (
-                    selectedSub.payments.map((p, idx) => (
-                      <div
-                        key={p.id}
-                        className="p-3.5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524] flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-3">
-                          <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center font-bold text-xs shrink-0">
-                            ✓
-                          </div>
+                    selectedSub.payments.map((p) => {
+                      const isSuccess = p.status?.toLowerCase() === "success";
+                      const isFailed = p.status?.toLowerCase() === "failed";
+
+                      return (
+                        <div
+                          key={p.id}
+                          className="p-3.5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524] flex items-center justify-between text-xs">
                           <div className="flex flex-col">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-zinc-900 dark:text-white">
-                                ₦{p.amount.toLocaleString()}
-                              </span>
-                              <span className="text-[10px] text-zinc-400 font-mono">
-                                ({p.provider_reference ? p.provider_reference.slice(0, 12) + "..." : p.id.slice(0, 8)})
-                              </span>
-                            </div>
-                            <span className="text-[11px] text-zinc-400 mt-0.5">
+                            <span className="font-bold text-zinc-900 dark:text-white font-mono text-sm">
+                              ₦{p.amount.toLocaleString()}
+                            </span>
+                            <span className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
                               {formatDateTime(p.paid_at || p.created_at)}
                             </span>
                           </div>
-                        </div>
 
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 capitalize">
-                          {p.status}
-                        </span>
-                      </div>
-                    ))
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border capitalize ${
+                              isSuccess
+                                ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
+                                : isFailed
+                                  ? "bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800"
+                                  : "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800"
+                            }`}>
+                            {p.status}
+                          </span>
+                        </div>
+                      );
+                    })
                   ) : (
                     <div className="py-8 text-center text-xs text-zinc-400">
                       No past payments found for this subscription.

@@ -550,29 +550,38 @@ export async function GET(req: Request) {
   -H "Authorization: Bearer sk_live_YOUR_KEY"`}
             />
 
-            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mt-3 mb-1">When user has active subscription (200 OK):</p>
+            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mt-3 mb-1">Response (200 OK):</p>
             <CodeSnippet
-              title="Response (Active)"
+              title="Response"
               language="json"
               code={`{
-  "customer": {
-    "id": "8fa24018-c5a4-4f05-89f4-180db63d2319",
-    "name": "Idawari Justus",
-    "email": "idawari005@gmail.com"
-  },
-  "has_active_subscription": true,
-  "subscription": {
-    "id": "sub_48912",
-    "status": "ACTIVE",
-    "plan_id": "plan_9481029",
-    "plan_name": "Monthly Starter",
-    "amount": 5000,
+  "id": "sub_48912",
+  "status": "active",
+  "cancel_at_period_end": false,
+  "current_period_end": "2026-09-20T12:00:00.000Z",
+  "starts_at": "2026-08-20T12:00:00.000Z",
+  "cancelled_at": null,
+  "plan": {
+    "id": "plan_9481029",
+    "name": "Monthly Starter",
+    "price": 5000,
     "currency": "NGN",
-    "billing_interval": "monthly",
-    "renews_at": "2026-09-20T12:00:00.000Z"
+    "interval": "monthly",
+    "description": "Standard recurring starter subscription",
+    "features": ["All core features", "Email support"]
   }
 }`}
             />
+
+            <div className="mt-3 p-3 rounded-lg bg-zinc-50 dark:bg-[#0c1524] border border-zinc-200 dark:border-[#1e2d47] text-xs">
+              <span className="font-semibold text-zinc-800 dark:text-zinc-200 block mb-1">Possible <code>status</code> values:</span>
+              <ul className="space-y-1 text-zinc-600 dark:text-zinc-400 pl-4 list-disc">
+                <li><code className="text-emerald-600 font-semibold">active</code> — Subscription is paid and in good standing. Grant user full access.</li>
+                <li><code className="text-amber-600 font-semibold">past_due</code> — Last renewal attempt failed (card declined/insufficient funds). Orbit is retrying.</li>
+                <li><code className="text-indigo-600 font-semibold">trialing</code> — Customer is currently enjoying an active free trial.</li>
+                <li><code className="text-rose-600 font-semibold">canceled</code> — Subscription is canceled and access is revoked.</li>
+              </ul>
+            </div>
           </div>
 
           {/* ENDPOINT: POST /api/v1/checkout/sessions */}

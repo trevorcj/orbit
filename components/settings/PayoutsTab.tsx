@@ -268,6 +268,24 @@ export default function PayoutsTab() {
         </div>
       </div>
 
+      {/* Payout Threshold & Schedule Bar */}
+      <div className="p-4 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+            Payout Threshold &amp; Schedule
+          </span>
+          <div className="relative group">
+            <Info size={13} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-help" />
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-64 p-2.5 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-[11px] text-white font-normal z-20 pointer-events-none text-center">
+              Minimum payout threshold is ₦100. Payouts are automatically swept into your settlement bank on daily T+1 schedule at ~5:40 AM with zero transfer fees.
+            </div>
+          </div>
+        </div>
+        <span className="font-mono text-zinc-600 dark:text-zinc-400">
+          Threshold: ₦100 • Daily T+1 (~5:40 AM)
+        </span>
+      </div>
+
       {/* 3. SETTLEMENT BANK ACCOUNT CONFIGURATION */}
       <div className="p-6 sm:p-8 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col gap-6">
         <div className="flex items-center justify-between">

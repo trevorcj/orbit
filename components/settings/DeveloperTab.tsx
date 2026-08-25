@@ -272,16 +272,17 @@ export default function DeveloperTab({
                 className="border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] dark:text-white"
               />
             </div>
-            <div className="flex-1 min-w-40">
-              <Input
-                label="Key type"
-                isRequired={false}
-                type="text"
+            <div className="flex-1 min-w-40 flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                Key type
+              </label>
+              <select
                 name="type"
                 defaultValue="secret"
-                placeholder="secret or publishable"
-                className="border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] dark:text-white"
-              />
+                className="h-11 w-full rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] px-3 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-[#0F86EE] cursor-pointer">
+                <option value="secret">Secret Key (Backend only)</option>
+                <option value="publishable">Publishable Key (Client / Frontend)</option>
+              </select>
             </div>
             <button
               disabled={generating}
@@ -406,37 +407,47 @@ export default function DeveloperTab({
 
           <form
             action={webhookAction}
-            className="flex flex-wrap items-end gap-3">
-            <div className="flex-1 min-w-52">
-              <Input
-                label="Endpoint URL"
-                isRequired={false}
-                type="text"
-                name="url"
-                placeholder="https://yourapp.com/api/orbit/webhook"
-                className="border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] dark:text-white"
-              />
+            className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Input
+                  label="Endpoint URL"
+                  isRequired={true}
+                  type="text"
+                  name="url"
+                  placeholder="https://yourapp.com/api/orbit/webhook"
+                  className="border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] dark:text-white"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                  Subscribed Event
+                </label>
+                <select
+                  name="events"
+                  defaultValue=""
+                  className="h-11 w-full rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] px-3 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-[#0F86EE] cursor-pointer">
+                  <option value="">All Events (*)</option>
+                  <option value="payment.succeeded">payment.succeeded</option>
+                  <option value="payment.failed">payment.failed</option>
+                  <option value="subscription.created">subscription.created</option>
+                  <option value="subscription.renewed">subscription.renewed</option>
+                  <option value="subscription.cancelled">subscription.cancelled</option>
+                  <option value="subscription.updated">subscription.updated</option>
+                </select>
+              </div>
             </div>
-            <div className="flex-1 min-w-52">
-              <Input
-                label="Subscribed Events"
-                isRequired={false}
-                type="text"
-                name="events"
-                placeholder="payment.succeeded, subscription.renewed"
-                className="border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] dark:text-white"
-              />
-              <span className="text-[10px] text-zinc-400 dark:text-zinc-500 block mt-1">
-                Comma-separated (e.g. <code>payment.succeeded</code>). Leave blank to subscribe to all events.
-              </span>
+
+            <div>
+              <button
+                disabled={creatingWebhook}
+                type="submit"
+                className="flex h-11 items-center gap-2 rounded-lg bg-[#0F86EE] px-5 text-xs font-semibold text-white hover:bg-[#0d7ad9] transition-colors disabled:opacity-60 cursor-pointer">
+                <Plus size={14} />
+                {creatingWebhook ? "Adding..." : "Add webhook endpoint"}
+              </button>
             </div>
-            <button
-              disabled={creatingWebhook}
-              type="submit"
-              className="flex h-11 items-center gap-2 rounded-lg bg-[#0F86EE] px-4 text-xs font-semibold text-white hover:bg-[#0d7ad9] transition-colors disabled:opacity-60 cursor-pointer">
-              <Plus size={14} />
-              {creatingWebhook ? "Adding..." : "Add endpoint"}
-            </button>
           </form>
         </div>
       </div>

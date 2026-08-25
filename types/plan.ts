@@ -10,6 +10,8 @@ export interface Plan {
   currency: string | null;
   amount: number | null;
   billing_interval: BillingInterval | string | null;
+  billing_interval_days?: number | null;
+  billing_interval_minutes?: number | null;
   trial_period_days: number | null;
   is_active: boolean | null;
   created_at: string;

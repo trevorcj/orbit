@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="coinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0F86EE" />
+    </linearGradient>
+    <linearGradient id="innerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F86EE" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+  </defs>
+  <!-- Outer Coin Rim -->
+  <circle cx="16" cy="16" r="15" fill="url(#coinGrad)" stroke="#0284c7" stroke-width="1" />
+  <!-- Inner Coin Ring -->
+  <circle cx="16" cy="16" r="12" fill="url(#innerGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-dasharray="2 1" />
+  <!-- Orbit Node in Center -->
+  <circle cx="16" cy="16" r="4.5" fill="#ffffff" />
+  <!-- Inner Orbital Ring -->
+  <ellipse cx="16" cy="16" rx="9" ry="3.5" fill="none" stroke="#ffffff" stroke-width="1.2" transform="rotate(-30 16 16)" opacity="0.9" />
+</svg>

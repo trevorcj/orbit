@@ -66,14 +66,54 @@ export default function CheckoutClient({
     year: "numeric",
   });
 
-  const intervalLabel =
-    selectedPlan.billing_interval === "yearly"
-      ? "year"
-      : selectedPlan.billing_interval === "quarterly"
-        ? "quarter"
-        : selectedPlan.billing_interval === "demo"
+  const getIntervalDisplay = (interval?: string | null, intervalDays?: number | null) => {
+    switch (interval) {
+      case "daily":
+        return "day";
+      case "weekly":
+        return "week";
+      case "yearly":
+        return "year";
+      case "quarterly":
+        return "quarter";
+      case "demo":
+        return "day";
+      case "custom":
+        return Number(intervalDays || 1) === 1
           ? "day"
-          : "month";
+          : `${intervalDays || 1} days`;
+      case "monthly":
+      default:
+        return "month";
+    }
+  };
+
+  const getPlanBillingLabel = (interval?: string | null, intervalDays?: number | null) => {
+    switch (interval) {
+      case "daily":
+        return "Daily billing";
+      case "weekly":
+        return "Weekly billing";
+      case "yearly":
+        return "Yearly billing";
+      case "quarterly":
+        return "Quarterly billing";
+      case "demo":
+        return "1 day billing";
+      case "custom":
+        return Number(intervalDays || 1) === 1
+          ? "1 day billing"
+          : `${intervalDays || 1} days billing`;
+      case "monthly":
+      default:
+        return "Monthly billing";
+    }
+  };
+
+  const intervalLabel = getIntervalDisplay(
+    selectedPlan.billing_interval,
+    selectedPlan.billing_interval_days,
+  );
 
   const initialFirstName = initialName?.split(" ")[0] || "";
   const initialLastName = initialName?.split(" ").slice(1).join(" ") || "";
@@ -170,7 +210,7 @@ export default function CheckoutClient({
                           )}
                         </div>
                         <span className="text-xs text-zinc-400 capitalize mt-0.5">
-                          {plan.billing_interval === "demo" ? "1 day" : plan.billing_interval} billing
+                          {getPlanBillingLabel(plan.billing_interval, plan.billing_interval_days)}
                         </span>
                       </div>
 

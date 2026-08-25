@@ -44,9 +44,15 @@ export default async function Page() {
         id,
         status,
         payments (
+          id,
           amount,
           status
         )
+      ),
+      payments (
+        id,
+        amount,
+        status
       )
       `,
     )
@@ -62,23 +68,33 @@ export default async function Page() {
 
   const formattedCustomers =
     customers?.map((customer) => {
-      const totalSpent =
-        customer.subscriptions?.reduce((total, subscription) => {
-          const payments = subscription.payments ?? [];
+      const directPayments = (customer.payments || []).filter(
+        (p: any) => p.status?.toLowerCase() === "success",
+      );
 
-          const successfulPayments = payments.filter(
-            (payment) =>
-              payment.status === "success" || payment.status === "SUCCESS",
-          );
+      const subPayments = (customer.subscriptions || []).flatMap(
+        (s: any) =>
+          (s.payments || []).filter((p: any) => p.status?.toLowerCase() === "success"),
+      );
 
-          return (
-            total +
-            successfulPayments.reduce(
-              (sum, payment) => sum + Number(payment.amount ?? 0),
-              0,
-            )
-          );
-        }, 0) ?? 0;
+      const paymentMap = new Map<string, number>();
+      for (const p of [...directPayments, ...subPayments]) {
+        if (p.id) {
+          paymentMap.set(p.id, Number(p.amount ?? 0));
+        }
+      }
+
+      let totalSpent = 0;
+      if (paymentMap.size > 0) {
+        for (const amt of paymentMap.values()) {
+          totalSpent += amt;
+        }
+      } else {
+        totalSpent = [...directPayments, ...subPayments].reduce(
+          (sum, p) => sum + Number(p.amount ?? 0),
+          0,
+        );
+      }
 
       const activeSubscriptions =
         customer.subscriptions?.filter(

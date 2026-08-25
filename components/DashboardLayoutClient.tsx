@@ -15,7 +15,6 @@ import {
   Menu,
   X,
   HandCoins,
-  ArrowRight,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -53,12 +52,14 @@ export default function DashboardLayoutClient({
       pathname === href ||
       (href !== "/dashboard" && pathname?.startsWith(href));
     return {
-      className: `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+      className: `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
         isActive
           ? "text-zinc-900 dark:text-white bg-zinc-100 dark:bg-[#131f33]"
           : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-[#131f33]"
       }`,
-      iconColor: isActive ? "text-zinc-900 dark:text-white" : "text-zinc-500 dark:text-zinc-400",
+      iconColor: isActive
+        ? "text-zinc-900 dark:text-white"
+        : "text-zinc-500 dark:text-zinc-400",
     };
   };
 
@@ -82,7 +83,10 @@ export default function DashboardLayoutClient({
         <div>
           {/* Top Logo & Mobile Close Button */}
           <div className="flex items-center justify-between px-2 mb-6">
-            <Link href="/dashboard" className="flex items-center gap-1.5" onClick={() => setMobileOpen(false)}>
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-1.5"
+              onClick={() => setMobileOpen(false)}>
               <Image
                 src="/orbit-light.svg"
                 alt="Orbit Logo"
@@ -156,7 +160,10 @@ export default function DashboardLayoutClient({
               href="/dashboard"
               className={getLinkStyles("/dashboard").className}
               onClick={() => setMobileOpen(false)}>
-              <Home size={17} className={getLinkStyles("/dashboard").iconColor} />
+              <Home
+                size={17}
+                className={getLinkStyles("/dashboard").iconColor}
+              />
               Dashboard
             </Link>
 
@@ -164,7 +171,10 @@ export default function DashboardLayoutClient({
               href="/dashboard/products"
               className={getLinkStyles("/dashboard/products").className}
               onClick={() => setMobileOpen(false)}>
-              <ShoppingBag size={17} className={getLinkStyles("/dashboard/products").iconColor} />
+              <ShoppingBag
+                size={17}
+                className={getLinkStyles("/dashboard/products").iconColor}
+              />
               Products
             </Link>
 
@@ -172,7 +182,10 @@ export default function DashboardLayoutClient({
               href="/dashboard/customers"
               className={getLinkStyles("/dashboard/customers").className}
               onClick={() => setMobileOpen(false)}>
-              <Users size={17} className={getLinkStyles("/dashboard/customers").iconColor} />
+              <Users
+                size={17}
+                className={getLinkStyles("/dashboard/customers").iconColor}
+              />
               Customers
             </Link>
 
@@ -180,7 +193,10 @@ export default function DashboardLayoutClient({
               href="/dashboard/subscriptions"
               className={getLinkStyles("/dashboard/subscriptions").className}
               onClick={() => setMobileOpen(false)}>
-              <CreditCard size={17} className={getLinkStyles("/dashboard/subscriptions").iconColor} />
+              <CreditCard
+                size={17}
+                className={getLinkStyles("/dashboard/subscriptions").iconColor}
+              />
               Subscriptions
             </Link>
 
@@ -188,7 +204,10 @@ export default function DashboardLayoutClient({
               href="/dashboard/payments"
               className={getLinkStyles("/dashboard/payments").className}
               onClick={() => setMobileOpen(false)}>
-              <HandCoins size={17} className={getLinkStyles("/dashboard/payments").iconColor} />
+              <HandCoins
+                size={17}
+                className={getLinkStyles("/dashboard/payments").iconColor}
+              />
               Payments
             </Link>
           </nav>
@@ -201,7 +220,10 @@ export default function DashboardLayoutClient({
               href="/dashboard/settings"
               className={getLinkStyles("/dashboard/settings").className}
               onClick={() => setMobileOpen(false)}>
-              <Settings size={17} className={getLinkStyles("/dashboard/settings").iconColor} />
+              <Settings
+                size={17}
+                className={getLinkStyles("/dashboard/settings").iconColor}
+              />
               Settings
             </Link>
             <Link
@@ -225,7 +247,8 @@ export default function DashboardLayoutClient({
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-[#0F86EE] text-white font-bold flex items-center justify-center text-xs shrink-0">
-                  {`${userProfile.firstName?.[0] || ""}${userProfile.lastName?.[0] || ""}`.toUpperCase() || "U"}
+                  {`${userProfile.firstName?.[0] || ""}${userProfile.lastName?.[0] || ""}`.toUpperCase() ||
+                    "U"}
                 </div>
               )}
 

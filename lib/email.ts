@@ -382,3 +382,102 @@ export function generatePaymentFailedEmail(params: {
     </div>
   `;
 }
+
+/**
+ * 6. Subscription Canceled Due to Non-Payment Email Template (For Customer)
+ */
+export function generateSubscriptionCancelledNonPaymentEmail(params: {
+  customerName: string;
+  productName: string;
+  planName: string;
+  checkoutUrl: string;
+}): string {
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #18181b; background-color: #ffffff; border-radius: 12px; border: 1px solid #f4f4f5;">
+      <div style="margin-bottom: 24px;">
+        <span style="font-size: 24px; font-weight: 800; color: #0F86EE; letter-spacing: -0.03em;">orbit</span>
+      </div>
+
+      <h1 style="font-size: 20px; font-weight: 700; margin-bottom: 12px; color: #dc2626;">
+        Subscription Canceled: ${params.productName}
+      </h1>
+
+      <p style="font-size: 15px; line-height: 1.5; color: #52525b; margin-bottom: 20px;">
+        Hi ${params.customerName || "there"}, after multiple unsuccessful payment attempts, your subscription to <strong>${params.productName}</strong> (${params.planName}) has been canceled.
+      </p>
+
+      <div style="background-color: #fef2f2; border-radius: 8px; padding: 18px; border: 1px solid #fee2e2; margin-bottom: 24px;">
+        <p style="font-size: 13px; color: #991b1b; margin: 0;">
+          Access to this service is now inactive. If you would like to continue your subscription, you can sign up again with an active payment card anytime.
+        </p>
+      </div>
+
+      <div style="margin-bottom: 24px;">
+        <a href="${params.checkoutUrl}" style="display: inline-block; background-color: #0F86EE; color: #ffffff; padding: 12px 24px; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">
+          Resubscribe Now
+        </a>
+      </div>
+
+      <p style="font-size: 12px; color: #a1a1aa; line-height: 1.4;">
+        Powered by Orbit Recurring Engine.
+      </p>
+    </div>
+  `;
+}
+
+/**
+ * 7. Merchant Alert: Customer Subscription Canceled for Non-Payment
+ */
+export function generateMerchantSubscriptionCancelledAlertEmail(params: {
+  customerName: string;
+  customerEmail: string;
+  productName: string;
+  planName: string;
+  amount: number;
+  currency: string;
+}): string {
+  const formattedAmount = `${params.currency === "NGN" ? "₦" : params.currency} ${Number(
+    params.amount,
+  ).toLocaleString()}`;
+
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #18181b; background-color: #ffffff; border-radius: 12px; border: 1px solid #f4f4f5;">
+      <div style="margin-bottom: 24px;">
+        <span style="font-size: 24px; font-weight: 800; color: #0F86EE; letter-spacing: -0.03em;">orbit</span>
+      </div>
+
+      <h1 style="font-size: 20px; font-weight: 700; margin-bottom: 12px; color: #dc2626;">
+        ⚠️ Customer Subscription Canceled: ${params.productName}
+      </h1>
+
+      <p style="font-size: 15px; line-height: 1.5; color: #52525b; margin-bottom: 20px;">
+        A customer subscription was automatically canceled after exhausting all payment retries.
+      </p>
+
+      <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 24px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+          <tr>
+            <td style="padding: 6px 0; color: #64748b;">Customer</td>
+            <td style="padding: 6px 0; font-weight: 600; text-align: right; color: #0f172a;">${params.customerName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b;">Email</td>
+            <td style="padding: 6px 0; font-weight: 600; text-align: right; color: #0f172a;">${params.customerEmail}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b;">Plan</td>
+            <td style="padding: 6px 0; font-weight: 600; text-align: right; color: #0f172a;">${params.planName} (${formattedAmount})</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b;">Reason</td>
+            <td style="padding: 6px 0; font-weight: 600; text-align: right; color: #dc2626;">Max payment retries exceeded (4 attempts)</td>
+          </tr>
+        </table>
+      </div>
+
+      <p style="font-size: 12px; color: #a1a1aa; line-height: 1.4;">
+        Orbit Workspace Real-time Alert.
+      </p>
+    </div>
+  `;
+}

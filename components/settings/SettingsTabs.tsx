@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Building2, CreditCard, User, Code } from "lucide-react";
 import OrganizationTab from "./OrganizationTab";
 import PayoutsTab from "./PayoutsTab";
@@ -10,12 +11,27 @@ import type { DeveloperData } from "@/actions/developer";
 
 type TabId = "organization" | "billing" | "profile" | "developer";
 
-export default function SettingsTabs({
+function SettingsTabsContent({
   developerData,
 }: {
   developerData: DeveloperData;
 }) {
-  const [activeTab, setActiveTab] = useState<TabId>("organization");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const tabParam = searchParams.get("tab") as TabId | null;
+  const activeTab: TabId =
+    tabParam &&
+    ["organization", "billing", "profile", "developer"].includes(tabParam)
+      ? tabParam
+      : "organization";
+
+  const handleTabChange = (id: TabId) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", id);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   const tabs = [
     { id: "organization", label: "Organization", icon: Building2 },
@@ -34,7 +50,7 @@ export default function SettingsTabs({
         </p>
       </div>
 
-      {/* Tab Navigation Menu (Horizontally scrollable on mobile) */}
+      {/* Tab Navigation Menu (Horizontally scrollable on mobile with absolute URL sync) */}
       <div className="flex items-center gap-4 sm:gap-8 border-b border-zinc-100 dark:border-[#1e2d47] pb-px overflow-x-auto no-scrollbar scrollbar-none whitespace-nowrap">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -42,7 +58,7 @@ export default function SettingsTabs({
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`flex items-center gap-2 pb-3 text-xs sm:text-[14px] font-medium transition-all relative shrink-0 cursor-pointer ${
                 isActive
                   ? "text-[#0F86EE] dark:text-[#38bdf8]"
@@ -68,5 +84,17 @@ export default function SettingsTabs({
         )}
       </div>
     </div>
+  );
+}
+
+export default function SettingsTabs({
+  developerData,
+}: {
+  developerData: DeveloperData;
+}) {
+  return (
+    <Suspense fallback={<div className="p-8 text-zinc-400">Loading settings...</div>}>
+      <SettingsTabsContent developerData={developerData} />
+    </Suspense>
   );
 }

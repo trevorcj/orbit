@@ -5,6 +5,8 @@ import {
   sendEmail,
   generateRenewalReceiptEmail,
   generatePaymentFailedEmail,
+  generateSubscriptionCancelledNonPaymentEmail,
+  generateMerchantSubscriptionCancelledAlertEmail,
 } from "@/lib/email";
 import { dispatchOrbitEvent } from "@/lib/developer-api/webhooks";
 
@@ -36,7 +38,8 @@ export async function renewSubscription(subscriptionId: string) {
         billing_interval_minutes,
         product_id,
         products!plans_product_id_fkey (
-          name
+          name,
+          slug
         )
       )
       `,
@@ -65,10 +68,11 @@ export async function renewSubscription(subscriptionId: string) {
     billing_interval: string;
     billing_interval_days: number | null;
     billing_interval_minutes: number | null;
-    products?: { name: string };
+    products?: { name: string; slug?: string };
   };
 
   const productName = plan.products?.name || "Subscription";
+  const productSlug = plan.products?.slug || "";
   const now = new Date();
 
   /*
@@ -299,9 +303,9 @@ export async function renewSubscription(subscriptionId: string) {
     };
   } catch (error) {
     const attempts = (subscription.failed_payment_attempts ?? 0) + 1;
-    const isPastDue = attempts >= 3;
+    const isExhausted = attempts >= 4;
 
-    // Log failed attempt & record failed transaction in payments
+    // Log failed transaction in payments
     await supabase.from("payments").insert({
       organisation_id: subscription.organisation_id,
       subscription_id: subscription.id,
@@ -314,55 +318,141 @@ export async function renewSubscription(subscriptionId: string) {
       paid_at: now.toISOString(),
     });
 
-    await supabase
-      .from("subscriptions")
-      .update({
-        status: isPastDue ? "PAST_DUE" : subscription.status,
-        failed_payment_attempts: attempts,
-        last_failed_payment_at: now.toISOString(),
-      })
-      .eq("id", subscription.id);
-
-    // Send payment failed notice
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const portalUrl = `${appUrl}/portal/${customer.portal_token}`;
+    const checkoutUrl = productSlug
+      ? `${appUrl}/checkout/${productSlug}?plan=${plan.id}`
+      : `${appUrl}/portal/${customer.portal_token}`;
 
-    sendEmail({
-      to: customer.email,
-      subject: `⚠️ Payment Failed: ${productName} (${plan.name})`,
-      html: generatePaymentFailedEmail({
-        customerName: `${customer.first_name || ""} ${customer.last_name || ""}`.trim(),
-        productName,
-        planName: plan.name,
-        amount,
-        currency: plan.currency || "NGN",
-        portalUrl,
-      }),
-    }).catch((e) => console.error("Email send error:", e));
+    if (isExhausted) {
+      // 4 failed attempts: Cancel subscription & close access
+      await supabase
+        .from("subscriptions")
+        .update({
+          status: "CANCELED",
+          failed_payment_attempts: attempts,
+          last_failed_payment_at: now.toISOString(),
+          ends_at: now.toISOString(),
+        })
+        .eq("id", subscription.id);
 
-    dispatchOrbitEvent({
-      organisationId: subscription.organisation_id,
-      type: "payment.failed",
-      data: {
-        subscription_id: subscription.id,
-        customer_id: customer.id,
-        amount,
-        currency: "NGN",
-        provider: "paystack",
-        reference: merchantTxRef,
-      },
-    }).catch((e) => console.error("Webhook dispatch error:", e));
+      // 1. Send cancellation email to customer
+      sendEmail({
+        to: customer.email,
+        subject: `Subscription Canceled: ${productName} (${plan.name})`,
+        html: generateSubscriptionCancelledNonPaymentEmail({
+          customerName: `${customer.first_name || ""} ${customer.last_name || ""}`.trim(),
+          productName,
+          planName: plan.name,
+          checkoutUrl,
+        }),
+      }).catch((e) => console.error("Customer cancellation email error:", e));
 
-    dispatchOrbitEvent({
-      organisationId: subscription.organisation_id,
-      type: "subscription.updated",
-      data: {
-        id: subscription.id,
-        status: isPastDue ? "past_due" : "failed_attempt",
-        failed_payment_attempts: attempts,
-      },
-    }).catch((e) => console.error("Webhook dispatch error:", e));
+      // 2. Fetch organisation owner email & send merchant alert
+      const { data: orgData } = await supabase
+        .from("organisations")
+        .select("user_id, users(email)")
+        .eq("id", subscription.organisation_id)
+        .maybeSingle();
 
-    throw error;
+      const merchantEmail = (orgData?.users as any)?.email;
+      if (merchantEmail) {
+        sendEmail({
+          to: merchantEmail,
+          subject: `⚠️ Customer Subscription Canceled (Non-Payment): ${productName}`,
+          html: generateMerchantSubscriptionCancelledAlertEmail({
+            customerName: `${customer.first_name || ""} ${customer.last_name || ""}`.trim(),
+            customerEmail: customer.email,
+            productName,
+            planName: plan.name,
+            amount,
+            currency: plan.currency || "NGN",
+          }),
+        }).catch((e) => console.error("Merchant alert email error:", e));
+      }
+
+      // 3. Dispatch developer webhook events
+      dispatchOrbitEvent({
+        organisationId: subscription.organisation_id,
+        type: "payment.failed",
+        data: {
+          subscription_id: subscription.id,
+          customer_id: customer.id,
+          amount,
+          currency: "NGN",
+          provider: "paystack",
+          reference: merchantTxRef,
+        },
+      }).catch((e) => console.error("Webhook dispatch error:", e));
+
+      dispatchOrbitEvent({
+        organisationId: subscription.organisation_id,
+        type: "subscription.cancelled",
+        data: {
+          id: subscription.id,
+          status: "canceled",
+          reason: "max_retries_exceeded",
+          failed_payment_attempts: attempts,
+        },
+      }).catch((e) => console.error("Webhook dispatch error:", e));
+    } else {
+      // Schedule next retry for tomorrow
+      const nextRetry = new Date(now);
+      nextRetry.setDate(nextRetry.getDate() + 1);
+
+      await supabase
+        .from("subscriptions")
+        .update({
+          status: "PAST_DUE",
+          failed_payment_attempts: attempts,
+          last_failed_payment_at: now.toISOString(),
+          renews_at: nextRetry.toISOString(),
+        })
+        .eq("id", subscription.id);
+
+      // Send payment failed notice
+      sendEmail({
+        to: customer.email,
+        subject: `⚠️ Payment Failed: ${productName} (${plan.name}) - Attempt ${attempts} of 4`,
+        html: generatePaymentFailedEmail({
+          customerName: `${customer.first_name || ""} ${customer.last_name || ""}`.trim(),
+          productName,
+          planName: plan.name,
+          amount,
+          currency: plan.currency || "NGN",
+          portalUrl,
+        }),
+      }).catch((e) => console.error("Email send error:", e));
+
+      dispatchOrbitEvent({
+        organisationId: subscription.organisation_id,
+        type: "payment.failed",
+        data: {
+          subscription_id: subscription.id,
+          customer_id: customer.id,
+          amount,
+          currency: "NGN",
+          provider: "paystack",
+          reference: merchantTxRef,
+        },
+      }).catch((e) => console.error("Webhook dispatch error:", e));
+
+      dispatchOrbitEvent({
+        organisationId: subscription.organisation_id,
+        type: "subscription.updated",
+        data: {
+          id: subscription.id,
+          status: "past_due",
+          failed_payment_attempts: attempts,
+          retries_remaining: 4 - attempts,
+        },
+      }).catch((e) => console.error("Webhook dispatch error:", e));
+    }
+
+    return {
+      success: false,
+      subscriptionId,
+      message: error instanceof Error ? error.message : "Recurring billing declined",
+    };
   }
 }

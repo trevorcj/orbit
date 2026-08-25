@@ -54,7 +54,11 @@ export default async function Page() {
         first_name,
         last_name,
         email,
-        portal_token
+        portal_token,
+        customer_payment_methods (
+          card_brand,
+          card_last4
+        )
       ),
 
       plans (
@@ -112,6 +116,13 @@ export default async function Page() {
         `${customer?.first_name ?? ""} ${customer?.last_name ?? ""}`.trim() ||
         customer?.email ||
         "Customer";
+
+      const paymentMethod = Array.isArray(customer?.customer_payment_methods)
+        ? customer.customer_payment_methods[0]
+        : customer?.customer_payment_methods;
+
+      const cardBrand = paymentMethod?.card_brand || "Card";
+      const cardLast4 = paymentMethod?.card_last4 || "";
 
       let status: SubscriptionStatus = "Canceled";
 
@@ -194,6 +205,8 @@ export default async function Page() {
         failedPaymentAttempts: subscription.failed_payment_attempts ?? 0,
         lastPaymentAt: subscription.last_payment_at,
         lastFailedPaymentAt: subscription.last_failed_payment_at,
+        cardBrand,
+        cardLast4,
         payments: paymentsList,
       };
     }) ?? [];
