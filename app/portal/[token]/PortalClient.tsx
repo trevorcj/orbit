@@ -151,12 +151,16 @@ export default function PortalClient({ customer }: { customer: Customer }) {
     }
   };
 
-  const isTrial = subscription?.status === "TRIALING";
-  const isCanceling = subscription?.cancel_at_period_end;
-  const isCancelled = subscription?.status === "CANCELLED";
-  const isActive = subscription?.status === "ACTIVE" && !isCanceling;
+  const normalizedStatus = subscription?.status?.toUpperCase() || "";
+  const isCancelled =
+    normalizedStatus === "CANCELLED" ||
+    normalizedStatus === "CANCELED";
+  const isCanceling = !isCancelled && Boolean(subscription?.cancel_at_period_end);
+  const isPastDue = !isCancelled && !isCanceling && normalizedStatus === "PAST_DUE";
+  const isTrial = !isCancelled && !isCanceling && !isPastDue && normalizedStatus === "TRIALING";
+  const isActive = !isCancelled && !isCanceling && !isPastDue && normalizedStatus === "ACTIVE";
 
-  const accessEndsDate = subscription?.ends_at || subscription?.renews_at;
+  const accessEndsDate = subscription?.ends_at || subscription?.cancelled_at || subscription?.renews_at;
 
   return (
     <div className="min-h-screen bg-zinc-50/60 py-12 px-4 sm:px-6 lg:px-8 antialiased font-sans text-zinc-900">
@@ -220,7 +224,7 @@ export default function PortalClient({ customer }: { customer: Customer }) {
           </div>
         )}
 
-        {/* ACTIVE / TRIALING SUBSCRIPTION CARD */}
+        {/* SUBSCRIPTION CARD */}
         {subscription ? (
           <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 sm:p-8 space-y-6 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-6 border-b border-zinc-100">
@@ -232,17 +236,24 @@ export default function PortalClient({ customer }: { customer: Customer }) {
                   <span
                     className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
                       isCancelled
-                        ? "bg-red-50 text-red-700 border-red-200"
+                        ? "bg-rose-50 text-rose-700 border-rose-200"
                         : isCanceling
                           ? "bg-amber-50 text-amber-700 border-amber-200"
-                          : isTrial
-                            ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                            : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : isPastDue
+                            ? "bg-amber-50 text-amber-700 border-amber-200"
+                            : isTrial
+                              ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                              : "bg-emerald-50 text-emerald-700 border-emerald-200"
                     }`}>
                     {isCancelled ? (
-                      "Cancelled"
+                      "Canceled"
                     ) : isCanceling ? (
                       "Cancels at period end"
+                    ) : isPastDue ? (
+                      <>
+                        <AlertTriangle size={11} />
+                        Past Due
+                      </>
                     ) : isTrial ? (
                       <>
                         <Clock size={11} />
@@ -276,10 +287,22 @@ export default function PortalClient({ customer }: { customer: Customer }) {
               <div className="space-y-1">
                 <span className="text-zinc-400 font-medium flex items-center gap-1.5">
                   <Calendar size={14} />
-                  {isTrial ? "Trial Period Ends" : isCanceling ? "Access Expires On" : "Next Billing Date"}
+                  {isCancelled
+                    ? "Access Ended"
+                    : isTrial
+                      ? "Trial Period Ends"
+                      : isCanceling
+                        ? "Access Expires On"
+                        : isPastDue
+                          ? "Next Payment Retry"
+                          : "Next Billing Date"}
                 </span>
                 <p className="font-semibold text-zinc-800 text-sm">
-                  {formatDate(subscription.renews_at || subscription.ends_at)}
+                  {formatDate(
+                    isCancelled
+                      ? subscription.ends_at || subscription.cancelled_at || subscription.renews_at
+                      : subscription.renews_at || subscription.ends_at,
+                  )}
                 </p>
               </div>
 
@@ -307,7 +330,7 @@ export default function PortalClient({ customer }: { customer: Customer }) {
               </div>
             </div>
 
-            {/* CANCELLATION ACTIONS */}
+            {/* CANCELLATION & RESUBSCRIBE ACTIONS */}
             {isActive && (
               <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <p className="text-xs text-zinc-500">
@@ -335,6 +358,19 @@ export default function PortalClient({ customer }: { customer: Customer }) {
                     Cancel Subscription
                   </button>
                 )}
+              </div>
+            )}
+
+            {isCancelled && subscription.products?.slug && (
+              <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <p className="text-xs text-zinc-500">
+                  This subscription is no longer active. Would you like to resubscribe?
+                </p>
+                <a
+                  href={`/checkout/${subscription.products.slug}${subscription.plans?.id ? `?plan=${subscription.plans.id}` : ""}`}
+                  className="h-9 px-4 rounded-xl bg-[#0F86EE] hover:bg-[#0d7ad9] text-white text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer">
+                  Resubscribe Now
+                </a>
               </div>
             )}
           </div>

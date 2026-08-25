@@ -41,6 +41,7 @@ export default async function CustomerPortalPage({ params }: PageProps) {
         cancelled_at,
         cancel_at_period_end,
         renewal_count,
+        created_at,
         plans (
           id,
           name,
@@ -90,9 +91,17 @@ export default async function CustomerPortalPage({ params }: PageProps) {
     ends_at: string | null;
     cancelled_at: string | null;
     cancel_at_period_end: boolean;
+    created_at?: string;
     plans?: unknown;
     products?: unknown;
   }>;
+
+  // Sort subscriptions newest first
+  rawSubs.sort(
+    (a, b) =>
+      new Date(b.created_at || b.starts_at || 0).getTime() -
+      new Date(a.created_at || a.starts_at || 0).getTime(),
+  );
 
   const formattedSubs = rawSubs.map((s) => ({
     ...s,
