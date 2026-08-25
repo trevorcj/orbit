@@ -609,7 +609,9 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                         </span>
                         {selectedSub.status === "Past due" && (
                           <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">
-                            Attempt {selectedSub.failedPaymentAttempts || 1} of 4 ({Math.max(0, 4 - (selectedSub.failedPaymentAttempts || 1))} retries remaining)
+                            {selectedSub.failedPaymentAttempts >= 4
+                              ? "Max retries exceeded (Auto-cancellation pending)"
+                              : `Attempt ${selectedSub.failedPaymentAttempts || 1} of 4 (${Math.max(0, 4 - (selectedSub.failedPaymentAttempts || 1))} retries remaining)`}
                           </span>
                         )}
                       </div>

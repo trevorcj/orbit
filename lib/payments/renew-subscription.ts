@@ -351,11 +351,20 @@ export async function renewSubscription(subscriptionId: string) {
       // 2. Fetch organisation owner email & send merchant alert
       const { data: orgData } = await supabase
         .from("organisations")
-        .select("user_id, users(email)")
+        .select("user_id")
         .eq("id", subscription.organisation_id)
         .maybeSingle();
 
-      const merchantEmail = (orgData?.users as any)?.email;
+      let merchantEmail: string | null = null;
+      if (orgData?.user_id) {
+        try {
+          const { data: authUser } = await supabase.auth.admin.getUserById(orgData.user_id);
+          merchantEmail = authUser?.user?.email || null;
+        } catch (e) {
+          console.error("Failed to fetch merchant auth user:", e);
+        }
+      }
+
       if (merchantEmail) {
         sendEmail({
           to: merchantEmail,
