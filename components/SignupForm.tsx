@@ -65,7 +65,6 @@ function SignupForm() {
                 type="text"
                 label="First name"
                 id="first-name"
-                className="border-zinc-200"
                 {...register("firstName", {
                   required: "First name is required",
                 })}
@@ -83,7 +82,6 @@ function SignupForm() {
                 type="text"
                 label="Last name"
                 id="last-name"
-                className="border-zinc-200"
                 {...register("lastName", { required: "Last name is required" })}
               />
               {errors?.lastName && (
@@ -100,7 +98,6 @@ function SignupForm() {
               type="email"
               label="Work email"
               id="email"
-              className="border-zinc-200"
               {...register("email", {
                 pattern: {
                   value: /^\S+@\S+$/i,
@@ -122,7 +119,6 @@ function SignupForm() {
               label="Password"
               id="password"
               required
-              className="border-zinc-200"
               {...register("password", {
                 required: "Password is required",
                 minLength: {

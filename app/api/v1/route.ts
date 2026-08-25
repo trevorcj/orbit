@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
+import { getAppUrl } from "@/lib/url";
 
-export async function GET() {
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL || "https://orbit-billing-nomba.vercel.app";
+export async function GET(req: Request) {
+  const appUrl = getAppUrl(req);
 
   return NextResponse.json({
     name: "Orbit Developer API",

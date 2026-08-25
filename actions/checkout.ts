@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { initializePaystackTransaction } from "@/lib/paystack";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { redirect } from "next/navigation";
+import { getAppUrl } from "@/lib/url";
 
 export async function initiateSubscriptionPayment(formData: FormData) {
   const planId = String(formData.get("planId") || "");
@@ -89,7 +90,7 @@ export async function initiateSubscriptionPayment(formData: FormData) {
   const amountInKobo = Math.round(amountInNaira * 100);
 
   const orderReference = `orbit_ord_${crypto.randomUUID()}`;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const appUrl = getAppUrl();
   
   const callbackUrl = new URL(`/checkout/${product.slug}/success`, appUrl);
   if (returnUrl) {

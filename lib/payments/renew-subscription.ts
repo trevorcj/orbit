@@ -9,6 +9,7 @@ import {
   generateMerchantSubscriptionCancelledAlertEmail,
 } from "@/lib/email";
 import { dispatchOrbitEvent } from "@/lib/developer-api/webhooks";
+import { getAppUrl } from "@/lib/url";
 
 export async function renewSubscription(subscriptionId: string) {
   const supabase = supabaseAdmin;
@@ -240,7 +241,7 @@ export async function renewSubscription(subscriptionId: string) {
     /*
      * 8. Send renewal receipt email to customer
      */
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = getAppUrl();
     const portalUrl = `${appUrl}/portal/${customer.portal_token}`;
 
     sendEmail({
@@ -318,7 +319,7 @@ export async function renewSubscription(subscriptionId: string) {
       paid_at: now.toISOString(),
     });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = getAppUrl();
     const portalUrl = `${appUrl}/portal/${customer.portal_token}`;
     const checkoutUrl = productSlug
       ? `${appUrl}/checkout/${productSlug}?plan=${plan.id}`

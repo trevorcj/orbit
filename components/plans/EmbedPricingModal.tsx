@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, Copy, Check, Code2, ExternalLink, FileCode } from "lucide-react";
 import { toast } from "sonner";
+import { getAppUrl } from "@/lib/url";
 
 interface EmbedPricingModalProps {
   isOpen: boolean;
@@ -28,8 +29,7 @@ export default function EmbedPricingModal({
 
   if (!isOpen) return null;
 
-  const appUrl =
-    typeof window !== "undefined" ? window.location.origin : "https://orbit-billing-nomba.vercel.app";
+  const appUrl = getAppUrl();
   const checkoutUrl = `${appUrl}/checkout/${productSlug}`;
 
   const safeAmount = Number(planAmount || 0);

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendEmail, generateCancellationNoticeEmail } from "@/lib/email";
 import { dispatchOrbitEvent } from "@/lib/developer-api/webhooks";
+import { getAppUrl } from "@/lib/url";
 
 export async function POST(req: Request) {
   try {
@@ -96,7 +97,7 @@ export async function POST(req: Request) {
       products?: { name: string };
     };
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = getAppUrl(req);
     const portalUrl = `${appUrl}/portal/${customer?.portal_token}`;
 
     const formattedEndsAt = new Date(endsAt).toLocaleDateString("en-US", {

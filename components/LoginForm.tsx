@@ -63,7 +63,6 @@ function LoginForm() {
               type="email"
               label="Email address"
               id="email"
-              className="border-zinc-200"
               {...register("email", {
                 pattern: {
                   value: /^\S+@\S+$/i,
@@ -85,7 +84,6 @@ function LoginForm() {
               label="Password"
               id="password"
               required
-              className="border-zinc-200"
               {...register("password", {
                 required: "Password is required",
                 minLength: {

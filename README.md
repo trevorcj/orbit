@@ -6,8 +6,8 @@
 
 ## Live Links
 
-- **Live Application:** [https://orbit-billing-nomba.vercel.app](https://orbit-billing-nomba.vercel.app)
-- **Interactive API Documentation:** [https://orbit-billing-nomba.vercel.app/docs](https://orbit-billing-nomba.vercel.app/docs)
+- **Live Application:** [https://www.orbitbilling.me](https://www.orbitbilling.me)
+- **Interactive API Documentation:** [https://www.orbitbilling.me/docs](https://www.orbitbilling.me/docs)
 
 <img src="./public/preview4.png" alt="Orbit">
 <img src="./public/preview5.png" alt="Orbit">

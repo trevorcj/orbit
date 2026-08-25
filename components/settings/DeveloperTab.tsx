@@ -21,6 +21,7 @@ import {
   toggleWebhookEndpoint,
   type DeveloperData,
 } from "@/actions/developer";
+import { getAppUrl } from "@/lib/url";
 
 function RevealField({
   value,
@@ -150,10 +151,7 @@ export default function DeveloperTab({
   const activeKeys = apiKeys.filter((key) => !key.revoked_at);
   const revokedKeys = apiKeys.filter((key) => key.revoked_at);
 
-  const appUrl =
-    typeof window !== "undefined"
-      ? window.location.origin
-      : "https://orbit-billing-nomba.vercel.app";
+  const appUrl = getAppUrl();
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl">

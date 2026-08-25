@@ -3,7 +3,7 @@ import styles from "./input.module.css";
 type InputProps = {
   label?: string;
   isRequired: boolean;
-  type: "text" | "number" | "email" | "password";
+  type?: "text" | "number" | "email" | "password" | "url";
   placeholder: string;
   children?: React.ReactNode;
 } & React.InputHTMLAttributes<HTMLInputElement>;
@@ -17,11 +17,12 @@ function Input({
   className: customClassName,
   ...props
 }: InputProps) {
-  const hasCustomBorder = customClassName?.includes("border");
+  const hasCustomBg = customClassName?.includes("bg-");
+  const hasCustomBorder = customClassName?.includes("border-") || customClassName?.includes("border ");
 
-  const baseInputClasses = `w-full p-3 rounded text-zinc-900 dark:text-zinc-100 font-medium transition-all focus:outline-none focus:border-orbit-primary ${
-    hasCustomBorder ? "" : "border border-transparent"
-  }`;
+  const baseInputClasses = `w-full p-3 rounded-lg text-sm text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-200 focus:outline-none focus:border-[#0F86EE] focus:bg-transparent dark:focus:bg-transparent placeholder:text-zinc-400 dark:placeholder:text-zinc-500 ${
+    hasCustomBg ? "" : "bg-[#F0F6FA] dark:bg-[#111C2E]"
+  } ${hasCustomBorder ? "" : "border border-transparent"}`;
 
   return (
     <div className={styles.inputField}>

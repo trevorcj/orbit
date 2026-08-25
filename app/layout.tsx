@@ -3,8 +3,9 @@ import "./globals.css";
 import { plusJakartaSans, boing } from "./fonts";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { getAppUrl } from "@/lib/url";
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://orbit-billing-nomba.vercel.app";
+const siteUrl = getAppUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

@@ -21,6 +21,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Loader2, Check, ArrowRight } from "lucide-react";
+import { getAppUrl } from "@/lib/url";
 
 interface OrbitPlan {
   id: string;
@@ -58,8 +59,7 @@ interface OrbitPricingTableProps {
   }) => Promise<{ id: string; url: string }>;
 }
 
-const DEFAULT_BASE_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? "https://orbit-billing-nomba.vercel.app";
+const DEFAULT_BASE_URL = getAppUrl();
 
 function formatCurrency(amount: number, currency: string) {
   return new Intl.NumberFormat("en-NG", {

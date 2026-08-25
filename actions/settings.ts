@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase/server";
+import { getAppUrl } from "@/lib/url";
 
 export interface UserProfileData {
   id: string;
@@ -506,7 +507,7 @@ export async function getDeveloperSettings() {
 
   if (!user) return null;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://orbit-billing-nomba.vercel.app";
+  const appUrl = getAppUrl();
   const cronSecret = process.env.BILLING_CRON_SECRET || "";
 
   return {

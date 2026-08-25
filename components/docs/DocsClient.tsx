@@ -29,6 +29,7 @@ import {
   Layers,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
+import { getAppUrl } from "@/lib/url";
 
 interface NavSection {
   title: string;
@@ -154,10 +155,7 @@ export default function DocsClient() {
   const [activeSection, setActiveSection] = useState("welcome");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const appUrl =
-    typeof window !== "undefined"
-      ? window.location.origin
-      : "https://orbit-billing-nomba.vercel.app";
+  const appUrl = getAppUrl();
 
   useEffect(() => {
     const handleScroll = () => {

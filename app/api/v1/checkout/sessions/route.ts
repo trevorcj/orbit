@@ -7,6 +7,7 @@ import {
   apiUnauthorized,
   apiForbidden,
 } from "@/lib/developer-api/response";
+import { getAppUrl } from "@/lib/url";
 
 export const dynamic = "force-dynamic";
 
@@ -104,7 +105,7 @@ export async function POST(req: Request) {
   /*
    * 2. Generate tracking order reference & hosted checkout URL
    */
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://orbit-billing-nomba.vercel.app";
+  const appUrl = getAppUrl(req);
   const orderReference = `orbit_ord_${crypto.randomUUID()}`;
 
   const [firstName, ...lastNameParts] = customerName

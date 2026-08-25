@@ -6,6 +6,7 @@ import {
   generateMerchantSubscriberAlertEmail,
 } from "@/lib/email";
 import { dispatchOrbitEvent } from "@/lib/developer-api/webhooks";
+import { getAppUrl } from "@/lib/url";
 
 interface FulfillPaymentInput {
   orderReference: string;
@@ -376,7 +377,7 @@ export async function fulfillPayment({
   /*
    * 11. Transactional Emails (Customer Welcome + Merchant Alert)
    */
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const appUrl = getAppUrl();
   const portalUrl = `${appUrl}/portal/${customer.portal_token}`;
 
   const nextBillingDateString = renewsAt.toLocaleDateString("en-US", {
