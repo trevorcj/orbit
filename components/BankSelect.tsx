@@ -81,7 +81,7 @@ export default function BankSelect({
         type="button"
         disabled={isDropdownLoading}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between h-11 px-3.5 rounded-lg border border-transparent bg-[#F0F6FA] text-left text-sm transition-all focus:outline-none focus:border-[#0F86EE] focus:bg-transparent disabled:bg-zinc-50 disabled:cursor-not-allowed cursor-pointer">
+        className="w-full flex items-center justify-between h-11 px-3.5 rounded-lg border border-zinc-200 bg-white hover:border-zinc-300 text-left text-sm transition-all focus:outline-none focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] disabled:bg-zinc-50 disabled:cursor-not-allowed cursor-pointer">
         <span className={selectedBank ? "text-zinc-900 font-medium text-xs" : "text-zinc-400 text-xs"}>
           {isDropdownLoading
             ? "Loading banks..."
@@ -102,7 +102,7 @@ export default function BankSelect({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search bank..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs bg-white rounded-md border border-zinc-200 focus:outline-none focus:border-[#0F86EE]"
+                className="w-full pl-8 pr-3 py-1.5 text-xs bg-white rounded-md border border-zinc-200 hover:border-zinc-300 focus:outline-none focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] transition-colors"
                 autoFocus
               />
             </div>

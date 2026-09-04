@@ -20,9 +20,9 @@ function Input({
   const hasCustomBg = customClassName?.includes("bg-");
   const hasCustomBorder = customClassName?.includes("border-") || customClassName?.includes("border ");
 
-  const baseInputClasses = `w-full h-11 px-3.5 rounded-lg text-sm text-zinc-900 font-medium transition-all duration-200 focus:outline-none focus:border-[#0F86EE] focus:bg-transparent placeholder:text-zinc-400 ${
-    hasCustomBg ? "" : "bg-[#F0F6FA]"
-  } ${hasCustomBorder ? "" : "border border-transparent"}`;
+  const baseInputClasses = `w-full h-11 px-3.5 rounded-lg text-sm text-zinc-900 font-medium transition-all duration-200 focus:outline-none focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] placeholder:text-zinc-400 ${
+    hasCustomBg ? "" : "bg-white"
+  } ${hasCustomBorder ? "" : "border border-zinc-200 hover:border-zinc-300"}`;
 
   return (
     <div className={styles.inputField}>

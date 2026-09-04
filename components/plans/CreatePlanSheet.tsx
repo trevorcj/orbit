@@ -102,7 +102,7 @@ export default function CreatePlanSheet({
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="5000"
-                    className="w-full h-11 pl-7 pr-3 rounded-lg text-sm bg-[#F0F6FA] border border-transparent focus:border-[#0F86EE] focus:bg-transparent text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all"
+                    className="w-full h-11 pl-7 pr-3 rounded-lg text-sm bg-white border border-zinc-200 hover:border-zinc-300 focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -116,7 +116,7 @@ export default function CreatePlanSheet({
                     name="billing_interval"
                     value={billingInterval}
                     onChange={(e) => setBillingInterval(e.target.value)}
-                    className="w-full h-11 px-3 pr-8 rounded-lg text-sm bg-[#F0F6FA] border border-transparent focus:border-[#0F86EE] focus:bg-transparent text-zinc-900 focus:outline-none appearance-none transition-all cursor-pointer">
+                    className="w-full h-11 px-3 pr-8 rounded-lg text-sm bg-white border border-zinc-200 hover:border-zinc-300 focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] text-zinc-900 focus:outline-none appearance-none transition-all cursor-pointer">
                     <option value="monthly">Monthly</option>
                     <option value="yearly">Yearly (Annual)</option>
                     <option value="weekly">Weekly</option>
@@ -146,7 +146,7 @@ export default function CreatePlanSheet({
                   onChange={(e) => setCustomDays(e.target.value)}
                   placeholder="e.g. 2 for every 2 days"
                   required
-                  className="w-full h-11 px-3.5 rounded-lg text-sm bg-[#F0F6FA] border border-transparent focus:border-[#0F86EE] focus:bg-transparent text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all"
+                  className="w-full h-11 px-3.5 rounded-lg text-sm bg-white border border-zinc-200 hover:border-zinc-300 focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all"
                 />
               </div>
             )}
@@ -162,7 +162,7 @@ export default function CreatePlanSheet({
                 value={trialDays}
                 onChange={(e) => setTrialDays(e.target.value)}
                 placeholder="0"
-                className="w-full h-11 px-3.5 rounded-lg text-sm bg-[#F0F6FA] border border-transparent focus:border-[#0F86EE] focus:bg-transparent text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all"
+                className="w-full h-11 px-3.5 rounded-lg text-sm bg-white border border-zinc-200 hover:border-zinc-300 focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all"
               />
             </div>
 
@@ -178,7 +178,7 @@ export default function CreatePlanSheet({
                 rows={3}
                 placeholder="Unlimited projects&#10;Priority support&#10;Custom domain"
                 required
-                className="w-full p-3 rounded-lg text-sm bg-[#F0F6FA] border border-transparent focus:border-[#0F86EE] focus:bg-transparent text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all resize-none"
+                className="w-full p-3 rounded-lg text-sm bg-white border border-zinc-200 hover:border-zinc-300 focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all resize-none"
               />
             </div>
 
@@ -192,7 +192,7 @@ export default function CreatePlanSheet({
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
                 placeholder="Short plan summary..."
-                className="w-full p-3 rounded-lg text-sm bg-[#F0F6FA] border border-transparent focus:border-[#0F86EE] focus:bg-transparent text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all resize-none"
+                className="w-full p-3 rounded-lg text-sm bg-white border border-zinc-200 hover:border-zinc-300 focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all resize-none"
               />
             </div>
           </div>

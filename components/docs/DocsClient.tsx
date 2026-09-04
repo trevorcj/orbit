@@ -231,7 +231,7 @@ export default function DocsClient() {
               placeholder="Search docs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-[#0F86EE]"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-zinc-200 bg-white hover:border-zinc-300 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] transition-colors"
             />
           </div>
 

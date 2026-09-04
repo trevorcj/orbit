@@ -267,7 +267,7 @@ export default function DeveloperTab({
               <select
                 name="type"
                 defaultValue="secret"
-                className="h-11 w-full rounded-lg border border-transparent bg-[#F0F6FA] px-3 text-xs text-zinc-900 focus:outline-none focus:border-[#0F86EE] focus:bg-transparent cursor-pointer">
+                className="h-11 w-full rounded-lg border border-zinc-200 bg-white hover:border-zinc-300 px-3 text-xs text-zinc-900 focus:outline-none focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] cursor-pointer transition-colors">
                 <option value="secret">Secret Key (Backend only)</option>
                 <option value="publishable">Publishable Key (Client / Frontend)</option>
               </select>
@@ -414,7 +414,7 @@ export default function DeveloperTab({
                 <select
                   name="events"
                   defaultValue=""
-                  className="h-11 w-full rounded-lg border border-transparent bg-[#F0F6FA] px-3 text-xs text-zinc-900 focus:outline-none focus:border-[#0F86EE] focus:bg-transparent cursor-pointer">
+                  className="h-11 w-full rounded-lg border border-zinc-200 bg-white hover:border-zinc-300 px-3 text-xs text-zinc-900 focus:outline-none focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] cursor-pointer transition-colors">
                   <option value="">All Events (*)</option>
                   <option value="payment.succeeded">payment.succeeded</option>
                   <option value="payment.failed">payment.failed</option>

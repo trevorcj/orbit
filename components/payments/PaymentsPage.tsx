@@ -400,7 +400,7 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
               placeholder="Search by customer, plan, or reference..."
               value={query}
               onChange={(e) => handleQueryChange(e.target.value)}
-              className="h-10 w-full rounded-lg bg-[#F0F6FA] border border-transparent focus:border-[#0F86EE] focus:bg-transparent pl-10 pr-4 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all"
+              className="h-10 w-full rounded-lg bg-white border border-zinc-200 hover:border-zinc-300 focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] pl-10 pr-4 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all"
             />
           </div>
 

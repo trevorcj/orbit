@@ -540,7 +540,7 @@ export default function PayoutsTab() {
                     )
                   }
                   placeholder="e.g. 50000"
-                  className="w-full pl-8 pr-4 h-11 rounded-lg border border-zinc-200 bg-white text-sm font-semibold text-zinc-900 focus:outline-none focus:border-[#0F86EE]"
+                  className="w-full pl-8 pr-4 h-11 rounded-lg border border-zinc-200 bg-white hover:border-zinc-300 text-sm font-semibold text-zinc-900 focus:outline-none focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] transition-colors"
                 />
               </div>
 

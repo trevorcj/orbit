@@ -46,8 +46,31 @@ select:-webkit-autofill,
 select:-webkit-autofill:hover,
 select:-webkit-autofill:focus {
   -webkit-text-fill-color: #09090b !important;
-  -webkit-box-shadow: 0 0 0px 1000px #F0F6FA inset !important;
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
   transition: background-color 5000s ease-in-out 0s;
+}
+
+/* =========================================================
+   Black & White Clean Sonner Toasts (Vercel Style)
+   ========================================================= */
+[data-sonner-toaster] [data-sonner-toast] {
+  background-color: #ffffff !important;
+  color: #09090b !important;
+  border: 1px solid #e4e4e7 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
+  font-family: var(--font-sans), sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-title] {
+  color: #09090b !important;
+  font-weight: 600 !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-description] {
+  color: #71717a !important;
 }
 
 /* =========================================================

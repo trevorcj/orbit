@@ -134,7 +134,7 @@ export default function CreateProductSheet({
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
                 placeholder="Brief summary of what customers get with this product..."
-                className="w-full p-3 rounded-lg text-sm bg-[#F0F6FA] border border-transparent focus:border-[#0F86EE] focus:bg-transparent text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all resize-none"
+                className="w-full p-3 rounded-lg text-sm bg-white border border-zinc-200 hover:border-zinc-300 focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all resize-none"
               />
             </div>
           </div>

@@ -320,7 +320,7 @@ export default function CheckoutClient({
                 required
                 defaultValue={initialEmail}
                 placeholder="name@example.com"
-                className="h-11 w-full border border-zinc-200 rounded-lg px-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 transition-colors bg-white"
+                className="h-11 w-full border border-zinc-200 rounded-lg px-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 hover:border-zinc-300 focus:outline-none focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] transition-colors bg-white"
               />
             </div>
 
@@ -334,7 +334,7 @@ export default function CheckoutClient({
                   required
                   defaultValue={initialFirstName}
                   placeholder="John"
-                  className="h-11 w-full border border-zinc-200 rounded-lg px-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 transition-colors bg-white"
+                  className="h-11 w-full border border-zinc-200 rounded-lg px-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 hover:border-zinc-300 focus:outline-none focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] transition-colors bg-white"
                 />
               </div>
 
@@ -347,7 +347,7 @@ export default function CheckoutClient({
                   required
                   defaultValue={initialLastName}
                   placeholder="Doe"
-                  className="h-11 w-full border border-zinc-200 rounded-lg px-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 transition-colors bg-white"
+                  className="h-11 w-full border border-zinc-200 rounded-lg px-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 hover:border-zinc-300 focus:outline-none focus:border-[#0F86EE] focus:ring-1 focus:ring-[#0F86EE] transition-colors bg-white"
                 />
               </div>
             </div>
