@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { X, Check, Copy } from "lucide-react";
+import { X, Check } from "lucide-react";
 import { createProduct, checkSlug } from "@/actions/products";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -21,7 +21,6 @@ export default function CreateProductSheet({
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
-  const [color, setColor] = useState("#0F86EE");
   const [available, setAvailable] = useState(false);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,11 +38,6 @@ export default function CreateProductSheet({
     if (!newSlug) setAvailable(false);
   };
 
-  const copyLink = async () => {
-    const url = `${window.location.origin}/checkout/${slug}`;
-    await navigator.clipboard.writeText(url);
-  };
-
   useEffect(() => {
     if (!slug) return;
 
@@ -58,25 +52,38 @@ export default function CreateProductSheet({
   if (!open) return null;
 
   return (
-    <>
-      <div onClick={onClose} className="fixed inset-0 z-40 bg-black/20" />
+    <div className="fixed inset-0 z-50 flex justify-end animate-in fade-in duration-150">
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+      />
 
-      <div className="fixed right-0 top-0 z-50 h-full w-155 bg-white flex flex-col">
-        <div className="flex items-center justify-between px-10 py-7 border-b border-zinc-100">
-          <p className="font-semibold cursor-pointer">Create product</p>
+      {/* Sheet / Drawer Container */}
+      <div className="relative z-50 h-full w-full sm:max-w-lg bg-white flex flex-col shadow-2xl border-l border-zinc-200/80 animate-in slide-in-from-right duration-200">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-100 shrink-0">
+          <div>
+            <h2 className="text-lg font-bold text-zinc-900 tracking-tight">Create Product</h2>
+            <p className="text-xs text-zinc-500 mt-0.5">Define a new subscription product for your workspace</p>
+          </div>
 
-          <button onClick={onClose}>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
+            aria-label="Close modal">
             <X size={18} />
           </button>
         </div>
 
+        {/* Form Body */}
         <form
           action={(formData) =>
             startTransition(async () => {
               const res = await createProduct(formData);
 
               if (res?.success) {
-                toast.success("Product created");
+                toast.success("Product created successfully");
                 router.refresh();
                 onClose();
               } else {
@@ -84,18 +91,17 @@ export default function CreateProductSheet({
               }
             })
           }
-          className="flex flex-1 flex-col justify-between px-10 py-8 overflow-y-auto">
-          <div className="space-y-7">
+          className="flex flex-1 flex-col justify-between overflow-y-auto p-6">
+          <div className="space-y-5">
             <div>
               <Input
                 type="text"
-                placeholder="Acme Pro"
+                placeholder="e.g. Acme Pro"
                 isRequired
                 name="name"
                 value={name}
                 onChange={handleNameChange}
-                label="Product name"
-                className="h-11 w-full border border-zinc-200 px-4"
+                label="Product Name"
                 required
               />
             </div>
@@ -108,85 +114,48 @@ export default function CreateProductSheet({
                 name="slug"
                 value={slug}
                 onChange={handleSlugChange}
-                label="Product slug"
-                className="h-11 w-full border border-zinc-200 px-4"
+                label="Product Slug"
                 required
               />
 
               {available && (
-                <div className="mt-3 flex items-center gap-2 text-green-600 text-[13px]">
+                <div className="mt-2 flex items-center gap-1.5 text-emerald-600 text-xs font-medium">
                   <Check size={14} />
-                  {slug} is available
+                  <span>/{slug} is available</span>
                 </div>
               )}
-
-              <div className="my-10">
-                <p className="mt-2 text-[15px] text-zinc-400">
-                  Your product will be available at:
-                </p>
-                <div className="flex gap-4 items-center">
-                  <p className="mt-2 text-[15px] text-zinc-700 font-medium underline">
-                    orbit.com/checkout/{slug}
-                  </p>
-
-                  <button type="button" onClick={copyLink}>
-                    <Copy
-                      size={16}
-                      className="text-zinc-500 cursor-pointer mt-2"
-                    />
-                  </button>
-                </div>
-              </div>
             </div>
 
-            <div>
-              <p className="text-[14px] font-medium mb-2">Color</p>
-
-              <div className="flex gap-3">
-                <input
-                  type="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="h-11 w-11 outline-0 border-0"
-                />
-
-                <input
-                  name="brand_color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="h-11 w-28 rounded border border-zinc-200 px-3 text-sm"
-                />
-              </div>
-            </div>
-
-            <div>
-              <p className="text-[14px] font-medium mb-2">Description</p>
-
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-zinc-700">Description</label>
               <textarea
                 name="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="h-32 w-full rounded border border-zinc-200 p-4 text-[14px]"
+                rows={4}
+                placeholder="Brief summary of what customers get with this product..."
+                className="w-full p-3 rounded-lg text-sm bg-[#F0F6FA] border border-transparent focus:border-[#0F86EE] focus:bg-transparent text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all resize-none"
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 border-t border-zinc-100 pt-6">
+          {/* Footer Actions */}
+          <div className="pt-6 border-t border-zinc-100 flex items-center justify-end gap-3 shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="h-11 rounded-full border border-zinc-200 px-6 text-[14px] font-semibold cursor-pointer">
+              className="h-10 px-4 rounded-lg border border-zinc-200 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors cursor-pointer">
               Cancel
             </button>
-
             <button
+              type="submit"
               disabled={pending}
-              className="h-11 rounded-full bg-[#0F86EE] px-6 text-[14px] font-semibold text-white  cursor-pointer">
-              Create
+              className="h-10 px-6 rounded-lg bg-[#0F86EE] hover:bg-[#0d7ad9] text-white text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50">
+              {pending ? "Creating..." : "Create Product"}
             </button>
           </div>
         </form>
       </div>
-    </>
+    </div>
   );
 }

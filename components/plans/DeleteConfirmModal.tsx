@@ -8,7 +8,8 @@ interface DeleteConfirmModalProps {
   onClose: () => void;
   onConfirm: () => Promise<void>;
   title: string;
-  description: string;
+  description?: string;
+  message?: string;
   confirmLabel?: string;
 }
 
@@ -18,9 +19,11 @@ export default function DeleteConfirmModal({
   onConfirm,
   title,
   description,
+  message,
   confirmLabel = "Delete",
 }: DeleteConfirmModalProps) {
   const [loading, setLoading] = useState(false);
+  const displayDescription = description || message || "";
 
   if (!isOpen) return null;
 
@@ -50,7 +53,7 @@ export default function DeleteConfirmModal({
 
         <div className="space-y-1.5">
           <h3 className="text-base font-bold text-zinc-900">{title}</h3>
-          <p className="text-xs text-zinc-500 leading-relaxed">{description}</p>
+          <p className="text-xs text-zinc-500 leading-relaxed">{displayDescription}</p>
         </div>
 
         <div className="pt-2 flex items-center justify-end gap-3">

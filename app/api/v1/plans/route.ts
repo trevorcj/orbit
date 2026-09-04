@@ -29,6 +29,7 @@ export async function GET(req: Request) {
         amount,
         currency,
         billing_interval,
+        billing_interval_days,
         is_active,
         product_id,
         products (
@@ -64,6 +65,7 @@ export async function GET(req: Request) {
         amount: Number(plan.amount),
         currency: plan.currency ?? "NGN",
         interval: normalizeInterval(plan.billing_interval),
+        interval_days: plan.billing_interval_days ?? null,
         description: plan.description,
         features: plan.features ?? [],
         product_id: plan.product_id,

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X, Copy, Check, Code2, ExternalLink, FileCode } from "lucide-react";
 import { toast } from "sonner";
 import { getAppUrl } from "@/lib/url";
+import { getIntervalLabel } from "@/lib/interval";
 
 interface EmbedPricingModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface EmbedPricingModalProps {
   planName?: string | null;
   planAmount?: number | null;
   planInterval?: string | null;
+  planIntervalDays?: number | null;
 }
 
 export default function EmbedPricingModal({
@@ -23,6 +25,7 @@ export default function EmbedPricingModal({
   planName = "Pro Plan",
   planAmount = 5000,
   planInterval = "monthly",
+  planIntervalDays,
 }: EmbedPricingModalProps) {
   const [activeTab, setActiveTab] = useState<"react" | "html" | "iframe" | "link">("react");
   const [copied, setCopied] = useState(false);
@@ -34,7 +37,7 @@ export default function EmbedPricingModal({
 
   const safeAmount = Number(planAmount || 0);
   const safeName = planName || "Plan";
-  const safeInterval = planInterval || "monthly";
+  const safeInterval = getIntervalLabel(planInterval, planIntervalDays);
 
   // Raw code strings for copying
   const rawHtmlCode = `<!-- Orbit Checkout Button -->

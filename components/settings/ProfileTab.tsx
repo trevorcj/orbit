@@ -5,7 +5,6 @@ import Input from "@/components/Input";
 import {
   getUserProfile,
   updateUserProfile,
-  uploadUserAvatarAction,
   UserProfileData,
 } from "@/actions/settings";
 import { toast } from "sonner";
@@ -93,7 +92,7 @@ export default function ProfileTab() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12 bg-white dark:bg-[#131f33] rounded-xl border border-zinc-100 dark:border-[#1e2d47] max-w-2xl">
+      <div className="flex items-center justify-center p-12 bg-white rounded-xl border border-zinc-200/80 max-w-2xl">
         <Loader2 className="animate-spin text-zinc-400" size={24} />
       </div>
     );
@@ -102,19 +101,19 @@ export default function ProfileTab() {
   const initials = `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase() || "U";
 
   return (
-    <form onSubmit={handleSave} className="flex flex-col gap-6 p-6 sm:p-8 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] max-w-2xl">
+    <form onSubmit={handleSave} className="flex flex-col gap-6 p-6 sm:p-8 rounded-xl border border-zinc-200/80 bg-white shadow-xs max-w-2xl">
       <div>
-        <h2 className="text-base font-bold text-zinc-900 dark:text-white">Profile Details</h2>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-          Manage your personal merchant account details and avatar.
+        <h2 className="text-base font-bold text-zinc-900">Profile Details</h2>
+        <p className="text-xs text-zinc-500 mt-0.5">
+          Manage your personal merchant account details and avatar
         </p>
       </div>
 
       {/* Account Avatar Section with Upload Button */}
-      <div className="flex items-center gap-5 p-4 rounded-xl border border-zinc-100 dark:border-[#1a2942] bg-zinc-50/50 dark:bg-[#0c1524]">
+      <div className="flex items-center gap-5 p-4 rounded-xl border border-zinc-100 bg-zinc-50/50">
         <div className="relative group">
           {profile?.avatarUrl ? (
-            <div className="relative w-16 h-16 rounded-full overflow-hidden border border-zinc-200 dark:border-[#1e2d47]">
+            <div className="relative w-16 h-16 rounded-full overflow-hidden border border-zinc-200">
               <Image
                 src={profile.avatarUrl}
                 alt={`${firstName} ${lastName}`}
@@ -132,8 +131,9 @@ export default function ProfileTab() {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadingAvatar}
-            className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-white dark:bg-[#152238] border border-zinc-200 dark:border-[#1e2d47] text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-[#1e2d47] transition cursor-pointer"
-            title="Upload avatar photo">
+            className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 transition cursor-pointer shadow-sm"
+            title="Upload avatar photo"
+            aria-label="Upload avatar photo">
             {uploadingAvatar ? (
               <Loader2 size={12} className="animate-spin text-[#0F86EE]" />
             ) : (
@@ -155,7 +155,7 @@ export default function ProfileTab() {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadingAvatar}
-            className="h-8 px-3 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] hover:bg-zinc-50 dark:hover:bg-[#1e2d47] text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center gap-1.5 w-fit">
+            className="h-8 px-3 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-xs font-semibold text-zinc-700 transition cursor-pointer flex items-center gap-1.5 w-fit">
             <Upload size={13} />
             <span>{uploadingAvatar ? "Uploading photo..." : "Upload photo"}</span>
           </button>
@@ -174,7 +174,6 @@ export default function ProfileTab() {
             placeholder="John"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            className="border-zinc-200 dark:border-[#1e2d47] dark:bg-[#152238] dark:text-white"
           />
 
           <Input
@@ -184,7 +183,6 @@ export default function ProfileTab() {
             placeholder="Doe"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            className="border-zinc-200 dark:border-[#1e2d47] dark:bg-[#152238] dark:text-white"
           />
         </div>
 
@@ -196,7 +194,7 @@ export default function ProfileTab() {
             placeholder=""
             disabled
             value={profile?.email || ""}
-            className="border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#0c1524] !text-zinc-400 cursor-not-allowed"
+            className="bg-zinc-50 !text-zinc-400 cursor-not-allowed"
           />
           <span className="text-[11px] text-zinc-400 pl-0.5">
             Email is associated with your login and cannot be changed here.
@@ -208,8 +206,8 @@ export default function ProfileTab() {
         <button
           type="submit"
           disabled={saving}
-          className="h-10 sm:h-11 rounded-full text-xs sm:text-sm bg-[#0F86EE] px-8 font-semibold text-white hover:bg-[#0d7ad9] transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2">
-          {saving && <Loader2 className="animate-spin" size={16} />}
+          className="h-10 rounded-lg text-xs font-semibold bg-[#0F86EE] px-6 text-white hover:bg-[#0d7ad9] transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2">
+          {saving && <Loader2 className="animate-spin" size={14} />}
           <span>{saving ? "Saving changes..." : "Save changes"}</span>
         </button>
       </div>

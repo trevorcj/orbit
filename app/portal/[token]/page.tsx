@@ -48,6 +48,7 @@ export default async function CustomerPortalPage({ params }: PageProps) {
           amount,
           currency,
           billing_interval,
+          billing_interval_days,
           trial_period_days
         ),
         products (

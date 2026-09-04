@@ -41,17 +41,17 @@ function SettingsTabsContent({
   ] as const;
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 w-full max-w-full mx-auto p-4 sm:p-6 md:p-8">
+    <div className="flex flex-col gap-8 w-full max-w-full mx-auto">
       {/* Top Page Header */}
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Settings</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Manage your organization settings and preferences.
+        <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Settings</h1>
+        <p className="text-sm text-zinc-500">
+          Manage your organization settings, settlement accounts, and API preferences
         </p>
       </div>
 
-      {/* Tab Navigation Menu (Horizontally scrollable on mobile with absolute URL sync) */}
-      <div className="flex items-center gap-4 sm:gap-8 border-b border-zinc-100 dark:border-[#1e2d47] pb-px overflow-x-auto no-scrollbar scrollbar-none whitespace-nowrap">
+      {/* Tab Navigation Menu */}
+      <div className="flex items-center gap-6 sm:gap-8 border-b border-zinc-200 pb-px overflow-x-auto no-scrollbar scrollbar-none whitespace-nowrap">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -59,15 +59,15 @@ function SettingsTabsContent({
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`flex items-center gap-2 pb-3 text-xs sm:text-[14px] font-medium transition-all relative shrink-0 cursor-pointer ${
+              className={`flex items-center gap-2 pb-3 text-xs sm:text-sm font-semibold transition-all relative shrink-0 cursor-pointer ${
                 isActive
-                  ? "text-[#0F86EE] dark:text-[#38bdf8]"
-                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200"
+                  ? "text-[#0F86EE]"
+                  : "text-zinc-500 hover:text-zinc-800"
               }`}>
               <Icon size={16} />
-              {tab.label}
+              <span>{tab.label}</span>
               {isActive && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0F86EE] dark:bg-[#38bdf8]" />
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0F86EE]" />
               )}
             </button>
           );
@@ -93,7 +93,7 @@ export default function SettingsTabs({
   developerData: DeveloperData;
 }) {
   return (
-    <Suspense fallback={<div className="p-8 text-zinc-400">Loading settings...</div>}>
+    <Suspense fallback={<div className="p-8 text-zinc-400 text-xs">Loading settings...</div>}>
       <SettingsTabsContent developerData={developerData} />
     </Suspense>
   );

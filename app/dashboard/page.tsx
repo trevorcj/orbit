@@ -52,7 +52,7 @@ export default async function MerchantDashboardPage() {
   const { data: plansData } = orgId
     ? await supabase
         .from("plans")
-        .select("id, name, amount, billing_interval, product_id, is_active")
+        .select("id, name, amount, billing_interval, billing_interval_days, product_id, is_active")
         .eq("organisation_id", orgId)
     : { data: null };
 
@@ -95,8 +95,22 @@ export default async function MerchantDashboardPage() {
     const plan = plans.find((p) => p.id === sub.plan_id);
     if (!plan) return acc;
     const amountValue = Number(plan.amount || 0);
-    if (plan.billing_interval?.toLowerCase() === "yearly") {
+    const interval = (plan.billing_interval || "monthly").toLowerCase();
+    if (interval === "yearly" || interval === "annual" || interval === "annually") {
       return acc + amountValue / 12;
+    }
+    if (interval === "quarterly") {
+      return acc + amountValue / 3;
+    }
+    if (interval === "weekly") {
+      return acc + (amountValue * 30) / 7;
+    }
+    if (interval === "daily" || interval === "demo") {
+      return acc + amountValue * 30;
+    }
+    if (interval === "custom") {
+      const days = Number(plan.billing_interval_days || 30);
+      return acc + (amountValue * 30) / (days > 0 ? days : 30);
     }
     return acc + amountValue;
   }, 0);
@@ -171,12 +185,12 @@ export default async function MerchantDashboardPage() {
   return (
     <div className="flex flex-col gap-8 antialiased max-w-full">
       {/* Top Welcome & Actions Header */}
-      <div id="tour-welcome" className="flex items-start justify-between">
+      <div id="tour-welcome" className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">
+          <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">
             Dashboard
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-zinc-500">
             Real-time recurring billing metrics for{" "}
             {org?.name || "your workspace"}
           </p>
@@ -185,7 +199,7 @@ export default async function MerchantDashboardPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard/products"
-            className="h-11 rounded-full text-[15px] bg-[#0F86EE] hover:bg-[#0d7ad9] px-8 font-semibold text-white transition-colors cursor-pointer flex items-center gap-2">
+            className="h-10 rounded-lg text-sm bg-[#0F86EE] hover:bg-[#0d7ad9] px-5 font-semibold text-white transition-colors cursor-pointer inline-flex items-center gap-2">
             <Plus size={16} />
             <span>Create product</span>
           </Link>
@@ -193,95 +207,62 @@ export default async function MerchantDashboardPage() {
       </div>
 
       {/* KPI METRIC CARDS */}
-      <div id="tour-metrics" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div id="tour-metrics" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Gross Revenue Card */}
-        <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] p-6 flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors">
-          <div>
-            <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
-              Gross Revenue
-            </span>
-            <div className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight mt-2 font-mono">
-              ₦
-              {grossRevenue.toLocaleString(undefined, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2,
-              })}
-            </div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-[#1e2d47] flex items-center justify-between">
-            <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 px-2.5 py-0.5 text-xs font-semibold border border-emerald-200 dark:border-emerald-800">
-              Live Settled
-            </span>
-            <span className="text-xs text-zinc-400 dark:text-zinc-500">Total Volume</span>
+        <div className="rounded-xl border border-zinc-200/80 bg-white p-6 flex flex-col justify-center hover:border-zinc-300 transition-colors shadow-xs">
+          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+            Gross Revenue
+          </span>
+          <div className="text-2xl sm:text-3xl font-bold text-zinc-900 tracking-tight mt-2">
+            ₦
+            {grossRevenue.toLocaleString(undefined, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2,
+            })}
           </div>
         </div>
 
         {/* MRR Volume Card */}
-        <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] p-6 flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors">
-          <div>
-            <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
-              Monthly Recurring
-            </span>
-            <div className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight mt-2 font-mono">
-              ₦
-              {Math.round(mrr).toLocaleString(undefined, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              })}
-            </div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-[#1e2d47] flex items-center justify-between">
-            <span className="rounded-full bg-blue-50 dark:bg-blue-950/50 text-[#0F86EE] dark:text-[#38bdf8] px-2.5 py-0.5 text-xs font-semibold border border-blue-200 dark:border-blue-800">
-              MRR Run-rate
-            </span>
-            <span className="text-xs text-zinc-400 dark:text-zinc-500">Recurring</span>
+        <div className="rounded-xl border border-zinc-200/80 bg-white p-6 flex flex-col justify-center hover:border-zinc-300 transition-colors shadow-xs">
+          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+            Monthly Recurring
+          </span>
+          <div className="text-2xl sm:text-3xl font-bold text-zinc-900 tracking-tight mt-2">
+            ₦
+            {Math.round(mrr).toLocaleString(undefined, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
           </div>
         </div>
 
         {/* Active Subscribers Card */}
-        <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] p-6 flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors">
-          <div>
-            <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
-              Active Subscribers
-            </span>
-            <div className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight mt-2">
-              {activeSubs.length}
-            </div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-[#1e2d47] flex items-center justify-between">
-            <span className="rounded-full border border-zinc-200 dark:border-[#1e2d47] px-2.5 py-0.5 text-xs text-zinc-600 dark:text-zinc-400 font-medium">
-              {subscriptions.length} total
-            </span>
-            <span className="text-xs text-zinc-400 dark:text-zinc-500">Customer base</span>
+        <div className="rounded-xl border border-zinc-200/80 bg-white p-6 flex flex-col justify-center hover:border-zinc-300 transition-colors shadow-xs">
+          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+            Active Subscribers
+          </span>
+          <div className="text-2xl sm:text-3xl font-bold text-zinc-900 tracking-tight mt-2">
+            {activeSubs.length}
           </div>
         </div>
 
         {/* Trials & Retention Card */}
-        <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] p-6 flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors">
-          <div>
-            <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
-              Trials & Retention
+        <div className="rounded-xl border border-zinc-200/80 bg-white p-6 flex flex-col justify-center hover:border-zinc-300 transition-colors shadow-xs">
+          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+            Trials & Retention
+          </span>
+          <div className="text-2xl sm:text-3xl font-bold text-zinc-900 tracking-tight mt-2">
+            {trialingSubs.length}{" "}
+            <span className="text-sm font-normal text-zinc-400">
+              trialing
             </span>
-            <div className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight mt-2">
-              {trialingSubs.length}{" "}
-              <span className="text-sm font-normal text-zinc-400 dark:text-zinc-500">
-                trialing
-              </span>
-            </div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-[#1e2d47] flex items-center justify-between">
-            <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-2.5 py-0.5 text-xs font-medium">
-              {pastDueSubs.length} past due
-            </span>
-            <span className="text-xs text-zinc-400 dark:text-zinc-500">Retention</span>
           </div>
         </div>
       </div>
 
       {/* LOWER REVENUE CHARTS SECTION */}
       <div className="w-full">
-        {/* Real Dynamic Recharts Area Chart */}
-        <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] p-7 flex flex-col justify-between">
+        <div className="rounded-xl border border-zinc-200/80 bg-white p-6 sm:p-7 flex flex-col justify-between shadow-xs">
           <RevenueChart data={chartSeries} totalRevenue={grossRevenue} />
         </div>
       </div>

@@ -84,94 +84,54 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
     return filteredPayments.slice(start, start + itemsPerPage);
   }, [filteredPayments, currentPage]);
 
-  const paginationPages = useMemo(() => {
-    const pages: (number | "...")[] = [];
-    if (totalPages <= 5) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-      return pages;
-    }
-
-    if (currentPage <= 3) {
-      return [1, 2, 3, "...", totalPages];
-    }
-
-    if (currentPage >= totalPages - 2) {
-      return [1, "...", totalPages - 2, totalPages - 1, totalPages];
-    }
-
-    return [
-      1,
-      "...",
-      currentPage - 1,
-      currentPage,
-      currentPage + 1,
-      "...",
-      totalPages,
-    ];
-  }, [currentPage, totalPages]);
-
   const statusConfig = {
     success: {
-      text: "text-emerald-600 dark:text-emerald-400",
-      bg: "bg-emerald-50 dark:bg-emerald-950/50",
-      border: "border-emerald-200 dark:border-emerald-800",
+      text: "text-emerald-700",
+      bg: "bg-emerald-50",
+      border: "border-emerald-200",
       display: "Approved",
     },
     failed: {
-      text: "text-rose-600 dark:text-rose-400",
-      bg: "bg-rose-50 dark:bg-rose-950/50",
-      border: "border-rose-200 dark:border-rose-800",
+      text: "text-rose-700",
+      bg: "bg-rose-50",
+      border: "border-rose-200",
       display: "Failed",
     },
     pending: {
-      text: "text-amber-600 dark:text-amber-400",
-      bg: "bg-amber-50 dark:bg-amber-950/50",
-      border: "border-amber-200 dark:border-amber-800",
+      text: "text-amber-700",
+      bg: "bg-amber-50",
+      border: "border-amber-200",
       display: "Pending",
     },
     reversed: {
-      text: "text-zinc-600 dark:text-zinc-400",
-      bg: "bg-zinc-100 dark:bg-zinc-800",
-      border: "border-zinc-200 dark:border-zinc-700",
+      text: "text-zinc-600",
+      bg: "bg-zinc-100",
+      border: "border-zinc-200",
       display: "Reversed",
     },
   };
 
-  const formatMoney = (amount: number, currency: string) => {
-    return `₦${Number(amount).toLocaleString("en-NG", {
-      minimumFractionDigits: 0,
-    })}`;
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedRef(true);
+      toast.success("Reference copied to clipboard");
+      setTimeout(() => setCopiedRef(false), 2000);
+    } catch {
+      toast.error("Failed to copy");
+    }
   };
 
-  const formatDateTime = (dateString?: string) => {
-    if (!dateString) return "—";
-    const date = new Date(dateString);
-    const datePart = date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-    const timePart = date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    return `${datePart} • ${timePart}`;
-  };
+  const handlePrintReceipt = (payment: Payment) => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast.error("Popup blocked. Please allow popups for this site.");
+      return;
+    }
 
-  const copyTransactionReference = async (ref: string) => {
-    await navigator.clipboard.writeText(ref);
-    setCopiedRef(true);
-    toast.success("Transaction reference copied!");
-    setTimeout(() => setCopiedRef(false), 2000);
-  };
-
-  const handleDownloadReceipt = (payment: Payment) => {
-    const receiptNum = `RCT-${(payment.provider_reference || payment.id).slice(-5).toUpperCase()}`;
     const dateObj = new Date(payment.paid_at || payment.created_at);
     const dateFormatted = dateObj.toLocaleDateString("en-US", {
-      month: "short",
+      month: "long",
       day: "numeric",
       year: "numeric",
     });
@@ -179,24 +139,30 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
       hour: "2-digit",
       minute: "2-digit",
     });
-    const planName = payment.subscriptions?.plans?.name || "Subscription Fee";
-    const customerName = payment.customers?.name || "Customer";
-    const customerEmail = payment.customers?.email || "";
-    const amountStr = Number(payment.amount).toLocaleString("en-NG");
-    const statusText = payment.status === "success" ? "Approved" : payment.status;
 
-    const printHtml = `
+    const statusText =
+      payment.status === "success"
+        ? "Paid"
+        : payment.status.charAt(0).toUpperCase() + payment.status.slice(1);
+    const amountStr = Number(payment.amount).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+    });
+    const receiptNum = `ORB-${(payment.provider_reference || payment.id).substring(0, 8).toUpperCase()}`;
+    const customerName = payment.customers?.name || "Customer";
+    const customerEmail = payment.customers?.email || "—";
+    const planName =
+      payment.subscriptions?.plans?.name || "Subscription Billing";
+
+    printWindow.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
-          <meta charset="utf-8">
-          <title>Receipt ${receiptNum}</title>
+          <title>Receipt ${receiptNum} - Orbit</title>
           <style>
-            @page { size: A4; margin: 20mm; }
+            * { box-sizing: border-box; }
             body {
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
               color: #09090b;
-              margin: 0;
               padding: 40px;
               max-width: 580px;
               margin: 0 auto;
@@ -320,7 +286,7 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
             </div>
             <div class="detail-item">
               <span class="label">Transaction Reference</span>
-              <span class="value" style="font-family: monospace;">${payment.provider_reference || payment.id}</span>
+              <span class="value">${payment.provider_reference || payment.id}</span>
             </div>
             <div class="detail-item">
               <span class="label">Status</span>
@@ -331,68 +297,34 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
           <div class="summary-title">Payment Summary</div>
           <div class="summary-row">
             <span>${planName}</span>
-            <span style="font-family: monospace; font-weight: 600;">₦${amountStr}</span>
+            <span style="font-weight: 600;">₦${amountStr}</span>
           </div>
           <div class="summary-row">
             <span>Processing Fee</span>
-            <span style="font-family: monospace; color: #71717a;">₦0</span>
+            <span style="color: #71717a;">₦0</span>
           </div>
           <div class="summary-row total">
             <span>Total Paid</span>
-            <span style="font-family: monospace;">₦${amountStr}</span>
+            <span>₦${amountStr}</span>
           </div>
           <div class="footer">
-            Thank you for your business. Powered by Orbit.
+            Thank you for your business. Orbit Billing Infrastructure.
           </div>
-          <script>
-            window.onload = function() {
-              window.print();
-            };
-          </script>
         </body>
       </html>
-    `;
-
-    const printWin = window.open("", "_blank");
-    if (printWin) {
-      printWin.document.open();
-      printWin.document.write(printHtml);
-      printWin.document.close();
-    }
-  };
-
-  const handleShareReceipt = async (payment: Payment) => {
-    const receiptNum = `RCT-${(payment.provider_reference || payment.id).slice(-5).toUpperCase()}`;
-    const amountStr = `₦${Number(payment.amount).toLocaleString("en-NG")}`;
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const portalUrl = (payment.customers as any)?.portalToken
-      ? `${origin}/portal/${(payment.customers as any).portalToken}`
-      : `${origin}/dashboard/payments`;
-    const shareText = `*Orbit Payment Receipt: ${receiptNum}*\nAmount: ${amountStr}\nCustomer: ${payment.customers?.name || "Customer"}\nReference: ${payment.provider_reference || payment.id}\nDate: ${new Date(payment.paid_at || payment.created_at).toLocaleDateString("en-NG")}\n\nView Receipt & Invoices:\n${portalUrl}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Receipt ${receiptNum}`,
-          text: shareText,
-          url: portalUrl,
-        });
-        return;
-      } catch {
-        // Fallback to clipboard
-      }
-    }
-
-    await navigator.clipboard.writeText(shareText);
-    toast.success("Receipt link & details copied to clipboard!");
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
   };
 
   const handleExportCSV = () => {
-    if (filteredPayments.length === 0) {
-      toast.error("No payments to export.");
+    if (!filteredPayments.length) {
+      toast.error("No payments to export");
       return;
     }
-
     const headers = [
       "ID",
       "Customer Name",
@@ -434,48 +366,48 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
 
   return (
     <>
-      <div className="flex flex-col gap-8 w-full max-w-full mx-auto p-6 relative">
+      <div className="flex flex-col gap-8 w-full max-w-full mx-auto relative">
         {/* Header */}
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">
               Payments
             </h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              View all transactions, billing charges, and settlement activity.
+            <p className="text-sm text-zinc-500">
+              View all transactions, billing charges, and settlement activity
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={handleExportCSV}
-              className="flex h-11 items-center gap-2 rounded-lg border border-zinc-200 dark:border-[#1e2d47] px-5 text-sm font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-[#111c2e] hover:bg-zinc-50 dark:hover:bg-[#152238] transition-colors cursor-pointer">
-              <Download size={16} />
-              Export
+              className="flex h-10 items-center gap-2 rounded-lg border border-zinc-200 px-4 text-xs font-semibold text-zinc-700 bg-white hover:bg-zinc-50 transition-colors cursor-pointer">
+              <Download size={15} />
+              <span>Export CSV</span>
             </button>
           </div>
         </div>
 
         {/* Search & Status Filters */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative w-full sm:w-80">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+          <div className="relative flex-1 max-w-md">
+            <Search
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400"
+              size={16}
+            />
             <input
               type="text"
-              placeholder="Search payments..."
+              placeholder="Search by customer, plan, or reference..."
               value={query}
               onChange={(e) => handleQueryChange(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-[#111c2e] border border-zinc-200 dark:border-[#1e2d47] rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-[#0F86EE]"
-            />
-            <Search
-              className="absolute left-3 top-2.5 text-zinc-400"
-              size={16}
+              className="h-10 w-full rounded-lg bg-[#F0F6FA] border border-transparent focus:border-[#0F86EE] focus:bg-transparent pl-10 pr-4 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all"
             />
           </div>
 
-          <div className="relative w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="relative w-full sm:w-44" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setOpenFilter(!openFilter)}
-              className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 px-3 py-2 text-sm bg-white dark:bg-[#111c2e] border border-zinc-200 dark:border-[#1e2d47] rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-[#152238] transition cursor-pointer">
+              className="w-full flex items-center justify-between h-10 px-3.5 text-xs font-semibold bg-white border border-zinc-200 rounded-lg text-zinc-700 hover:bg-zinc-50 transition cursor-pointer">
               <span className="capitalize">
                 {status === "all" ? "All statuses" : status}
               </span>
@@ -483,13 +415,13 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
             </button>
 
             {openFilter && (
-              <div className="absolute right-0 top-12 w-40 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] overflow-hidden z-50 py-1">
+              <div className="absolute right-0 top-11 w-full sm:w-44 rounded-lg border border-zinc-200 bg-white shadow-xl overflow-hidden z-50 py-1 animate-in fade-in">
                 {(["all", "success", "failed", "pending", "reversed"] as const).map(
                   (item) => (
                     <button
                       key={item}
                       onClick={() => handleStatusChange(item)}
-                      className="w-full px-4 py-2 text-left text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-[#152238] capitalize transition cursor-pointer">
+                      className="w-full px-3.5 py-2 text-left text-xs font-medium text-zinc-700 hover:bg-zinc-50 capitalize transition cursor-pointer">
                       {item === "all" ? "All statuses" : item}
                     </button>
                   ),
@@ -500,55 +432,63 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
         </div>
 
         {/* Payments Table */}
-        <div className="w-full overflow-x-auto bg-white dark:bg-[#111c2e] rounded-xl border border-zinc-200 dark:border-[#1e2d47]">
-          <table className="w-full border-collapse text-left text-sm text-zinc-600 dark:text-zinc-300">
+        <div className="w-full overflow-x-auto bg-white rounded-xl border border-zinc-200/80 shadow-xs">
+          <table className="w-full border-collapse text-left text-xs text-zinc-600">
             <thead>
-              <tr className="border-b border-zinc-100 dark:border-[#1e2d47] text-zinc-500 dark:text-zinc-400 text-xs bg-zinc-50/50 dark:bg-[#0c1524]">
-                <th className="py-3 px-4 font-semibold">Customer</th>
-                <th className="py-3 px-4 font-semibold">Amount</th>
-                <th className="py-3 px-4 font-semibold">Plan</th>
-                <th className="py-3 px-4 font-semibold">Status</th>
-                <th className="py-3 px-4 font-semibold">Reference</th>
-                <th className="py-3 px-4 font-semibold">Date</th>
+              <tr className="border-b border-zinc-100 bg-zinc-50/50 text-zinc-400 font-semibold uppercase tracking-wider text-[11px]">
+                <th className="py-3 px-5 font-semibold">Customer</th>
+                <th className="py-3 px-5 font-semibold">Amount</th>
+                <th className="py-3 px-5 font-semibold">Plan</th>
+                <th className="py-3 px-5 font-semibold">Status</th>
+                <th className="py-3 px-5 font-semibold">Reference</th>
+                <th className="py-3 px-5 font-semibold">Date</th>
                 <th className="py-3 px-4 text-right font-semibold">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-[#1e2d47]">
+            <tbody className="divide-y divide-zinc-100">
               {paginatedPayments.length > 0 ? (
                 paginatedPayments.map((payment) => (
                   <tr
                     key={payment.id}
                     onClick={() => setSelectedPayment(payment)}
-                    className="hover:bg-zinc-50/60 dark:hover:bg-[#152238] transition cursor-pointer">
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-zinc-900 dark:text-white">
+                    className="hover:bg-zinc-50/70 transition cursor-pointer">
+                    <td className="py-3.5 px-5">
+                      <div className="font-semibold text-zinc-900">
                         {payment.customers?.name || "Customer"}
                       </div>
-                      <div className="text-xs text-zinc-400">
-                        {payment.customers?.email}
+                      <div className="text-[11px] text-zinc-400">
+                        {payment.customers?.email || "—"}
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 font-mono font-semibold text-zinc-900 dark:text-white">
-                      {formatMoney(payment.amount, payment.currency)}
+                    <td className="py-3.5 px-5 font-bold text-zinc-900 text-sm">
+                      ₦{Number(payment.amount).toLocaleString()}
                     </td>
-                    <td className="py-3.5 px-4 text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                      {payment.subscriptions?.plans?.name ?? "One-time"}
+                    <td className="py-3.5 px-5 text-zinc-700 font-medium">
+                      {payment.subscriptions?.plans?.name || "One-time"}
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-5">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border capitalize ${
-                          statusConfig[payment.status].bg
-                        } ${statusConfig[payment.status].text} ${
-                          statusConfig[payment.status].border
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border capitalize ${
+                          statusConfig[payment.status as PaymentStatus]?.bg
+                        } ${statusConfig[payment.status as PaymentStatus]?.text} ${
+                          statusConfig[payment.status as PaymentStatus]?.border
                         }`}>
-                        {statusConfig[payment.status].display}
+                        {statusConfig[payment.status as PaymentStatus]?.display || payment.status}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-xs text-zinc-500 dark:text-zinc-400">
-                      {(payment.provider_reference || payment.id).slice(0, 14)}...
+                    <td className="py-3.5 px-5 text-zinc-400">
+                      {payment.provider_reference
+                        ? `${payment.provider_reference.slice(0, 10)}...`
+                        : "—"}
                     </td>
-                    <td className="py-3.5 px-4 text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
-                      {formatDateTime(payment.paid_at || payment.created_at)}
+                    <td className="py-3.5 px-5 text-zinc-500 whitespace-nowrap">
+                      {payment.paid_at
+                        ? new Date(payment.paid_at).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })
+                        : "—"}
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <button
@@ -556,8 +496,8 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
                           e.stopPropagation();
                           setSelectedPayment(payment);
                         }}
-                        className="text-xs font-semibold text-[#0F86EE] dark:text-[#38bdf8] hover:underline cursor-pointer">
-                        View
+                        className="text-xs font-semibold text-[#0F86EE] hover:underline cursor-pointer">
+                        Details
                       </button>
                     </td>
                   </tr>
@@ -566,8 +506,8 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
                 <tr>
                   <td
                     colSpan={7}
-                    className="text-center py-12 text-zinc-400 dark:text-zinc-500 text-sm">
-                    No payment records found matching your filters.
+                    className="text-center py-12 text-zinc-400 text-xs">
+                    No payments found matching your query.
                   </td>
                 </tr>
               )}
@@ -577,51 +517,40 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
 
         {/* Pagination */}
         {totalItems > 0 && (
-          <div className="flex items-center justify-between pt-4 text-sm text-zinc-400 dark:text-zinc-500 border-t border-zinc-100 dark:border-[#1e2d47]">
+          <div className="flex items-center justify-between pt-2 text-xs text-zinc-400 border-t border-zinc-100">
             <span>
               Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
               {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}{" "}
-              transactions
+              payments
             </span>
 
             <div className="flex items-center gap-1">
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                className="p-2 disabled:opacity-40 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#152238] rounded cursor-pointer">
+                className="p-1.5 disabled:opacity-40 text-zinc-400 hover:bg-zinc-100 rounded cursor-pointer">
                 <ChevronLeft size={16} />
               </button>
 
-              {paginationPages.map((page, index) =>
-                page === "..." ? (
-                  <span key={index} className="px-2">
-                    ...
-                  </span>
-                ) : (
-                  <button
-                    key={`${page}-${index}`}
-                    onClick={() =>
-                      typeof page === "number" && setCurrentPage(page)
-                    }
-                    className={`
-                      w-8 h-8 rounded text-xs cursor-pointer transition
-                      ${
-                        currentPage === page
-                          ? "border border-zinc-300 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#152238] text-[#0F86EE] dark:text-[#38bdf8] font-semibold"
-                          : "hover:bg-zinc-100 dark:hover:bg-[#152238] text-zinc-500 dark:text-zinc-400"
-                      }
-                    `}>
-                    {page}
-                  </button>
-                ),
-              )}
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`w-7 h-7 rounded text-xs font-semibold cursor-pointer transition ${
+                    currentPage === i + 1
+                      ? "bg-[#0F86EE] text-white"
+                      : "hover:bg-zinc-100 text-zinc-600"
+                  }`}>
+                  {i + 1}
+                </button>
+              ))}
 
               <button
                 disabled={currentPage === totalPages}
                 onClick={() =>
                   setCurrentPage((p) => Math.min(p + 1, totalPages))
                 }
-                className="p-2 disabled:opacity-40 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#152238] rounded cursor-pointer">
+                className="p-1.5 disabled:opacity-40 text-zinc-400 hover:bg-zinc-100 rounded cursor-pointer">
                 <ChevronRight size={16} />
               </button>
             </div>
@@ -629,201 +558,109 @@ export default function PaymentsPage({ initialPayments }: PaymentsPageProps) {
         )}
       </div>
 
-      {/* MATCHING TEMPLATE RECEIPT DETAILS SIDEBAR DRAWER */}
+      {/* Payment Details Drawer */}
       {selectedPayment && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="flex-1" onClick={() => setSelectedPayment(null)} />
+        <div className="fixed inset-0 z-50 flex justify-end animate-in fade-in duration-150">
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+            onClick={() => setSelectedPayment(null)}
+          />
 
-          <div className="w-full max-w-md bg-white dark:bg-[#111c2e] border-l border-zinc-200 dark:border-[#1e2d47] h-full p-6 flex flex-col justify-between overflow-y-auto text-zinc-900 dark:text-white animate-in slide-in-from-right duration-200">
+          <div className="relative z-50 w-full sm:max-w-lg bg-white border-l border-zinc-200/80 h-full p-6 flex flex-col justify-between overflow-y-auto text-zinc-900 shadow-2xl animate-in slide-in-from-right duration-200">
             <div className="flex flex-col">
-              {/* Header Title and Close */}
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-[#1e2d47]">
-                <h3 className="text-sm font-bold text-zinc-900 dark:text-white">
-                  Receipt Details
+              <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
+                <h3 className="text-sm font-bold text-zinc-900">
+                  Payment Details
                 </h3>
                 <button
                   onClick={() => setSelectedPayment(null)}
-                  className="p-1 rounded-md text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-[#152238] transition cursor-pointer">
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition cursor-pointer"
+                  aria-label="Close drawer">
                   <X size={17} />
                 </button>
               </div>
 
-              {/* Status Pill */}
-              <div className="mt-5">
+              <div className="mt-5 flex items-center justify-between">
                 <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border capitalize ${
-                    statusConfig[selectedPayment.status].bg
-                  } ${statusConfig[selectedPayment.status].text} ${
-                    statusConfig[selectedPayment.status].border
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border capitalize ${
+                    statusConfig[selectedPayment.status as PaymentStatus]?.bg
+                  } ${statusConfig[selectedPayment.status as PaymentStatus]?.text} ${
+                    statusConfig[selectedPayment.status as PaymentStatus]?.border
                   }`}>
-                  {statusConfig[selectedPayment.status].display}
+                  {statusConfig[selectedPayment.status as PaymentStatus]?.display || selectedPayment.status}
                 </span>
-              </div>
 
-              {/* Main Receipt Identifier */}
-              <div className="mt-3">
-                <h2 className="text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-white font-mono">
-                  RCT-{(selectedPayment.provider_reference || selectedPayment.id).slice(-5).toUpperCase()}
-                </h2>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                  Receipt for {new Date(selectedPayment.paid_at || selectedPayment.created_at).toLocaleDateString("en-US", {
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
-
-              {/* Vertical Details with Icons */}
-              <div className="mt-6 flex flex-col gap-4">
-                {/* Payment Date */}
-                <div className="flex items-start gap-3.5">
-                  <Calendar size={16} className="text-zinc-400 dark:text-zinc-500 shrink-0 mt-0.5" />
-                  <div className="flex flex-col">
-                    <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
-                      Payment Date
-                    </span>
-                    <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 mt-0.5">
-                      {formatDateTime(selectedPayment.paid_at || selectedPayment.created_at)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Paid By */}
-                <div className="flex items-start gap-3.5">
-                  <User size={16} className="text-zinc-400 dark:text-zinc-500 shrink-0 mt-0.5" />
-                  <div className="flex flex-col">
-                    <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
-                      Paid By
-                    </span>
-                    <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 mt-0.5">
-                      {selectedPayment.customers?.name || "Customer"}
-                    </span>
-                    {selectedPayment.customers?.email && (
-                      <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                        {selectedPayment.customers.email}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Product & Plan */}
-                <div className="flex items-start gap-3.5">
-                  <Package size={16} className="text-zinc-400 dark:text-zinc-500 shrink-0 mt-0.5" />
-                  <div className="flex flex-col">
-                    <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
-                      Product &amp; Plan
-                    </span>
-                    <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 mt-0.5">
-                      {selectedPayment.subscriptions?.plans?.name ?? "Standard Subscription"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Payment Method */}
-                <div className="flex items-start gap-3.5">
-                  <CreditCard size={16} className="text-zinc-400 dark:text-zinc-500 shrink-0 mt-0.5" />
-                  <div className="flex flex-col">
-                    <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
-                      Payment Method
-                    </span>
-                    <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 mt-0.5 capitalize">
-                      {selectedPayment.provider || "Paystack"} (Card)
-                    </span>
-                  </div>
-                </div>
-
-                {/* Transaction Reference */}
-                <div className="flex items-start gap-3.5">
-                  <FileText size={16} className="text-zinc-400 dark:text-zinc-500 shrink-0 mt-0.5" />
-                  <div className="flex flex-col">
-                    <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
-                      Transaction Reference
-                    </span>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs font-mono font-semibold text-zinc-800 dark:text-zinc-200 break-all">
-                        {selectedPayment.provider_reference || selectedPayment.id}
-                      </span>
-                      <button
-                        onClick={() =>
-                          copyTransactionReference(
-                            selectedPayment.provider_reference || selectedPayment.id,
-                          )
-                        }
-                        className="p-1 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
-                        title="Copy reference">
-                        {copiedRef ? (
-                          <Check size={13} className="text-emerald-500" />
-                        ) : (
-                          <Copy size={13} />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Status Timestamp */}
-                <div className="flex items-start gap-3.5">
-                  <Settings size={16} className="text-zinc-400 dark:text-zinc-500 shrink-0 mt-0.5" />
-                  <div className="flex flex-col">
-                    <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
-                      Status
-                    </span>
-                    <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 mt-0.5">
-                      Payment {selectedPayment.status === "success" ? "approved" : selectedPayment.status} on{" "}
-                      {new Date(selectedPayment.paid_at || selectedPayment.created_at).toLocaleDateString("en-US", {
+                <span className="text-xs text-zinc-400">
+                  {selectedPayment.paid_at
+                    ? new Date(selectedPayment.paid_at).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
                         year: "numeric",
-                      })}
-                    </span>
-                  </div>
-                </div>
+                      })
+                    : "—"}
+                </span>
               </div>
 
-              {/* Dashed Divider */}
-              <div className="border-t border-dashed border-zinc-200 dark:border-[#1e2d47] my-5" />
+              <div className="mt-4">
+                <span className="text-2xl sm:text-3xl font-bold text-zinc-900">
+                  ₦{Number(selectedPayment.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </span>
+                <p className="text-xs text-zinc-500 mt-1">
+                  Processed via Paystack for {selectedPayment.customers?.name || "Customer"}
+                </p>
+              </div>
 
-              {/* Payment Summary */}
-              <div>
-                <h4 className="text-xs font-bold text-zinc-900 dark:text-white mb-3">
-                  Payment Summary
-                </h4>
-                <div className="flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
-                  <span>{selectedPayment.subscriptions?.plans?.name ?? "Subscription Fee"}</span>
-                  <span className="font-mono font-semibold text-zinc-900 dark:text-zinc-100">
-                    {formatMoney(selectedPayment.amount, selectedPayment.currency)}
+              <div className="mt-6 flex flex-col gap-3.5 text-xs">
+                <div className="flex items-start justify-between py-2.5 border-b border-zinc-100">
+                  <span className="text-zinc-400 font-medium">Customer</span>
+                  <span className="text-zinc-900 font-semibold text-right">
+                    {selectedPayment.customers?.name} ({selectedPayment.customers?.email})
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400 mt-2">
-                  <span>Processing Fee</span>
-                  <span className="font-mono text-zinc-500 dark:text-zinc-400">₦0</span>
-                </div>
-                <div className="border-t border-zinc-100 dark:border-[#1e2d47] my-3" />
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-zinc-900 dark:text-white">
-                    Total Paid
+
+                <div className="flex items-start justify-between py-2.5 border-b border-zinc-100">
+                  <span className="text-zinc-400 font-medium">Plan</span>
+                  <span className="text-zinc-900 font-semibold text-right">
+                    {selectedPayment.subscriptions?.plans?.name || "One-time"}
                   </span>
-                  <span className="text-base font-extrabold font-mono text-[#0F86EE] dark:text-[#38bdf8]">
-                    {formatMoney(selectedPayment.amount, selectedPayment.currency)}
+                </div>
+
+                <div className="flex items-start justify-between py-2.5 border-b border-zinc-100">
+                  <span className="text-zinc-400 font-medium">Reference</span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(selectedPayment.provider_reference || selectedPayment.id)}
+                    className="inline-flex items-center gap-1.5 text-zinc-900 font-medium hover:text-zinc-950 transition-colors cursor-pointer group">
+                    <span>{selectedPayment.provider_reference || selectedPayment.id}</span>
+                    {copiedRef ? (
+                      <Check size={12} className="text-emerald-600" />
+                    ) : (
+                      <Copy size={12} className="text-zinc-400 group-hover:text-zinc-700" />
+                    )}
+                  </button>
+                </div>
+
+                <div className="flex items-start justify-between py-2.5 border-b border-zinc-100">
+                  <span className="text-zinc-400 font-medium">Net Payout (95%)</span>
+                  <span className="text-emerald-600 font-bold text-sm">
+                    ₦{(Number(selectedPayment.amount) * 0.95).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-2.5 pt-6 border-t border-zinc-100 dark:border-[#1e2d47] mt-6">
+            <div className="flex flex-col gap-2.5 pt-5 border-t border-zinc-100 mt-6">
               <button
-                onClick={() => handleDownloadReceipt(selectedPayment)}
-                className="w-full h-11 rounded-xl bg-[#0F86EE] hover:bg-[#0d7ad9] text-white font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer">
-                <Download size={15} />
-                <span>Download Receipt (PDF)</span>
+                onClick={() => handlePrintReceipt(selectedPayment)}
+                className="w-full h-10 rounded-lg bg-[#0F86EE] hover:bg-[#0d7ad9] text-white font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer">
+                <FileText size={14} />
+                <span>Print Payment Receipt</span>
               </button>
 
               <button
-                onClick={() => handleShareReceipt(selectedPayment)}
-                className="w-full h-10 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#152238] hover:bg-zinc-100 dark:hover:bg-[#1e2d47] text-zinc-700 dark:text-zinc-300 font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer">
-                <Share2 size={14} />
-                <span>Share Receipt</span>
+                onClick={() => setSelectedPayment(null)}
+                className="w-full h-10 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 font-semibold text-xs transition cursor-pointer">
+                Close
               </button>
             </div>
           </div>

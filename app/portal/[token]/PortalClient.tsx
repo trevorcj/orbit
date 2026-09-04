@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
+import { getIntervalLabel } from "@/lib/interval";
 
 interface Plan {
   id: string;
@@ -20,6 +21,7 @@ interface Plan {
   amount: number;
   currency: string;
   billing_interval: string;
+  billing_interval_days?: number | null;
   trial_period_days?: number;
 }
 
@@ -73,13 +75,13 @@ interface Customer {
 }
 
 export default function PortalClient({ customer }: { customer: Customer }) {
-  const subscription = customer.subscriptions?.[0];
+  const subscriptions = customer.subscriptions || [];
   const paymentMethod = customer.customer_payment_methods?.[0];
   const payments = customer.payments || [];
   const organisation = customer.organisations;
 
   const [loading, setLoading] = useState(false);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
 
   const formatCurrency = (amount: number, currency = "NGN") => {
     return new Intl.NumberFormat("en-NG", {
@@ -100,21 +102,20 @@ export default function PortalClient({ customer }: { customer: Customer }) {
     });
   };
 
-  const handleCancelSubscription = async () => {
-    if (!subscription) return;
+  const handleCancelSubscription = async (subId: string) => {
     setLoading(true);
 
     try {
       const res = await fetch("/api/portal/cancel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subscriptionId: subscription.id }),
+        body: JSON.stringify({ subscriptionId: subId }),
       });
       const data = await res.json();
 
       if (res.ok && data.success) {
         toast.success(data.message || "Cancellation scheduled.");
-        setShowCancelConfirm(false);
+        setConfirmCancelId(null);
         window.location.reload();
       } else {
         toast.error(data.error || "Failed to cancel subscription.");
@@ -126,15 +127,14 @@ export default function PortalClient({ customer }: { customer: Customer }) {
     }
   };
 
-  const handleReactivateSubscription = async () => {
-    if (!subscription) return;
+  const handleReactivateSubscription = async (subId: string) => {
     setLoading(true);
 
     try {
       const res = await fetch("/api/portal/reactivate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subscriptionId: subscription.id }),
+        body: JSON.stringify({ subscriptionId: subId }),
       });
       const data = await res.json();
 
@@ -151,16 +151,24 @@ export default function PortalClient({ customer }: { customer: Customer }) {
     }
   };
 
-  const normalizedStatus = subscription?.status?.toUpperCase() || "";
-  const isCancelled =
-    normalizedStatus === "CANCELLED" ||
-    normalizedStatus === "CANCELED";
-  const isCanceling = !isCancelled && Boolean(subscription?.cancel_at_period_end);
-  const isPastDue = !isCancelled && !isCanceling && normalizedStatus === "PAST_DUE";
-  const isTrial = !isCancelled && !isCanceling && !isPastDue && normalizedStatus === "TRIALING";
-  const isActive = !isCancelled && !isCanceling && !isPastDue && normalizedStatus === "ACTIVE";
+  const getSubStatus = (sub: Subscription) => {
+    const now = new Date();
+    const endsAtDate = sub.ends_at ? new Date(sub.ends_at) : null;
+    const isPastEndsAt = Boolean(endsAtDate && endsAtDate.getTime() <= now.getTime());
 
-  const accessEndsDate = subscription?.ends_at || subscription?.cancelled_at || subscription?.renews_at;
+    const rawStatus = (sub.status || "").toUpperCase();
+    const isCancelled =
+      rawStatus === "CANCELLED" ||
+      rawStatus === "CANCELED" ||
+      (Boolean(sub.cancel_at_period_end) && isPastEndsAt);
+
+    const isCanceling = !isCancelled && Boolean(sub.cancel_at_period_end);
+    const isPastDue = !isCancelled && !isCanceling && rawStatus === "PAST_DUE";
+    const isTrial = !isCancelled && !isCanceling && !isPastDue && rawStatus === "TRIALING";
+    const isActive = !isCancelled && !isCanceling && !isPastDue && !isTrial && (rawStatus === "ACTIVE" || rawStatus === "SUCCESS");
+
+    return { isCancelled, isCanceling, isPastDue, isTrial, isActive };
+  };
 
   return (
     <div className="min-h-screen bg-zinc-50/60 py-12 px-4 sm:px-6 lg:px-8 antialiased font-sans text-zinc-900">
@@ -198,181 +206,193 @@ export default function PortalClient({ customer }: { customer: Customer }) {
           </div>
         </div>
 
-        {/* CANCELLATION PERIOD-END NOTICE */}
-        {isCanceling && !isCancelled && (
-          <div className="p-5 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in">
-            <div className="flex items-start gap-3">
-              <AlertTriangle size={20} className="text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <h3 className="text-sm font-bold text-amber-900">
-                  Subscription Cancellation Scheduled
-                </h3>
-                <p className="text-xs text-amber-800/90 mt-0.5 leading-relaxed">
-                  Your access to <strong>{subscription?.plans?.name}</strong> remains fully active until{" "}
-                  <strong>{formatDate(accessEndsDate)}</strong>. You will not be billed again.
-                </p>
-              </div>
-            </div>
+        {/* SUBSCRIPTIONS LIST */}
+        {subscriptions.length > 0 ? (
+          <div className="space-y-6">
+            {subscriptions.map((sub) => {
+              const { isCancelled, isCanceling, isPastDue, isTrial, isActive } = getSubStatus(sub);
+              const accessEndsDate = sub.ends_at || sub.cancelled_at || sub.renews_at;
 
-            <button
-              onClick={handleReactivateSubscription}
-              disabled={loading}
-              className="shrink-0 h-9 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
-              <RotateCcw size={13} />
-              <span>Keep Subscription</span>
-            </button>
-          </div>
-        )}
+              return (
+                <div key={sub.id} className="space-y-4">
+                  {/* CANCELLATION PERIOD-END NOTICE */}
+                  {isCanceling && !isCancelled && (
+                    <div className="p-5 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle size={20} className="text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <h3 className="text-sm font-bold text-amber-900">
+                            Subscription Cancellation Scheduled
+                          </h3>
+                          <p className="text-xs text-amber-800/90 mt-0.5 leading-relaxed">
+                            Your access to <strong>{sub.plans?.name}</strong> remains fully active until{" "}
+                            <strong>{formatDate(accessEndsDate)}</strong>. You will not be billed again.
+                          </p>
+                        </div>
+                      </div>
 
-        {/* SUBSCRIPTION CARD */}
-        {subscription ? (
-          <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 sm:p-8 space-y-6 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-6 border-b border-zinc-100">
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <h2 className="text-lg font-bold text-zinc-900">
-                    {subscription.products?.name}
-                  </h2>
-                  <span
-                    className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
-                      isCancelled
-                        ? "bg-rose-50 text-rose-700 border-rose-200"
-                        : isCanceling
-                          ? "bg-amber-50 text-amber-700 border-amber-200"
-                          : isPastDue
-                            ? "bg-amber-50 text-amber-700 border-amber-200"
+                      <button
+                        onClick={() => handleReactivateSubscription(sub.id)}
+                        disabled={loading}
+                        className="shrink-0 h-9 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+                        <RotateCcw size={13} />
+                        <span>Keep Subscription</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* SUBSCRIPTION CARD */}
+                  <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 sm:p-8 space-y-6 shadow-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-6 border-b border-zinc-100">
+                      <div>
+                        <div className="flex items-center gap-2.5">
+                          <h2 className="text-lg font-bold text-zinc-900">
+                            {sub.products?.name}
+                          </h2>
+                          <span
+                            className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                              isCancelled
+                                ? "bg-rose-50 text-rose-700 border-rose-200"
+                                : isCanceling
+                                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                                  : isPastDue
+                                    ? "bg-amber-50 text-amber-700 border-amber-200"
+                                    : isTrial
+                                      ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                                      : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            }`}>
+                            {isCancelled ? (
+                              "Canceled"
+                            ) : isCanceling ? (
+                              "Cancels at period end"
+                            ) : isPastDue ? (
+                              <>
+                                <AlertTriangle size={11} />
+                                Past Due
+                              </>
+                            ) : isTrial ? (
+                              <>
+                                <Clock size={11} />
+                                Trial Active
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 size={11} />
+                                Active
+                              </>
+                            )}
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-500 mt-1">
+                          Plan: <span className="font-semibold text-zinc-700">{sub.plans?.name}</span>
+                        </p>
+                      </div>
+
+                      <div className="sm:text-right">
+                        <span className="text-2xl font-extrabold text-zinc-950">
+                          {formatCurrency(sub.plans?.amount || 0, sub.plans?.currency)}
+                        </span>
+                        <span className="text-xs text-zinc-400 capitalize block">
+                          / {getIntervalLabel(sub.plans?.billing_interval, sub.plans?.billing_interval_days)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* DETAILS GRID */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs">
+                      <div className="space-y-1">
+                        <span className="text-zinc-400 font-medium flex items-center gap-1.5">
+                          <Calendar size={14} />
+                          {isCancelled
+                            ? "Access Ended"
                             : isTrial
-                              ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                              : "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    }`}>
-                    {isCancelled ? (
-                      "Canceled"
-                    ) : isCanceling ? (
-                      "Cancels at period end"
-                    ) : isPastDue ? (
-                      <>
-                        <AlertTriangle size={11} />
-                        Past Due
-                      </>
-                    ) : isTrial ? (
-                      <>
-                        <Clock size={11} />
-                        Trial Active
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 size={11} />
-                        Active
-                      </>
+                              ? "Trial Period Ends"
+                              : isCanceling
+                                ? "Access Expires On"
+                                : isPastDue
+                                  ? "Next Payment Retry"
+                                  : "Next Billing Date"}
+                        </span>
+                        <p className="font-semibold text-zinc-800 text-sm">
+                          {formatDate(
+                            isCancelled
+                              ? sub.ends_at || sub.cancelled_at || sub.renews_at
+                              : sub.renews_at || sub.ends_at,
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="text-zinc-400 font-medium flex items-center gap-1.5">
+                          <CreditCard size={14} />
+                          Payment Method
+                        </span>
+                        <p className="font-semibold text-zinc-800 text-sm">
+                          {paymentMethod ? (
+                            <span className="font-mono">
+                              {paymentMethod.card_brand || "Card"} •••• {paymentMethod.card_last4 || "0000"}
+                            </span>
+                          ) : (
+                            "Paystack Tokenized Card"
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="text-zinc-400 font-medium">Started On</span>
+                        <p className="font-semibold text-zinc-800 text-sm">
+                          {formatDate(sub.starts_at)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* CANCELLATION & RESUBSCRIBE ACTIONS */}
+                    {isActive && (
+                      <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <p className="text-xs text-zinc-500">
+                          Need to make changes? You can cancel your subscription anytime.
+                        </p>
+
+                        {confirmCancelId === sub.id ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setConfirmCancelId(null)}
+                              className="h-9 px-4 rounded-xl border border-zinc-200 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors cursor-pointer">
+                              Keep Active
+                            </button>
+                            <button
+                              onClick={() => handleCancelSubscription(sub.id)}
+                              disabled={loading}
+                              className="h-9 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50">
+                              {loading ? "Canceling..." : "Confirm Cancellation"}
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmCancelId(sub.id)}
+                            className="text-xs font-semibold text-red-600 hover:text-red-700 hover:underline cursor-pointer">
+                            Cancel Subscription
+                          </button>
+                        )}
+                      </div>
                     )}
-                  </span>
-                </div>
-                <p className="text-xs text-zinc-500 mt-1">
-                  Plan: <span className="font-semibold text-zinc-700">{subscription.plans?.name}</span>
-                </p>
-              </div>
 
-              <div className="sm:text-right">
-                <span className="text-2xl font-extrabold text-zinc-950">
-                  {formatCurrency(subscription.plans?.amount || 0, subscription.plans?.currency)}
-                </span>
-                <span className="text-xs text-zinc-400 capitalize block">
-                  / {subscription.plans?.billing_interval || "month"}
-                </span>
-              </div>
-            </div>
-
-            {/* DETAILS GRID */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs">
-              <div className="space-y-1">
-                <span className="text-zinc-400 font-medium flex items-center gap-1.5">
-                  <Calendar size={14} />
-                  {isCancelled
-                    ? "Access Ended"
-                    : isTrial
-                      ? "Trial Period Ends"
-                      : isCanceling
-                        ? "Access Expires On"
-                        : isPastDue
-                          ? "Next Payment Retry"
-                          : "Next Billing Date"}
-                </span>
-                <p className="font-semibold text-zinc-800 text-sm">
-                  {formatDate(
-                    isCancelled
-                      ? subscription.ends_at || subscription.cancelled_at || subscription.renews_at
-                      : subscription.renews_at || subscription.ends_at,
-                  )}
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <span className="text-zinc-400 font-medium flex items-center gap-1.5">
-                  <CreditCard size={14} />
-                  Payment Method
-                </span>
-                <p className="font-semibold text-zinc-800 text-sm">
-                  {paymentMethod ? (
-                    <span className="font-mono">
-                      {paymentMethod.card_brand || "Card"} •••• {paymentMethod.card_last4 || "0000"}
-                    </span>
-                  ) : (
-                    "Paystack Tokenized Card"
-                  )}
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <span className="text-zinc-400 font-medium">Started On</span>
-                <p className="font-semibold text-zinc-800 text-sm">
-                  {formatDate(subscription.starts_at)}
-                </p>
-              </div>
-            </div>
-
-            {/* CANCELLATION & RESUBSCRIBE ACTIONS */}
-            {isActive && (
-              <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <p className="text-xs text-zinc-500">
-                  Need to make changes? You can cancel your subscription anytime.
-                </p>
-
-                {showCancelConfirm ? (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setShowCancelConfirm(false)}
-                      className="h-9 px-4 rounded-xl border border-zinc-200 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors cursor-pointer">
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleCancelSubscription}
-                      disabled={loading}
-                      className="h-9 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50">
-                      {loading ? "Confirming..." : "Confirm Cancellation"}
-                    </button>
+                    {isCancelled && sub.products?.slug && (
+                      <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <p className="text-xs text-zinc-500">
+                          This subscription is no longer active. Would you like to resubscribe?
+                        </p>
+                        <a
+                          href={`/checkout/${sub.products.slug}${sub.plans?.id ? `?plan=${sub.plans.id}` : ""}`}
+                          className="h-9 px-4 rounded-xl bg-[#0F86EE] hover:bg-[#0d7ad9] text-white text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer">
+                          Resubscribe Now
+                        </a>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <button
-                    onClick={() => setShowCancelConfirm(true)}
-                    className="text-xs font-semibold text-red-600 hover:text-red-700 hover:underline cursor-pointer">
-                    Cancel Subscription
-                  </button>
-                )}
-              </div>
-            )}
-
-            {isCancelled && subscription.products?.slug && (
-              <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <p className="text-xs text-zinc-500">
-                  This subscription is no longer active. Would you like to resubscribe?
-                </p>
-                <a
-                  href={`/checkout/${subscription.products.slug}${subscription.plans?.id ? `?plan=${subscription.plans.id}` : ""}`}
-                  className="h-9 px-4 rounded-xl bg-[#0F86EE] hover:bg-[#0d7ad9] text-white text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer">
-                  Resubscribe Now
-                </a>
-              </div>
-            )}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-zinc-200 p-8 text-center text-zinc-500 text-sm">

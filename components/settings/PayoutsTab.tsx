@@ -102,38 +102,38 @@ export default function PayoutsTab() {
           setLookupError("");
         }
       } catch {
-        setLookupError("Verification failed");
+        setLookupError("Failed to reach Paystack validation service");
         setAccountName("");
       } finally {
         setCheckingBank(false);
       }
     };
 
-    const timer = setTimeout(verify, 400);
+    const timer = setTimeout(verify, 350);
     return () => clearTimeout(timer);
   }, [accountNumber, bankCode, data?.bankDetails]);
 
   const handleSaveBank = async () => {
-    if (!bankCode || !bankName || accountNumber.length !== 10 || !accountName) {
-      toast.error("Please verify bank account details first.");
+    if (!accountName || accountNumber.length !== 10 || !bankCode) {
+      toast.error("Please enter a valid 10-digit NUBAN account number.");
       return;
     }
 
     setSavingBank(true);
     try {
       const res = await updatePayoutDetails({
-        bankName,
         bankCode,
+        bankName,
         accountNumber,
         accountName,
       });
 
       if (res.success) {
-        toast.success("Settlement bank account updated!");
+        toast.success("Settlement bank details saved successfully!");
         setIsEditingBank(false);
-        await loadData();
+        loadData();
       } else {
-        toast.error(res.error || "Failed to update settlement bank.");
+        toast.error(res.error || "Failed to update bank details");
       }
     } catch {
       toast.error("An unexpected error occurred.");
@@ -149,8 +149,8 @@ export default function PayoutsTab() {
       return;
     }
 
-    if (amt > (data?.availableBalance || 0)) {
-      toast.error("Withdrawal exceeds available balance.");
+    if (data && amt > data.availableBalance) {
+      toast.error("Requested amount exceeds available balance.");
       return;
     }
 
@@ -158,12 +158,14 @@ export default function PayoutsTab() {
     try {
       const res = await requestPayout(amt);
       if (res.success) {
-        toast.success("Manual withdrawal submitted successfully!");
+        toast.success(
+          `Payout request for ₦${amt.toLocaleString()} initiated successfully!`,
+        );
         setShowWithdrawModal(false);
         setWithdrawAmount("");
-        await loadData();
+        loadData();
       } else {
-        toast.error(res.error || "Failed to process payout.");
+        toast.error(res.error || "Failed to initiate manual payout.");
       }
     } catch {
       toast.error("An unexpected error occurred during payout.");
@@ -179,21 +181,21 @@ export default function PayoutsTab() {
   return (
     <div className="flex flex-col gap-6 w-full max-w-4xl">
       {/* 1. PAYSTACK SUBACCOUNT STATUS BANNER */}
-      <div className="p-4 sm:p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 rounded-xl border border-zinc-200/80 bg-white shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#0F86EE]/10 dark:bg-[#0F86EE]/20 text-[#0F86EE] dark:text-[#38bdf8] flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-[#0F86EE]/10 text-[#0F86EE] flex items-center justify-center shrink-0">
             <Zap size={17} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-zinc-900 dark:text-white">
+              <h3 className="text-sm font-bold text-zinc-900">
                 Paystack Subaccount
               </h3>
               <span
                 className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
                   isBankLinked
-                    ? "bg-emerald-100 dark:bg-emerald-900/70 text-emerald-800 dark:text-emerald-300"
-                    : "bg-amber-100 dark:bg-amber-900/70 text-amber-800 dark:text-amber-300"
+                    ? "bg-emerald-100 text-emerald-800"
+                    : "bg-amber-100 text-amber-800"
                 }`}>
                 {isBankLinked ? "Active" : "Pending Bank Setup"}
               </span>
@@ -202,99 +204,99 @@ export default function PayoutsTab() {
         </div>
 
         {data?.bankDetails?.subaccountCode && (
-          <div className="px-3 py-1.5 rounded-lg bg-zinc-50 dark:bg-[#152238] border border-zinc-200 dark:border-[#1e2d47] text-xs font-mono text-zinc-700 dark:text-zinc-300 shrink-0 self-start sm:self-center">
-            Subaccount: <span className="font-bold text-[#0F86EE] dark:text-[#38bdf8]">{data.bankDetails.subaccountCode}</span>
+          <div className="px-3 py-1.5 rounded-lg bg-zinc-50 border border-zinc-200 text-xs text-zinc-700 shrink-0 self-start sm:self-center">
+            Subaccount: <span className="font-bold text-[#0F86EE]">{data.bankDetails.subaccountCode}</span>
           </div>
         )}
       </div>
 
-      {/* 2. FINANCIAL SUMMARY METRIC CARDS WITH HOVER INFO TOOLTIPS */}
+      {/* 2. FINANCIAL SUMMARY METRIC CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Gross Revenue Processed */}
-        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between">
+        <div className="p-5 rounded-xl border border-zinc-200/80 bg-white shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
               <span>Gross Volume</span>
               <div className="relative group">
-                <Info size={13} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-help" />
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-48 p-2 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-[11px] text-white font-normal z-20 pointer-events-none text-center">
+                <Info size={13} className="text-zinc-400 hover:text-zinc-600 cursor-help" />
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-48 p-2 rounded-lg bg-zinc-900 text-[11px] text-white font-normal z-20 pointer-events-none text-center">
                   Total subscription volume processed across all customer checkouts.
                 </div>
               </div>
             </div>
-            <Wallet size={16} className="text-[#0F86EE] dark:text-[#38bdf8]" />
+            <Wallet size={16} className="text-[#0F86EE]" />
           </div>
-          <div className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight mt-3 font-mono">
+          <div className="text-2xl font-bold text-zinc-900 tracking-tight mt-3">
             ₦{loading ? "..." : (data?.grossRevenue || 0).toLocaleString()}
           </div>
         </div>
 
         {/* Net Earnings (95%) */}
-        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between">
+        <div className="p-5 rounded-xl border border-zinc-200/80 bg-white shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
               <span>Net Earnings (95%)</span>
               <div className="relative group">
-                <Info size={13} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-help" />
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-48 p-2 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-[11px] text-white font-normal z-20 pointer-events-none text-center">
+                <Info size={13} className="text-zinc-400 hover:text-zinc-600 cursor-help" />
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-48 p-2 rounded-lg bg-zinc-900 text-[11px] text-white font-normal z-20 pointer-events-none text-center">
                   Total 95% net revenue deposited into your verified Nigerian settlement bank.
                 </div>
               </div>
             </div>
             <Building2 size={16} className="text-emerald-500" />
           </div>
-          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight mt-3 font-mono">
+          <div className="text-2xl font-bold text-emerald-600 tracking-tight mt-3">
             ₦{loading ? "..." : Math.round((data?.grossRevenue || 0) * 0.95).toLocaleString()}
           </div>
         </div>
 
         {/* Orbit 5% Platform Cut */}
-        <div className="p-5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col justify-between">
+        <div className="p-5 rounded-xl border border-zinc-200/80 bg-white shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
               <span>Orbit Fee (5%)</span>
               <div className="relative group">
-                <Info size={13} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-help" />
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-48 p-2 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-[11px] text-white font-normal z-20 pointer-events-none text-center">
+                <Info size={13} className="text-zinc-400 hover:text-zinc-600 cursor-help" />
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-48 p-2 rounded-lg bg-zinc-900 text-[11px] text-white font-normal z-20 pointer-events-none text-center">
                   Orbit platform charge covering recurring billing, card tokenization, and infrastructure.
                 </div>
               </div>
             </div>
-            <Percent size={16} className="text-zinc-400 dark:text-zinc-500" />
+            <Percent size={16} className="text-zinc-400" />
           </div>
-          <div className="text-2xl font-bold text-zinc-700 dark:text-zinc-300 tracking-tight mt-3 font-mono">
+          <div className="text-2xl font-bold text-zinc-700 tracking-tight mt-3">
             ₦{loading ? "..." : Math.round((data?.grossRevenue || 0) * 0.05).toLocaleString()}
           </div>
         </div>
       </div>
 
       {/* Payout Threshold & Schedule Bar */}
-      <div className="p-4 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+      <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+          <span className="font-semibold text-zinc-700">
             Payout Threshold &amp; Schedule
           </span>
           <div className="relative group">
-            <Info size={13} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-help" />
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-64 p-2.5 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-[11px] text-white font-normal z-20 pointer-events-none text-center">
+            <Info size={13} className="text-zinc-400 hover:text-zinc-600 cursor-help" />
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-64 p-2.5 rounded-lg bg-zinc-900 text-[11px] text-white font-normal z-20 pointer-events-none text-center">
               Minimum payout threshold is ₦100. Payouts are automatically swept into your settlement bank on daily T+1 schedule at ~5:40 AM with zero transfer fees.
             </div>
           </div>
         </div>
-        <span className="font-mono text-zinc-600 dark:text-zinc-400">
+        <span className="text-zinc-600 font-medium">
           Threshold: ₦100 • Daily T+1 (~5:40 AM)
         </span>
       </div>
 
       {/* 3. SETTLEMENT BANK ACCOUNT CONFIGURATION */}
-      <div className="p-6 sm:p-8 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] flex flex-col gap-6">
+      <div className="p-6 sm:p-8 rounded-xl border border-zinc-200/80 bg-white shadow-xs flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-              <Building2 size={18} className="text-[#0F86EE] dark:text-[#38bdf8]" />
+            <h2 className="text-base font-bold text-zinc-900 flex items-center gap-2">
+              <Building2 size={18} className="text-[#0F86EE]" />
               <span>Settlement Bank Account</span>
             </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+            <p className="text-xs text-zinc-500 mt-1">
               Your subscription payouts are routed automatically to this verified bank account on daily T+1 settlement.
             </p>
           </div>
@@ -303,7 +305,7 @@ export default function PayoutsTab() {
             <button
               type="button"
               onClick={() => setIsEditingBank(true)}
-              className="h-8 px-3 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#152238] hover:bg-zinc-100 dark:hover:bg-[#1e2d47] text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center gap-1.5 shrink-0">
+              className="h-8 px-3 rounded-lg border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-xs font-semibold text-zinc-700 transition cursor-pointer flex items-center gap-1.5 shrink-0">
               <Pencil size={12} />
               <span>Change Bank</span>
             </button>
@@ -312,25 +314,25 @@ export default function PayoutsTab() {
 
         {/* Established / Verified View */}
         {isBankLinked && !isEditingBank ? (
-          <div className="p-4 sm:p-5 rounded-xl border border-zinc-100 dark:border-[#1e2d47] bg-zinc-50/60 dark:bg-[#0c1524] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="p-4 sm:p-5 rounded-xl border border-zinc-100 bg-zinc-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex flex-col gap-1">
               <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
                 Bank &amp; Account Holder
               </span>
-              <div className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+              <div className="text-sm font-bold text-zinc-900 flex items-center gap-2">
                 <span>{data?.bankDetails?.bankName}</span>
                 <span className="text-zinc-400 font-normal">•</span>
-                <span className="font-mono text-zinc-600 dark:text-zinc-300">
+                <span className="text-zinc-600 font-medium">
                   •••• {data?.bankDetails?.accountNumber?.slice(-4)}
                 </span>
               </div>
-              <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+              <span className="text-xs text-zinc-500 font-medium">
                 {data?.bankDetails?.accountName}
               </span>
             </div>
 
             <div className="flex items-center gap-2 self-start sm:self-center">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 <CheckCircle2 size={14} />
                 <span>Active Settlement Account</span>
               </span>
@@ -341,7 +343,7 @@ export default function PayoutsTab() {
           <div className="flex flex-col gap-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block mb-1.5">
+                <label className="text-xs font-semibold text-zinc-700 block mb-1.5">
                   Destination Bank *
                 </label>
                 <BankSelect
@@ -387,12 +389,12 @@ export default function PayoutsTab() {
                   placeholder="Account holder name will appear here..."
                   value={accountName}
                   readOnly
-                  className="bg-zinc-50 dark:bg-[#152238] cursor-not-allowed font-medium text-zinc-800 dark:text-zinc-200"
+                  className="bg-zinc-50 cursor-not-allowed font-medium text-zinc-800"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-[#1e2d47]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-100">
               {isBankLinked && (
                 <button
                   type="button"
@@ -405,7 +407,7 @@ export default function PayoutsTab() {
                       setAccountName(data.bankDetails.accountName || "");
                     }
                   }}
-                  className="h-10 px-4 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#152238] hover:bg-zinc-100 dark:hover:bg-[#1e2d47] text-zinc-700 dark:text-zinc-300 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5">
+                  className="h-10 px-4 rounded-lg border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-700 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5">
                   <X size={13} />
                   <span>Cancel</span>
                 </button>
@@ -414,7 +416,7 @@ export default function PayoutsTab() {
               <button
                 onClick={handleSaveBank}
                 disabled={savingBank || !accountName || accountNumber.length !== 10}
-                className="h-10 px-6 rounded-lg bg-[#0F86EE] hover:bg-[#0d7ad9] disabled:bg-zinc-200 dark:disabled:bg-zinc-800 text-white font-semibold text-xs transition cursor-pointer disabled:cursor-not-allowed flex items-center gap-2">
+                className="h-10 px-6 rounded-lg bg-[#0F86EE] hover:bg-[#0d7ad9] disabled:bg-zinc-200 text-white font-semibold text-xs transition cursor-pointer disabled:cursor-not-allowed flex items-center gap-2">
                 {savingBank && <Loader2 size={14} className="animate-spin" />}
                 <span>{isBankLinked ? "Update Settlement Bank" : "Save & Link Settlement Bank"}</span>
               </button>
@@ -424,14 +426,14 @@ export default function PayoutsTab() {
       </div>
 
       {/* 4. SETTLEMENT & PAYOUT AUDIT HISTORY TABLE */}
-      <div className="rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] overflow-hidden">
-        <div className="p-5 border-b border-zinc-100 dark:border-[#1e2d47] flex items-center justify-between">
+      <div className="rounded-xl border border-zinc-200/80 bg-white shadow-xs overflow-hidden">
+        <div className="p-5 border-b border-zinc-100 flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-white">
+            <h3 className="text-sm font-bold text-zinc-900">
               Payout &amp; Settlement Ledger
             </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              Historical ledger of disbursements and settled balances.
+            <p className="text-xs text-zinc-500 mt-0.5">
+              Historical ledger of disbursements and settled balances
             </p>
           </div>
           {data && data.availableBalance >= 100 && (
@@ -440,7 +442,7 @@ export default function PayoutsTab() {
                 setWithdrawAmount(data.availableBalance);
                 setShowWithdrawModal(true);
               }}
-              className="text-xs font-semibold text-[#0F86EE] dark:text-[#38bdf8] hover:underline flex items-center gap-1 cursor-pointer">
+              className="text-xs font-semibold text-[#0F86EE] hover:underline flex items-center gap-1 cursor-pointer">
               <span>Manual Withdrawal</span>
               <ArrowUpRight size={13} />
             </button>
@@ -449,7 +451,7 @@ export default function PayoutsTab() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-zinc-50/80 dark:bg-[#0f172a] border-b border-zinc-100 dark:border-[#1e2d47] text-zinc-500 dark:text-zinc-400 font-semibold uppercase tracking-wider">
+            <thead className="bg-zinc-50/80 border-b border-zinc-100 text-zinc-400 font-semibold uppercase tracking-wider text-[11px]">
               <tr>
                 <th className="py-3 px-5">Date</th>
                 <th className="py-3 px-5">Reference</th>
@@ -460,34 +462,34 @@ export default function PayoutsTab() {
                 <th className="py-3 px-5">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-[#1e2d47]">
+            <tbody className="divide-y divide-zinc-100">
               {data?.history && data.history.length > 0 ? (
                 data.history.map((item) => (
-                  <tr key={item.id} className="hover:bg-zinc-50/50 dark:hover:bg-[#152238] transition-colors">
-                    <td className="py-3 px-5 text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                  <tr key={item.id} className="hover:bg-zinc-50/50 transition-colors">
+                    <td className="py-3 px-5 text-zinc-500 whitespace-nowrap">
                       {new Date(item.createdAt).toLocaleDateString("en-NG", {
                         day: "numeric",
                         month: "short",
                         year: "numeric",
                       })}
                     </td>
-                    <td className="py-3 px-5 font-mono text-zinc-700 dark:text-zinc-300">
+                    <td className="py-3 px-5 text-zinc-700">
                       {item.reference.slice(0, 14)}...
                     </td>
-                    <td className="py-3 px-5 font-mono font-semibold text-zinc-900 dark:text-white">
+                    <td className="py-3 px-5 font-bold text-zinc-900">
                       ₦{item.grossAmount.toLocaleString()}
                     </td>
-                    <td className="py-3 px-5 font-mono text-zinc-500 dark:text-zinc-400">
+                    <td className="py-3 px-5 text-zinc-500">
                       ₦{item.feeAmount.toLocaleString()}
                     </td>
-                    <td className="py-3 px-5 font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    <td className="py-3 px-5 font-bold text-emerald-600">
                       ₦{item.netAmount.toLocaleString()}
                     </td>
-                    <td className="py-3 px-5 text-zinc-600 dark:text-zinc-300">
+                    <td className="py-3 px-5 text-zinc-600">
                       {item.bankName} (•••{item.accountNumber.slice(-4)})
                     </td>
                     <td className="py-3 px-5">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 capitalize">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 capitalize">
                         {item.status}
                       </span>
                     </td>
@@ -495,7 +497,7 @@ export default function PayoutsTab() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-zinc-400 dark:text-zinc-500">
+                  <td colSpan={7} className="py-8 text-center text-zinc-400">
                     No historical manual ledger records found. Standard T+1 settlements are swept directly to your bank account daily by Paystack.
                   </td>
                 </tr>
@@ -507,24 +509,24 @@ export default function PayoutsTab() {
 
       {/* 5. WITHDRAWAL POPUP MODAL */}
       {showWithdrawModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#111c2e] rounded-xl border border-zinc-200 dark:border-[#1e2d47] w-full max-w-md p-6 flex flex-col gap-5 text-zinc-900 dark:text-white">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl border border-zinc-200 w-full max-w-md p-6 flex flex-col gap-5 text-zinc-900 shadow-2xl animate-in fade-in duration-150">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-zinc-900 dark:text-white">Request Manual Payout</h3>
+              <h3 className="text-base font-bold text-zinc-900">Request Manual Payout</h3>
               <button
                 onClick={() => setShowWithdrawModal(false)}
-                className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm font-semibold cursor-pointer">
+                className="text-zinc-400 hover:text-zinc-600 text-sm font-semibold cursor-pointer">
                 ✕
               </button>
             </div>
 
             <div className="flex flex-col gap-3">
-              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+              <label className="text-xs font-semibold text-zinc-700">
                 Withdrawal Amount (NGN)
               </label>
 
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 font-bold text-sm">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-sm">
                   ₦
                 </span>
                 <input
@@ -538,48 +540,48 @@ export default function PayoutsTab() {
                     )
                   }
                   placeholder="e.g. 50000"
-                  className="w-full pl-8 pr-4 h-11 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-[#0F86EE]"
+                  className="w-full pl-8 pr-4 h-11 rounded-lg border border-zinc-200 bg-white text-sm font-semibold text-zinc-900 focus:outline-none focus:border-[#0F86EE]"
                 />
               </div>
 
-              <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center justify-between text-xs text-zinc-500">
                 <span>Available: ₦{(data?.availableBalance || 0).toLocaleString()}</span>
                 <button
                   type="button"
                   onClick={() => setWithdrawAmount(data?.availableBalance || 0)}
-                  className="text-[#0F86EE] dark:text-[#38bdf8] font-semibold hover:underline cursor-pointer">
+                  className="text-[#0F86EE] font-semibold hover:underline cursor-pointer">
                   Max Available
                 </button>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#152238] flex flex-col gap-2 text-xs">
-              <div className="flex items-center justify-between text-zinc-500 dark:text-zinc-400">
+            <div className="p-3.5 rounded-lg border border-zinc-200 bg-zinc-50 flex flex-col gap-2 text-xs">
+              <div className="flex items-center justify-between text-zinc-500">
                 <span>Gross Withdrawal:</span>
-                <span className="font-mono text-zinc-800 dark:text-zinc-200">
+                <span className="font-semibold text-zinc-800">
                   ₦{(Number(withdrawAmount) || 0).toLocaleString()}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center justify-between text-zinc-500">
                 <span>Orbit Platform Fee (5%):</span>
-                <span className="font-mono text-zinc-800 dark:text-zinc-200">
+                <span className="font-semibold text-zinc-800">
                   -₦{Math.round((Number(withdrawAmount) || 0) * 0.05).toLocaleString()}
                 </span>
               </div>
-              <div className="pt-2 border-t border-zinc-200 dark:border-[#1e2d47] flex items-center justify-between font-bold">
-                <span className="text-zinc-800 dark:text-white">Net to Bank (95%):</span>
-                <span className="font-mono text-emerald-600 dark:text-emerald-400 text-sm">
+              <div className="pt-2 border-t border-zinc-200 flex items-center justify-between font-bold">
+                <span className="text-zinc-800">Net to Bank (95%):</span>
+                <span className="text-emerald-600 text-sm">
                   ₦{Math.max(0, (Number(withdrawAmount) || 0) - Math.round((Number(withdrawAmount) || 0) * 0.05)).toLocaleString()}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-zinc-100 dark:border-[#1e2d47]">
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-zinc-100">
               <button
                 type="button"
                 onClick={() => setShowWithdrawModal(false)}
                 disabled={withdrawing}
-                className="h-10 px-4 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#152238] text-zinc-700 dark:text-zinc-300 text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-[#1c2e4a] cursor-pointer">
+                className="h-10 px-4 rounded-lg border border-zinc-200 bg-white text-zinc-700 text-xs font-semibold hover:bg-zinc-50 cursor-pointer">
                 Cancel
               </button>
 

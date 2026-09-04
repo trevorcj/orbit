@@ -120,56 +120,58 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
 
   const statusConfig = {
     Active: {
-      text: "text-emerald-600 dark:text-emerald-400",
-      bg: "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800",
+      text: "text-emerald-700",
+      bg: "bg-emerald-50 border-emerald-200",
       dot: "bg-emerald-500",
       count: statusCount.Active,
     },
     "Past due": {
-      text: "text-amber-600 dark:text-amber-400",
-      bg: "bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800",
+      text: "text-amber-700",
+      bg: "bg-amber-50 border-amber-200",
       dot: "bg-amber-500",
       count: statusCount["Past due"],
     },
     Canceled: {
-      text: "text-rose-600 dark:text-rose-400",
-      bg: "bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-800",
+      text: "text-rose-700",
+      bg: "bg-rose-50 border-rose-200",
       dot: "bg-rose-500",
       count: statusCount.Canceled,
     },
     Trialing: {
-      text: "text-indigo-600 dark:text-indigo-400",
-      bg: "bg-indigo-50 dark:bg-indigo-950/50 border-indigo-200 dark:border-indigo-800",
+      text: "text-indigo-700",
+      bg: "bg-indigo-50 border-indigo-200",
       dot: "bg-indigo-500",
       count: statusCount.Trialing,
     },
   };
 
-  const copyToClipboard = async (text: string, label: string) => {
-    await navigator.clipboard.writeText(text);
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
     setCopiedText(text);
-    toast.success(`${label} copied to clipboard!`);
+    toast.success(`${label} copied to clipboard`);
     setTimeout(() => setCopiedText(null), 2000);
   };
 
-  const formatDateTime = (dateString?: string | null) => {
-    if (!dateString) return "—";
-    const date = new Date(dateString);
-    const datePart = date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-    const timePart = date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    return `${datePart} • ${timePart}`;
+  const formatDateTime = (dateStr?: string | null) => {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr);
+    return (
+      d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }) +
+      " • " +
+      d.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    );
   };
 
   const handleExportCSV = () => {
-    if (filtered.length === 0) {
-      toast.error("No subscriptions to export.");
+    if (!filtered.length) {
+      toast.error("No subscriptions to export");
       return;
     }
 
@@ -219,24 +221,24 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
 
   return (
     <>
-      <div className="flex flex-col gap-8 w-full max-w-full mx-auto p-4 sm:p-6 md:p-8">
+      <div className="flex flex-col gap-8 w-full max-w-full mx-auto">
         {/* Header */}
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">
               Subscriptions
             </h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              View and manage active recurring billing subscriptions.
+            <p className="text-sm text-zinc-500">
+              View and manage active recurring billing subscriptions
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={handleExportCSV}
-              className="flex h-11 items-center gap-2 rounded-lg border border-zinc-200 dark:border-[#1e2d47] px-5 text-sm font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-[#111c2e] hover:bg-zinc-50 dark:hover:bg-[#152238] transition-colors cursor-pointer">
-              <Download size={16} />
-              Export
+              className="flex h-10 items-center gap-2 rounded-lg border border-zinc-200 px-4 text-xs font-semibold text-zinc-700 bg-white hover:bg-zinc-50 transition-colors cursor-pointer">
+              <Download size={15} />
+              <span>Export CSV</span>
             </button>
           </div>
         </div>
@@ -254,20 +256,20 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                     setStatus(status === key ? "All" : key);
                     setCurrentPage(1);
                   }}
-                  className={`flex items-center gap-3.5 p-4 rounded-xl border transition-all cursor-pointer ${
+                  className={`flex items-center gap-3.5 p-4 rounded-xl border transition-all cursor-pointer shadow-xs ${
                     isSelected
-                      ? "border-[#0F86EE] bg-[#0F86EE]/5 dark:bg-[#0F86EE]/10"
-                      : "border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] hover:border-zinc-300 dark:hover:border-zinc-600"
+                      ? "border-[#0F86EE] bg-blue-50/40"
+                      : "border-zinc-200/80 bg-white hover:border-zinc-300"
                   }`}>
                   <div
                     className={`flex items-center justify-center w-8 h-8 rounded-lg border shrink-0 ${cfg.bg} ${cfg.text}`}>
                     <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 truncate">
+                    <span className="text-xs font-medium text-zinc-500 truncate">
                       {key}
                     </span>
-                    <span className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white">
+                    <span className="text-lg sm:text-xl font-bold text-zinc-900">
                       {cfg.count}
                     </span>
                   </div>
@@ -278,10 +280,10 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
         </div>
 
         {/* Control Actions (Search & Filter) */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
-          <div className="relative w-full sm:w-80">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+          <div className="relative flex-1 max-w-md">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400"
               size={16}
             />
             <input
@@ -291,14 +293,14 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                 setCurrentPage(1);
               }}
               placeholder="Search by customer, plan, or ID..."
-              className="h-10 w-full rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] pl-9 pr-4 text-xs sm:text-sm text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 transition-all focus:outline-none focus:border-[#0F86EE]"
+              className="h-10 w-full rounded-lg bg-[#F0F6FA] border border-transparent focus:border-[#0F86EE] focus:bg-transparent pl-10 pr-4 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all"
             />
           </div>
 
-          <div className="relative w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="relative w-full sm:w-44" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setOpenFilter(!openFilter)}
-              className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 h-10 px-3.5 text-xs sm:text-sm bg-white dark:bg-[#111c2e] border border-zinc-200 dark:border-[#1e2d47] rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-[#152238] transition cursor-pointer">
+              className="w-full flex items-center justify-between h-10 px-3.5 text-xs font-semibold bg-white border border-zinc-200 rounded-lg text-zinc-700 hover:bg-zinc-50 transition cursor-pointer">
               <span className="capitalize">
                 {status === "All" ? "All statuses" : status}
               </span>
@@ -306,7 +308,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
             </button>
 
             {openFilter && (
-              <div className="absolute right-0 top-11 w-40 rounded-lg border border-zinc-200 dark:border-[#1e2d47] bg-white dark:bg-[#111c2e] overflow-hidden z-50 py-1">
+              <div className="absolute right-0 top-11 w-full sm:w-44 rounded-lg border border-zinc-200 bg-white shadow-xl overflow-hidden z-50 py-1 animate-in fade-in">
                 {(["All", "Active", "Past due", "Trialing", "Canceled"] as const).map(
                   (item) => (
                     <button
@@ -316,7 +318,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                         setCurrentPage(1);
                         setOpenFilter(false);
                       }}
-                      className="w-full px-4 py-2 text-left text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-[#152238] capitalize transition cursor-pointer">
+                      className="w-full px-3.5 py-2 text-left text-xs font-medium text-zinc-700 hover:bg-zinc-50 capitalize transition cursor-pointer">
                       {item === "All" ? "All statuses" : item}
                     </button>
                   ),
@@ -327,20 +329,20 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
         </div>
 
         {/* Data Table */}
-        <div className="w-full overflow-x-auto bg-white dark:bg-[#111c2e] rounded-xl border border-zinc-200 dark:border-[#1e2d47]">
-          <table className="w-full border-collapse text-left text-sm text-zinc-600 dark:text-zinc-300">
+        <div className="w-full overflow-x-auto bg-white rounded-xl border border-zinc-200/80 shadow-xs">
+          <table className="w-full border-collapse text-left text-xs text-zinc-600">
             <thead>
-              <tr className="border-b border-zinc-100 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524] text-zinc-500 dark:text-zinc-400 font-medium text-xs">
-                <th className="py-3 px-4 font-semibold">Customer</th>
-                <th className="py-3 px-4 font-semibold">Product &amp; Plan</th>
-                <th className="py-3 px-4 font-semibold">Amount</th>
-                <th className="py-3 px-4 font-semibold">Billing</th>
-                <th className="py-3 px-4 font-semibold">Status</th>
-                <th className="py-3 px-4 font-semibold">Next Payment</th>
+              <tr className="border-b border-zinc-100 bg-zinc-50/50 text-zinc-400 font-semibold uppercase tracking-wider text-[11px]">
+                <th className="py-3 px-5 font-semibold">Customer</th>
+                <th className="py-3 px-5 font-semibold">Product &amp; Plan</th>
+                <th className="py-3 px-5 font-semibold">Amount</th>
+                <th className="py-3 px-5 font-semibold">Billing</th>
+                <th className="py-3 px-5 font-semibold">Status</th>
+                <th className="py-3 px-5 font-semibold">Next Payment</th>
                 <th className="py-3 px-4 text-right font-semibold">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-[#1e2d47]">
+            <tbody className="divide-y divide-zinc-100">
               {paginated.length > 0 ? (
                 paginated.map((sub) => (
                   <tr
@@ -349,38 +351,38 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                       setSelectedSub(sub);
                       setDrawerTab("overview");
                     }}
-                    className="hover:bg-zinc-50/60 dark:hover:bg-[#152238] transition cursor-pointer">
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-zinc-900 dark:text-white">
+                    className="hover:bg-zinc-50/70 transition cursor-pointer">
+                    <td className="py-3.5 px-5">
+                      <div className="font-semibold text-zinc-900">
                         {sub.customerName}
                       </div>
-                      <div className="text-xs text-zinc-400">
+                      <div className="text-[11px] text-zinc-400">
                         {sub.customerEmail}
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 text-xs">
-                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                    <td className="py-3.5 px-5">
+                      <span className="font-semibold text-zinc-800">
                         {sub.productName}
                       </span>
-                      <span className="text-zinc-400 dark:text-zinc-500 ml-1.5">
+                      <span className="text-zinc-400 ml-1.5">
                         • {sub.planName}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 font-mono font-semibold text-zinc-900 dark:text-white">
+                    <td className="py-3.5 px-5 font-bold text-zinc-900 text-sm">
                       {sub.amount}
                     </td>
-                    <td className="py-3.5 px-4 text-xs text-zinc-600 dark:text-zinc-400">
+                    <td className="py-3.5 px-5 text-zinc-600">
                       {sub.billingInterval}
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-5">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border capitalize ${
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
                           statusConfig[sub.status].bg
                         } ${statusConfig[sub.status].text}`}>
                         {sub.status}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                    <td className="py-3.5 px-5 text-zinc-500 whitespace-nowrap">
                       {sub.nextPayment}
                     </td>
                     <td className="py-3.5 px-4 text-right">
@@ -390,7 +392,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                           setSelectedSub(sub);
                           setDrawerTab("overview");
                         }}
-                        className="text-xs font-semibold text-[#0F86EE] dark:text-[#38bdf8] hover:underline cursor-pointer">
+                        className="text-xs font-semibold text-[#0F86EE] hover:underline cursor-pointer">
                         Details
                       </button>
                     </td>
@@ -400,7 +402,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                 <tr>
                   <td
                     colSpan={7}
-                    className="text-center py-12 text-zinc-400 dark:text-zinc-500 text-sm">
+                    className="text-center py-12 text-zinc-400 text-xs">
                     No subscriptions found matching your query.
                   </td>
                 </tr>
@@ -411,7 +413,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
 
         {/* Pagination */}
         {totalItems > 0 && (
-          <div className="flex items-center justify-between pt-2 text-sm text-zinc-400 dark:text-zinc-500 border-t border-zinc-100 dark:border-[#1e2d47]">
+          <div className="flex items-center justify-between pt-2 text-xs text-zinc-400 border-t border-zinc-100">
             <span>
               Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
               {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}{" "}
@@ -422,7 +424,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                className="p-2 disabled:opacity-40 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#152238] rounded cursor-pointer">
+                className="p-1.5 disabled:opacity-40 text-zinc-400 hover:bg-zinc-100 rounded cursor-pointer">
                 <ChevronLeft size={16} />
               </button>
 
@@ -430,10 +432,10 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                 <button
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
-                  className={`w-8 h-8 rounded text-xs cursor-pointer transition ${
+                  className={`w-7 h-7 rounded text-xs font-semibold cursor-pointer transition ${
                     currentPage === i + 1
-                      ? "border border-zinc-300 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#152238] text-[#0F86EE] dark:text-[#38bdf8] font-semibold"
-                      : "hover:bg-zinc-100 dark:hover:bg-[#152238] text-zinc-500 dark:text-zinc-400"
+                      ? "bg-[#0F86EE] text-white"
+                      : "hover:bg-zinc-100 text-zinc-600"
                   }`}>
                   {i + 1}
                 </button>
@@ -444,7 +446,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                 onClick={() =>
                   setCurrentPage((p) => Math.min(p + 1, totalPages))
                 }
-                className="p-2 disabled:opacity-40 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#152238] rounded cursor-pointer">
+                className="p-1.5 disabled:opacity-40 text-zinc-400 hover:bg-zinc-100 rounded cursor-pointer">
                 <ChevronRight size={16} />
               </button>
             </div>
@@ -452,22 +454,26 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
         )}
       </div>
 
-      {/* RICH PAYSTACK-STYLE SUBSCRIPTION DETAILS DRAWER */}
+      {/* SUBSCRIPTION DETAILS DRAWER */}
       {selectedSub && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="flex-1" onClick={() => setSelectedSub(null)} />
+        <div className="fixed inset-0 z-50 flex justify-end animate-in fade-in duration-150">
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+            onClick={() => setSelectedSub(null)}
+          />
 
-          <div className="w-full max-w-lg bg-white dark:bg-[#111c2e] border-l border-zinc-200 dark:border-[#1e2d47] h-full p-6 flex flex-col justify-between overflow-y-auto text-zinc-900 dark:text-white animate-in slide-in-from-right duration-200">
+          <div className="relative z-50 w-full sm:max-w-lg bg-white border-l border-zinc-200/80 h-full p-6 flex flex-col justify-between overflow-y-auto text-zinc-900 shadow-2xl animate-in slide-in-from-right duration-200">
             <div className="flex flex-col">
               {/* Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-[#1e2d47]">
-                <h3 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+              <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
+                <h3 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
                   <Layers size={16} className="text-[#0F86EE]" />
                   <span>Subscription Details</span>
                 </h3>
                 <button
                   onClick={() => setSelectedSub(null)}
-                  className="p-1 rounded-md text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-[#152238] transition cursor-pointer">
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition cursor-pointer"
+                  aria-label="Close drawer">
                   <X size={17} />
                 </button>
               </div>
@@ -475,63 +481,63 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
               {/* Status Pill & ID */}
               <div className="mt-5 flex items-center justify-between">
                 <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border capitalize ${
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
                     statusConfig[selectedSub.status].bg
                   } ${statusConfig[selectedSub.status].text}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${statusConfig[selectedSub.status].dot}`} />
                   {selectedSub.status}
                 </span>
 
-                <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-mono">
-                  <span>SUB-{selectedSub.id.slice(0, 8).toUpperCase()}</span>
-                  <button
-                    onClick={() => copyToClipboard(selectedSub.id, "Subscription ID")}
-                    className="p-1 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
-                    title="Copy full ID">
-                    {copiedText === selectedSub.id ? (
-                      <Check size={12} className="text-emerald-500" />
-                    ) : (
-                      <Copy size={12} />
-                    )}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(selectedSub.id, "Subscription ID")}
+                  className="inline-flex items-center gap-1.5 text-xs text-zinc-600 hover:text-zinc-900 transition-colors cursor-pointer group"
+                  title="Copy full ID">
+                  <span className="text-zinc-400">ID:</span>
+                  <span className="font-medium text-zinc-900">sub_{selectedSub.id.slice(0, 8)}...</span>
+                  {copiedText === selectedSub.id ? (
+                    <Check size={12} className="text-emerald-600" />
+                  ) : (
+                    <Copy size={12} className="text-zinc-400 group-hover:text-zinc-700" />
+                  )}
+                </button>
               </div>
 
               {/* Customer & Plan Title */}
               <div className="mt-3">
-                <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
+                <h2 className="text-xl font-bold text-zinc-900">
                   {selectedSub.customerName}
                 </h2>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <p className="text-xs text-zinc-500 mt-0.5">
                   {selectedSub.customerEmail}
                 </p>
               </div>
 
-              {/* Past Due Notification Banner if charge failed */}
+              {/* Past Due Banner */}
               {selectedSub.status === "Past due" && (
-                <div className="mt-4 p-3.5 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/30 flex items-start gap-3 text-xs text-amber-800 dark:text-amber-300">
+                <div className="mt-4 p-3.5 rounded-xl border border-amber-200 bg-amber-50 flex items-start gap-3 text-xs text-amber-800">
                   <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
                   <div>
                     <strong className="block font-semibold">Payment Retry in Progress</strong>
                     <span>
-                      The last automatic renewal attempt failed due to insufficient funds or card decline. Orbit will automatically retry billing on the next scheduled cron run.
+                      The last automatic renewal attempt failed. Orbit will automatically retry billing on the next scheduled run.
                     </span>
                   </div>
                 </div>
               )}
 
               {/* Drawer Tabs */}
-              <div className="flex items-center gap-6 border-b border-zinc-100 dark:border-[#1e2d47] mt-6 pb-px">
+              <div className="flex items-center gap-6 border-b border-zinc-100 mt-6 pb-px">
                 <button
                   onClick={() => setDrawerTab("overview")}
                   className={`pb-2.5 text-xs font-semibold transition cursor-pointer relative ${
                     drawerTab === "overview"
-                      ? "text-[#0F86EE] dark:text-[#38bdf8]"
-                      : "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                      ? "text-[#0F86EE]"
+                      : "text-zinc-400 hover:text-zinc-700"
                   }`}>
                   Overview
                   {drawerTab === "overview" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0F86EE] dark:bg-[#38bdf8]" />
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0F86EE]" />
                   )}
                 </button>
 
@@ -539,15 +545,15 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                   onClick={() => setDrawerTab("transactions")}
                   className={`pb-2.5 text-xs font-semibold transition cursor-pointer relative flex items-center gap-1.5 ${
                     drawerTab === "transactions"
-                      ? "text-[#0F86EE] dark:text-[#38bdf8]"
-                      : "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                      ? "text-[#0F86EE]"
+                      : "text-zinc-400 hover:text-zinc-700"
                   }`}>
                   <span>Payment History</span>
-                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-zinc-100 dark:bg-[#152238] font-bold">
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-zinc-100 font-bold">
                     {selectedSub.payments.length}
                   </span>
                   {drawerTab === "transactions" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0F86EE] dark:bg-[#38bdf8]" />
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0F86EE]" />
                   )}
                 </button>
               </div>
@@ -556,21 +562,21 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
               {drawerTab === "overview" && (
                 <div className="mt-5 flex flex-col gap-4">
                   {/* Plan Details Card */}
-                  <div className="p-4 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524] flex flex-col gap-3">
+                  <div className="p-4 rounded-xl border border-zinc-200/80 bg-zinc-50/50 flex flex-col gap-3">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-semibold uppercase text-zinc-400 tracking-wider">
                         Active Plan
                       </span>
-                      <span className="text-xs font-mono font-bold text-[#0F86EE] dark:text-[#38bdf8]">
+                      <span className="text-xs font-bold text-[#0F86EE]">
                         {selectedSub.amount} / {selectedSub.billingInterval.toLowerCase()}
                       </span>
                     </div>
 
                     <div>
-                      <h4 className="text-sm font-bold text-zinc-900 dark:text-white">
+                      <h4 className="text-sm font-bold text-zinc-900">
                         {selectedSub.productName} — {selectedSub.planName}
                       </h4>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                      <p className="text-xs text-zinc-500 mt-0.5">
                         Interval: {selectedSub.billingInterval}
                       </p>
                     </div>
@@ -584,7 +590,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                         <span className="text-zinc-400 text-[11px] font-medium">
                           Subscription Started
                         </span>
-                        <span className="font-semibold text-zinc-800 dark:text-zinc-200 mt-0.5">
+                        <span className="font-semibold text-zinc-800 mt-0.5">
                           {formatDateTime(selectedSub.startsAt || selectedSub.createdAt)}
                         </span>
                       </div>
@@ -596,7 +602,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                         <span className="text-zinc-400 text-[11px] font-medium">
                           {selectedSub.status === "Past due" ? "Next Payment Retry" : "Next Scheduled Billing"}
                         </span>
-                        <span className="font-semibold text-zinc-800 dark:text-zinc-200 mt-0.5">
+                        <span className="font-semibold text-zinc-800 mt-0.5">
                           {selectedSub.status === "Canceled"
                             ? "Inactive (No upcoming billing)"
                             : selectedSub.renewsAt
@@ -608,7 +614,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                               : "—"}
                         </span>
                         {selectedSub.status === "Past due" && (
-                          <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">
+                          <span className="text-[11px] text-amber-700 font-medium mt-0.5">
                             {selectedSub.failedPaymentAttempts >= 4
                               ? "Max retries exceeded (Auto-cancellation pending)"
                               : `Attempt ${selectedSub.failedPaymentAttempts || 1} of 4 (${Math.max(0, 4 - (selectedSub.failedPaymentAttempts || 1))} retries remaining)`}
@@ -623,7 +629,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                         <span className="text-zinc-400 text-[11px] font-medium">
                           Renewal Cycles Completed
                         </span>
-                        <span className="font-semibold text-zinc-800 dark:text-zinc-200 mt-0.5">
+                        <span className="font-semibold text-zinc-800 mt-0.5">
                           {selectedSub.renewalCount} successful billing cycle{selectedSub.renewalCount === 1 ? "" : "s"}
                         </span>
                       </div>
@@ -635,7 +641,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                         <span className="text-zinc-400 text-[11px] font-medium">
                           Payment Method
                         </span>
-                        <span className="font-semibold text-zinc-800 dark:text-zinc-200 mt-0.5">
+                        <span className="font-semibold text-zinc-800 mt-0.5">
                           Card (•••• {selectedSub.cardLast4 || "4242"})
                         </span>
                       </div>
@@ -644,9 +650,9 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                 </div>
               )}
 
-              {/* Tab 2: Payment History */}
+              {/* Tab 2: Payment History (Clean divided rows with borders below) */}
               {drawerTab === "transactions" && (
-                <div className="mt-5 flex flex-col gap-2.5">
+                <div className="mt-6 flex flex-col divide-y divide-zinc-100">
                   {selectedSub.payments.length > 0 ? (
                     selectedSub.payments.map((p) => {
                       const isSuccess = p.status?.toLowerCase() === "success";
@@ -655,23 +661,28 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                       return (
                         <div
                           key={p.id}
-                          className="p-3.5 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50/50 dark:bg-[#0c1524] flex items-center justify-between text-xs">
-                          <div className="flex flex-col">
-                            <span className="font-bold text-zinc-900 dark:text-white font-mono text-sm">
+                          className="py-4 flex items-center justify-between first:pt-0 last:pb-0">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-zinc-900 text-sm">
                               ₦{p.amount.toLocaleString()}
                             </span>
-                            <span className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                            <span className="text-xs text-zinc-500 font-medium">
                               {formatDateTime(p.paid_at || p.created_at)}
                             </span>
+                            {p.provider_reference && (
+                              <span className="text-[11px] text-zinc-400">
+                                Ref: {p.provider_reference}
+                              </span>
+                            )}
                           </div>
 
                           <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border capitalize ${
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border capitalize ${
                               isSuccess
-                                ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                 : isFailed
-                                  ? "bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800"
-                                  : "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800"
+                                  ? "bg-rose-50 text-rose-700 border-rose-200"
+                                  : "bg-amber-50 text-amber-700 border-amber-200"
                             }`}>
                             {p.status}
                           </span>
@@ -679,8 +690,8 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                       );
                     })
                   ) : (
-                    <div className="py-8 text-center text-xs text-zinc-400">
-                      No past payments found for this subscription.
+                    <div className="py-12 text-center text-xs text-zinc-400">
+                      No payment records found for this subscription.
                     </div>
                   )}
                 </div>
@@ -688,7 +699,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
             </div>
 
             {/* Bottom Actions */}
-            <div className="flex flex-col gap-2.5 pt-5 border-t border-zinc-100 dark:border-[#1e2d47] mt-6">
+            <div className="flex flex-col gap-2.5 pt-5 border-t border-zinc-100 mt-6">
               {selectedSub.portalToken && (
                 <button
                   onClick={() => {
@@ -696,7 +707,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                     const url = `${origin}/portal/${selectedSub.portalToken}`;
                     copyToClipboard(url, "Customer Portal Link");
                   }}
-                  className="w-full h-11 rounded-xl bg-[#0F86EE] hover:bg-[#0d7ad9] text-white font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer">
+                  className="w-full h-10 rounded-lg bg-[#0F86EE] hover:bg-[#0d7ad9] text-white font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer">
                   <ExternalLink size={14} />
                   <span>Copy Customer Portal Link</span>
                 </button>
@@ -704,7 +715,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
 
               <button
                 onClick={() => setSelectedSub(null)}
-                className="w-full h-10 rounded-xl border border-zinc-200 dark:border-[#1e2d47] bg-zinc-50 dark:bg-[#152238] hover:bg-zinc-100 dark:hover:bg-[#1e2d47] text-zinc-700 dark:text-zinc-300 font-semibold text-xs transition cursor-pointer">
+                className="w-full h-10 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 font-semibold text-xs transition cursor-pointer">
                 Close
               </button>
             </div>

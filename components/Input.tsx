@@ -2,7 +2,7 @@ import styles from "./input.module.css";
 
 type InputProps = {
   label?: string;
-  isRequired: boolean;
+  isRequired?: boolean;
   type?: "text" | "number" | "email" | "password" | "url";
   placeholder: string;
   children?: React.ReactNode;
@@ -20,15 +20,15 @@ function Input({
   const hasCustomBg = customClassName?.includes("bg-");
   const hasCustomBorder = customClassName?.includes("border-") || customClassName?.includes("border ");
 
-  const baseInputClasses = `w-full p-3 rounded-lg text-sm text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-200 focus:outline-none focus:border-[#0F86EE] focus:bg-transparent dark:focus:bg-transparent placeholder:text-zinc-400 dark:placeholder:text-zinc-500 ${
-    hasCustomBg ? "" : "bg-[#F0F6FA] dark:bg-[#111C2E]"
+  const baseInputClasses = `w-full h-11 px-3.5 rounded-lg text-sm text-zinc-900 font-medium transition-all duration-200 focus:outline-none focus:border-[#0F86EE] focus:bg-transparent placeholder:text-zinc-400 ${
+    hasCustomBg ? "" : "bg-[#F0F6FA]"
   } ${hasCustomBorder ? "" : "border border-transparent"}`;
 
   return (
     <div className={styles.inputField}>
       {label && (
         <div className={styles.label}>
-          <div className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{label}</div>
+          <div className="text-xs font-semibold text-zinc-700">{label}</div>
           <div className={styles.requiredAsterisk}>{isRequired ? "*" : ""}</div>
         </div>
       )}
@@ -41,7 +41,7 @@ function Input({
           {...props}
         />
         {children && (
-          <span className={`${styles.inputIcon} text-zinc-500 dark:text-zinc-400`}>
+          <span className={`${styles.inputIcon} text-zinc-400`}>
             {children}
           </span>
         )}
